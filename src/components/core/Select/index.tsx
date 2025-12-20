@@ -41,7 +41,7 @@ interface SelectProps {
   isFriend?: boolean;
   name?: string;
   bookId: string;
-  type?: string
+  type?: string;
 }
 
 const SelectComponent = ({
@@ -53,7 +53,7 @@ const SelectComponent = ({
   label,
   isFriend,
   bookId,
-  type
+  type,
 }: SelectProps) => {
   const { theme } = useTheme();
   const styles = createStyles();
@@ -87,8 +87,21 @@ const SelectComponent = ({
     });
   };
 
+  const finalOptions = React.useMemo(() => {
+    if (!isFriend) return options;
 
-  const selectedCategory = options?.find(cat => cat?.id === value);
+    return [
+      {
+        id: 'me',
+        name: 'MySelf',
+        title: 'MySelf',
+        icon: '',
+        type: 'expense',
+      },
+      ...options,
+    ];
+  }, [options, isFriend]);
+  const selectedCategory = finalOptions?.find(cat => cat?.id === value);
 
   const navigateToCategory = () => {
     if (isFriend) {
@@ -99,8 +112,8 @@ const SelectComponent = ({
   };
 
   const onClose = () => {
-    setIsFriendModal(false)
-  }
+    setIsFriendModal(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -112,9 +125,12 @@ const SelectComponent = ({
           styles.inputContainer,
           error && { borderColor: theme.ERROR },
           !error && { borderColor: value ? theme.PRIMARY : theme.BORDER_COLOR },
-        ]}>
+        ]}
+      >
         <Text style={value ? styles.input : styles.placeholderText}>
-          {isFriend ? selectedCategory?.name || placeholder : selectedCategory?.title || placeholder}
+          {isFriend
+            ? selectedCategory?.name || placeholder
+            : selectedCategory?.title || placeholder}
         </Text>
         <Entypo
           name={isModalVisible ? 'chevron-up' : 'chevron-down'}
@@ -129,27 +145,33 @@ const SelectComponent = ({
         visible={isModalVisible}
         transparent
         animationType="none"
-        onRequestClose={closeModal}>
+        onRequestClose={closeModal}
+      >
         <View style={styles.modalOverlay}>
-          <Animated.View style={[
-            styles.modalContent,
-            animatedModalStyle,
-            { overflow: 'hidden' } // Fix visual glitch
-          ]}>
+          <Animated.View
+            style={[
+              styles.modalContent,
+              animatedModalStyle,
+              { overflow: 'hidden' }, // Fix visual glitch
+            ]}
+          >
             <View style={styles.modalHeader}>
               <View style={styles.insideHeader}>
                 <View style={styles.leftButton} />
                 <Text style={styles.modalTitle}>
                   Select {isFriend ? 'Friend' : 'Category'}
                 </Text>
-                <TouchableOpacity style={styles.rightSpacer} onPress={navigateToCategory}>
+                <TouchableOpacity
+                  style={styles.rightSpacer}
+                  onPress={navigateToCategory}
+                >
                   <Text style={styles.rightButtonText}>Add New</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             <FlatList
-              data={options}
+              data={finalOptions}
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -160,12 +182,14 @@ const SelectComponent = ({
                   onPress={() => {
                     onPress(item.id);
                     closeModal();
-                  }}>
+                  }}
+                >
                   <Text
                     style={[
                       styles.optionText,
                       value === item.id && styles.selectedOptionText,
-                    ]}>
+                    ]}
+                  >
                     {isFriend ? item.name : capitalizeFirstLetter(item.title)}
                   </Text>
                 </TouchableOpacity>
@@ -173,7 +197,8 @@ const SelectComponent = ({
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
-                    No {isFriend ? 'friend' : 'category'} available. Please add new.
+                    No {isFriend ? 'friend' : 'category'} available. Please add
+                    new.
                   </Text>
                 </View>
               }
@@ -185,7 +210,11 @@ const SelectComponent = ({
           </Animated.View>
         </View>
       </Modal>
-      <FriendModal isVisible={isFriendModal} onClose={onClose} bookId={bookId} />
+      <FriendModal
+        isVisible={isFriendModal}
+        onClose={onClose}
+        bookId={bookId}
+      />
     </View>
   );
 };
