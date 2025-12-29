@@ -6,41 +6,69 @@ export const createStyles = () => {
 
     return StyleSheet.create({
         transactionItem: {
-            // marginBottom: 8,
-            paddingHorizontal: 10,
+            paddingHorizontal: 0,
+            paddingVertical: 0,
         },
         container: {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            paddingVertical: 5,
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            backgroundColor: theme.BACKGROUND_LIGHT,
+            borderRadius: 16,
+            marginVertical: 4,
+            borderWidth: 1,
+            borderColor: theme.BORDER_COLOR + '30',
+            shadowColor: theme.SHADOW,
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.08,
+            shadowRadius: 10,
+            elevation: 2,
         },
         leftContainer: {
             flexDirection: 'row',
             alignItems: 'center',
             flex: 1,
+            marginRight: 10,
         },
         iconContainer: {
-            padding: 10,
-            borderRadius: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 14,
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: 12,
+            backgroundColor: theme.LIGHT_PURPLE,
+            borderWidth: 1.5,
+            borderColor: theme.PURPLE + '40',
+            shadowColor: theme.PURPLE,
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.12,
+            shadowRadius: 6,
+            elevation: 2,
         },
         rightActionWrapper: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'flex-end',
             paddingRight: 10,
-            // paddingLeft: 25,
-            gap: 10,
-            backgroundColor: 'transparent', // transparent background
+            gap: 8,
+            backgroundColor: 'transparent',
         },
         actionButton: {
-            padding: 12,
+            padding: 10,
             borderRadius: 10,
             alignItems: 'center',
             justifyContent: 'center',
+            width: 44,
+            height: 44,
         },
 
         viewButton: {
@@ -52,54 +80,75 @@ export const createStyles = () => {
         },
 
         icon: {
-            fontSize: 24,
+            fontSize: 22,
         },
         titleContainer: {
             justifyContent: 'center',
+            flex: 1,
         },
         text: {
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: '700',
             color: theme.TEXT,
+            letterSpacing: 0.1,
+            marginBottom: 4,
+            lineHeight: 20,
         },
         bottomText: {
-            fontSize: 13,
+            fontSize: 11.5,
             fontWeight: '500',
             color: theme.TEXT,
-            opacity: 0.7,
-            marginTop: 2,
+            opacity: 0.65,
+            marginTop: 0,
         },
         categoryRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 4,
+            gap: 6,
+            marginTop: 2,
         },
-
-        categoryIcon: {
-            fontSize: 16,
+        categoryBadge: {
+            backgroundColor: theme.PURPLE + '18',
+            borderRadius: 8,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            overflow: 'hidden',
         },
-
         categoryText: {
-            fontSize: 14,
-            color: theme.TEXT, // or theme.SECONDARY
+            fontSize: 10.5,
+            fontWeight: '700',
+            color: theme.PURPLE,
+            letterSpacing: 0.2,
         },
         price: {
-            fontSize: 16,
-            fontWeight: '700',
+            fontSize: 17,
+            fontWeight: '800',
+            letterSpacing: 0.3,
+            marginBottom: 4,
+            lineHeight: 22,
+        },
+        priceContainer: {
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            minWidth: 90,
+        },
+        priceWrapper: {
+            alignItems: 'flex-end',
         },
         bar: {
-            height: 1.5,
-            backgroundColor: theme.BORDER_COLOR || '#E0E0E0',
-            // marginLeft: 60,
-            // marginTop: 5,
-            borderRadius: 2,
+            display: 'none', // Hide the bar since we're using card style now
         },
         friendName: {
-            fontSize: 12,
+            fontSize: 10.5,
             color: theme.TEXT,
-            opacity: 0.6,
-            marginTop: 2,
-            fontWeight: 500
+            opacity: 0.7,
+            marginTop: 3,
+            fontWeight: '600',
+            backgroundColor: theme.BACKGROUND + '80',
+            paddingHorizontal: 7,
+            paddingVertical: 2,
+            borderRadius: 6,
+            overflow: 'hidden',
         },
         leftActionWrapper: {
             flexDirection: 'row',

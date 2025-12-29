@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import React from 'react';
 import { createStyles } from './styles';
 import { useTheme } from '../../utils/colors';
-import { FeatherIcon } from '../../utils/Icons';
+import { FeatherIcon, MaterialIcons } from '../../utils/Icons';
 
 interface BookItem {
   id: string;
@@ -28,24 +28,34 @@ const BookListItem = ({ item, onEditPress, onPress }: BookListItemProps) => {
       onPress={onPress}
     >
       <View style={styles.contentContainer}>
-        <View style={styles.textContainer}>
-          <Text style={[styles.title, {}]} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.PLACEHOLDER_COLOR }]}>
-            {item.transactionCount}{' '}
-            {item.transactionCount === 1 ? 'transaction' : 'transactions'}
-          </Text>
+        {/* Left Section - Icon and Info */}
+        <View style={styles.leftSection}>
+          <View style={[styles.iconContainer, {
+            backgroundColor: item.type === 'single' 
+              ? theme.SUCCESS_LIGHT 
+              : theme.WARNING_LIGHT
+          }]}>
+          <MaterialIcons 
+            name={item.type === 'single' ? 'account-balance-wallet' : 'group'} 
+            size={24} 
+            color={item.type === 'single' ? theme.SUCCESS : theme.WARNING} 
+          />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <View style={styles.subtitleContainer}>
+              <MaterialIcons name="receipt-long" size={15} color={theme.LIGHT_TEXT} />
+              <Text style={styles.subtitle}>
+                {item.transactionCount || 0} {item.transactionCount === 1 ? 'txn' : 'txns'}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.actionContainer}>
-          <TouchableOpacity
-            onPress={onEditPress}
-            style={styles.editButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <FeatherIcon name="edit" size={24} color={theme.TEXT} />
-          </TouchableOpacity>
+        {/* Right Section - Actions */}
+        <View style={styles.rightSection}>
           <View
             style={[
               styles.typeBadge,
@@ -65,9 +75,18 @@ const BookListItem = ({ item, onEditPress, onPress }: BookListItemProps) => {
                 },
               ]}
             >
-              {item?.type?.toUpperCase()}
+              {item?.type?.toUpperCase() || 'SINGLE'}
             </Text>
           </View>
+          <TouchableOpacity
+            onPress={onEditPress}
+            style={styles.editButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <View style={styles.editButtonContainer}>
+              <FeatherIcon name="edit-3" size={17} color={theme.PURPLE} />
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>

@@ -17,6 +17,7 @@ import {
 } from '../../../../utils/Icons';
 import { FilterBar } from '../../../../components/FilterBar';
 import TransactionList from '../../../../components/transaction';
+import BookTransactionItem from '../../../../components/transaction/BookTransactionItem';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -24,7 +25,11 @@ import Animated, {
   withDelay,
   withSpring,
   withTiming,
+  FadeInDown,
+  FadeIn,
 } from 'react-native-reanimated';
+
+const AnimatedView = Animated.createAnimatedComponent(View);
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFetchTransaction } from '../../../../ReactQueryHook/transaction.hook';
 import { useFetchFriend } from '../../../../ReactQueryHook/friend.hook';
@@ -80,19 +85,47 @@ const Transactions = () => {
           (transaction: any) => transaction.type === filter,
         );
 
-  const renderRecentTransaction = ({ item }: any) => {
-    return <TransactionList {...item} isGesture={true} bookId={bookId} />;
+  const renderRecentTransaction = ({ item, index }: any) => {
+    return (
+      <AnimatedView
+        entering={FadeInDown.delay(index * 50)
+          .springify()
+          .damping(15)}
+      >
+        <BookTransactionItem
+          {...item}
+          bookId={bookId}
+          onEdit={() => {
+            // Handle edit action
+            console.log('Edit transaction', item);
+          }}
+        />
+      </AnimatedView>
+    );
   };
 
   const EmptyListComponent = () => (
-    <View style={styles.emptyState}>
-      <MaterialIcons name="receipt-long" size={64} color={theme.PURPLE} />
+    <AnimatedView
+      entering={FadeIn.delay(300).springify()}
+      style={styles.emptyState}
+    >
+      <AnimatedView
+        entering={FadeInDown.delay(400).springify()}
+        style={styles.emptyIconContainer}
+      >
+        <MaterialIcons name="receipt-long" size={72} color={theme.PURPLE} />
+      </AnimatedView>
       <Text style={[styles.emptyText, { color: theme.TEXT }]}>
         {refreshing
           ? 'Loading transactions...'
           : 'No recent transactions found'}
       </Text>
-    </View>
+      <Text style={[styles.emptySubText, { color: theme.TEXT }]}>
+        {refreshing
+          ? 'Please wait while we fetch your data'
+          : 'Add your first transaction to get started'}
+      </Text>
+    </AnimatedView>
   );
 
   const isExpanded = useSharedValue(false);
@@ -189,80 +222,97 @@ const Transactions = () => {
   const keyExtractor = 1;
   return (
     <View style={styles.root}>
-      <AuthHeader
-        title={`${bookTitle}'s Transactions`}
-        showRightIcon={true}
-        rightIconName="chart-bar"
-        onRightIconPress={() =>
-          navigation.navigate('InnerScreen', {
-            screen: 'TransactionChart',
-            params: { bookId },
-          })
-        }
-      />
+      <View style={styles.headerWrapper}>
+        <AuthHeader
+          title={`${bookTitle}'s Transactions`}
+          showRightIcon={true}
+          rightIconName="chart-bar"
+          onRightIconPress={() =>
+            navigation.navigate('InnerScreen', {
+              screen: 'TransactionChart',
+              params: { bookId },
+            })
+          }
+        />
+      </View>
       <View style={styles.container}>
         <View style={styles.topSection}>
-          <View style={styles.innerTop}>
-            <View style={styles.card}>
-              <View style={styles.totalInner}>
-                <Text style={styles.totalText}>Total Balance</Text>
-                {/* <TouchableOpacity>
-                                    <FontAwesome5Icon name="eye" size={16} color={theme.SECONDARY} />
-                                </TouchableOpacity> */}
-              </View>
-              <Text
-                style={[
-                  styles.price,
-                  { fontSize: bookType === 'group' ? 28 : 32 },
-                ]}
-              >
-                Rs.{' '}
-                {bookType === 'group'
-                  ? getPositiveNumber(transactionData?.totals?.balance)
-                  : transactionData?.totals?.balance}
-              </Text>
-            </View>
-          </View>
-
-          {bookType === 'single' && (
-            <View style={styles.row}>
-              {IncomeExpense.map((finance: { type: string; total: string }) => (
-                <View style={styles.typeContainer} key={finance.type}>
-                  <Text style={styles.typeText}>
-                    {finance.type.charAt(0).toUpperCase() +
-                      finance.type.slice(1)}
-                  </Text>
-                  <View style={styles.typeInnerContainer}>
-                    <FeatherIcon
-                      size={22}
-                      color={
-                        finance.type.toLowerCase() === 'income'
-                          ? theme.SUCCESS
-                          : theme.ERROR
-                      }
-                      name={
-                        finance.type.toLowerCase() === 'income'
-                          ? 'arrow-up'
-                          : 'arrow-down'
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.typePrice,
-                        {
-                          color:
-                            finance.type.toLowerCase() === 'income'
-                              ? theme.SUCCESS
-                              : theme.ERROR,
-                        },
-                      ]}
-                    >
-                      Rs. {finance.total}
-                    </Text>
-                  </View>
+          <AnimatedView
+            entering={FadeInDown.delay(100).springify()}
+            style={styles.innerTop}
+          >
+            {bookType === 'group' && (
+              <View style={styles.card}>
+                <View style={styles.totalInner}>
+                  <MaterialIcons
+                    name="account-balance-wallet"
+                    size={24}
+                    color={theme.SECONDARY}
+                  />
+                  <Text style={styles.totalText}>Total Balance</Text>
                 </View>
-              ))}
-            </View>
+                <Text
+                  style={[
+                    styles.price,
+                    { fontSize: bookType === 'group' ? 28 : 32 },
+                  ]}
+                >
+                  Rs.{' '}
+                  {bookType === 'group'
+                    ? getPositiveNumber(transactionData?.totals?.balance)
+                    : transactionData?.totals?.balance}
+                </Text>
+              </View>
+            )}
+          </AnimatedView>
+          {bookType === 'single' && (
+            <AnimatedView
+              entering={FadeInDown.delay(150).springify()}
+              style={styles.row}
+            >
+              {IncomeExpense.map(
+                (finance: { type: string; total: string }, index: number) => (
+                  <AnimatedView
+                    entering={FadeInDown.delay(200 + index * 50).springify()}
+                    style={styles.typeContainer}
+                    key={finance.type}
+                  >
+                    <Text style={styles.typeText}>
+                      {finance.type.charAt(0).toUpperCase() +
+                        finance.type.slice(1)}
+                    </Text>
+                    <View style={styles.typeInnerContainer}>
+                      <FeatherIcon
+                        size={22}
+                        color={
+                          finance.type.toLowerCase() === 'income'
+                            ? theme.SUCCESS
+                            : theme.ERROR
+                        }
+                        name={
+                          finance.type.toLowerCase() === 'income'
+                            ? 'arrow-up'
+                            : 'arrow-down'
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.typePrice,
+                          {
+                            color:
+                              finance.type.toLowerCase() === 'income'
+                                ? theme.SUCCESS
+                                : theme.ERROR,
+                          },
+                        ]}
+                      >
+                        Rs. {finance.total}
+                      </Text>
+                    </View>
+                  </AnimatedView>
+                ),
+              )}
+            </AnimatedView>
           )}
         </View>
         <View style={styles.content}>
@@ -289,7 +339,9 @@ const Transactions = () => {
           <FlatList
             data={filteredTransactions}
             renderItem={renderRecentTransaction}
-            keyExtractor={item => item.id}
+            keyExtractor={(item, index) =>
+              item?._id || item?.id || `transaction-${index}`
+            }
             showsVerticalScrollIndicator={false}
             style={styles.flatList}
             scrollEnabled={true}
@@ -307,7 +359,8 @@ const Transactions = () => {
                 progressBackgroundColor={theme.SECONDARY}
               />
             }
-            ListFooterComponent={<View style={{ height: 150 }} />}
+            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+            ListFooterComponent={<View style={{ height: 100 }} />}
           />
         </View>
       </View>

@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
   FlatList,
   StyleSheet,
   Animated,
-  Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '../../../../utils/colors';
 
@@ -21,13 +21,29 @@ interface FriendExpenseData {
   friendName: string;
   expenses: Expense[];
   total: number;
+  share: number;
+  netContribution: number;
+}
+
+interface Settlement {
+  from: string;
+  to: string;
+  amount: number;
 }
 
 interface FriendExpensesProps {
   data: FriendExpenseData[];
+  totalExpense: number;
+  perPersonShare: number;
+  participantCount: number;
+  settlements: Settlement[];
 }
 
-const { width } = Dimensions.get('window');
+const formatAmount = (value: number) =>
+  value.toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
 
 // Compact expense item component
 const ExpenseItem: React.FC<{
@@ -98,11 +114,7 @@ const ExpenseItem: React.FC<{
             },
           ]}
         >
-          {item.type === 'income' ? '+' : '-'}₹
-          {item.amount.toLocaleString('en-IN', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}
+          {item.type === 'income' ? '+' : '-'}₹{formatAmount(item.amount)}
         </Text>
       </View>
     </Animated.View>
@@ -172,22 +184,50 @@ const FriendCard: React.FC<{
 
           <View style={styles.totalRight}>
             <Text style={[styles.totalLabel, { color: theme.LIGHT_TEXT }]}>
-              Total
+              Paid
             </Text>
             <Text
               style={[
                 styles.totalAmount,
                 {
-                  color: item.total >= 0 ? theme.SUCCESS : theme.EXPENSE_PIE,
+                  color:
+                    item.netContribution >= 0
+                      ? theme.SUCCESS
+                      : theme.EXPENSE_PIE,
                 },
               ]}
             >
-              ₹
-              {Math.abs(item.total).toLocaleString('en-IN', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
+              ₹{formatAmount(item.total)}
             </Text>
+            <Text style={[styles.shareText, { color: theme.LIGHT_TEXT }]}>
+              Share ₹{formatAmount(item.share)}
+            </Text>
+            <View
+              style={[
+                styles.netPill,
+                {
+                  backgroundColor:
+                    item.netContribution >= 0
+                      ? 'rgba(16,185,129,0.12)'
+                      : 'rgba(239,68,68,0.12)',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.netText,
+                  {
+                    color:
+                      item.netContribution >= 0
+                        ? theme.SUCCESS
+                        : theme.EXPENSE_PIE,
+                  },
+                ]}
+              >
+                {item.netContribution >= 0 ? 'Gets back' : 'Owes'} ₹
+                {formatAmount(Math.abs(item.netContribution))}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -209,8 +249,15 @@ const FriendCard: React.FC<{
   );
 };
 
-export const FriendExpenses: React.FC<FriendExpensesProps> = ({ data }) => {
+export const FriendExpenses: React.FC<FriendExpensesProps> = ({
+  data,
+  totalExpense,
+  perPersonShare,
+  participantCount,
+  settlements,
+}) => {
   const { theme } = useTheme();
+  const [showDetails, setShowDetails] = useState(true);
 
   const getAvatarColor = (index: number) => {
     const colors = [
@@ -226,20 +273,124 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({ data }) => {
     return colors[index % colors.length];
   };
 
+  const peopleCount = participantCount || data.length;
+
   return (
     <View style={styles.container}>
-      {/* Compact Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.TEXT }]}>
-          Friend Expenses
-        </Text>
+        <Text style={[styles.title, { color: theme.TEXT }]}>Group Split</Text>
         <Text style={[styles.subtitle, { color: theme.LIGHT_TEXT }]}>
-          {data.length} {data.length === 1 ? 'friend' : 'friends'} • Track group
-          spending
+          {peopleCount} {peopleCount === 1 ? 'person' : 'people'} • Tap to view
+          who owes whom
         </Text>
       </View>
 
-      {/* Friends List */}
+      <View style={[styles.summaryCard, { backgroundColor: theme.LIST_BG }]}>
+        <View style={styles.summaryRow}>
+          <View
+            style={[
+              styles.statPill,
+              { backgroundColor: theme.BACKGROUND_LIGHT },
+            ]}
+          >
+            <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
+              Group total
+            </Text>
+            <Text style={[styles.statValue, { color: theme.TEXT }]}>
+              ₹{formatAmount(totalExpense)}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.statPill,
+              { backgroundColor: theme.BACKGROUND_LIGHT },
+            ]}
+          >
+            <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
+              Per person
+            </Text>
+            <Text style={[styles.statValue, { color: theme.TEXT }]}>
+              ₹{formatAmount(perPersonShare || 0)}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.statPill,
+              { backgroundColor: theme.BACKGROUND_LIGHT, marginRight: 0 },
+            ]}
+          >
+            <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
+              People
+            </Text>
+            <Text style={[styles.statValue, { color: theme.TEXT }]}>
+              {peopleCount}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => setShowDetails(prev => !prev)}
+          style={[styles.toggleButton, { backgroundColor: theme.PURPLE }]}
+        >
+          <Text style={styles.toggleButtonText}>
+            {showDetails ? 'Hide split details' : 'View split details'}
+          </Text>
+        </TouchableOpacity>
+
+        {showDetails && (
+          <View style={styles.settlementContainer}>
+            <Text style={[styles.settlementTitle, { color: theme.TEXT }]}>
+              Settlement plan
+            </Text>
+
+            {settlements.length === 0 ? (
+              <Text
+                style={[styles.settlementEmpty, { color: theme.LIGHT_TEXT }]}
+              >
+                Everyone is balanced for now.
+              </Text>
+            ) : (
+              settlements.map((settlement, idx) => (
+                <View
+                  key={`${settlement.from}-${settlement.to}-${idx}`}
+                  style={styles.settlementRow}
+                >
+                  <View style={styles.settlementNames}>
+                    <Text
+                      style={[styles.settlementName, { color: theme.TEXT }]}
+                    >
+                      {settlement.from}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.settlementArrow,
+                        { color: theme.LIGHT_TEXT },
+                      ]}
+                    ></Text>
+                    <Text
+                      style={[styles.settlementName, { color: theme.TEXT }]}
+                    >
+                      {settlement.to}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.settlementAmount,
+                      { color: theme.EXPENSE_PIE },
+                    ]}
+                  >
+                    ₹{formatAmount(settlement.amount)}
+                  </Text>
+                </View>
+              ))
+            )}
+          </View>
+        )}
+      </View>
+
       <FlatList
         data={data}
         renderItem={({ item, index }) => (
@@ -254,6 +405,11 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({ data }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ListEmptyComponent={() => (
+          <Text style={[styles.settlementEmpty, { color: theme.LIGHT_TEXT }]}>
+            Add a friend and record a shared expense to see the split.
+          </Text>
+        )}
       />
     </View>
   );
@@ -275,6 +431,87 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 13,
     fontWeight: '500',
+  },
+  summaryCard: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.04)',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  statPill: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 4,
+    letterSpacing: 0.3,
+  },
+  toggleButton: {
+    marginTop: 6,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  settlementContainer: {
+    marginTop: 12,
+    paddingTop: 4,
+  },
+  settlementTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
+  settlementEmpty: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  settlementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  settlementNames: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  settlementName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  settlementArrow: {
+    fontSize: 12,
+    marginHorizontal: 8,
+  },
+  settlementAmount: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   listContent: {
     paddingBottom: 16,
@@ -337,6 +574,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,
+  },
+  shareText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  netPill: {
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 6,
+  },
+  netText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   expensesList: {
     marginTop: 0,

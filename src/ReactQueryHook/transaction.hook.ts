@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useToast } from "../context/ToastContext";
+import { useModal } from "../context/ModalContext";
 import { AxiosError } from "axios";
 import { ApiError, transactionDataProps } from "../utils/types";
 import { createTransaction, deleteTransaction, getBalanceTransaction, getBookTransaction, getLatestTransaction, getWeeklyTransaction } from "../services/TransactionService";
@@ -7,17 +8,50 @@ import { createTransaction, deleteTransaction, getBalanceTransaction, getBookTra
 export const useCreateTransaction = (setError: any) => {
     const queryClient = useQueryClient();
     const { showToast } = useToast();
+    const { showModal } = useModal();
 
     return useMutation<any, AxiosError<ApiError>, transactionDataProps>(
         async (transaction) => createTransaction(transaction),
         {
             onSuccess: async (response, variables: any) => {
                 showToast("Transaction created successfully", "success");
+                
+                // Show challenge warnings if any
+                if (response?.challengeWarnings && response.challengeWarnings.length > 0) {
+                    const warnings = response.challengeWarnings;
+                    const errorWarnings = warnings.filter((w: any) => w.severity === 'error');
+                    const warningWarnings = warnings.filter((w: any) => w.severity === 'warning');
+                    
+                    // Show error warnings first
+                    if (errorWarnings.length > 0) {
+                        const messages = errorWarnings.map((w: any) => `• ${w.message}`).join('\n\n');
+                        showModal({
+                            title: '⚠️ Challenge Alert',
+                            message: `This transaction affects your challenges:\n\n${messages}`,
+                            type: 'error',
+                        });
+                    } else if (warningWarnings.length > 0) {
+                        const messages = warningWarnings.map((w: any) => `• ${w.message}`).join('\n\n');
+                        showModal({
+                            title: 'Challenge Warning',
+                            message: `This transaction affects your challenges:\n\n${messages}`,
+                            type: 'warning',
+                        });
+                    }
+                }
+                
                 await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: ['TransactionList'], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['BookTransactionList'], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['ChartTransaction'], exact: true })
+                    queryClient.invalidateQueries({ queryKey: ['TransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['BookTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChartTransaction'] }),
+                    queryClient.invalidateQueries({ queryKey: ['WeeklyTransactionList'] }),
+                    // Invalidate challenge queries to refresh progress
+                    queryClient.invalidateQueries({ queryKey: ['Challenges'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChallengeProgress'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChallengeLeaderboard'] }),
+                    // Invalidate feed to show new challenge completion items
+                    queryClient.invalidateQueries({ queryKey: ['Feed'] })
                 ]);
 
             },
@@ -45,7 +79,7 @@ export const useCreateTransaction = (setError: any) => {
 
 export const useFetchTransaction = (bookId: string) => {
     return useQuery(
-        ['TransactionList'],
+        ['TransactionList', bookId],
         () => getBookTransaction(bookId),
         {
             onError: (error) => {
@@ -93,10 +127,11 @@ export const useDeleteTransactionBook = (title: string) => {
             onSuccess: async (_response,) => {
                 showToast(`${title} deleted successfully`, 'success');
                 await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: ['TransactionList'], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['BookTransactionList'], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'], exact: true }),
-                    queryClient.invalidateQueries({ queryKey: ['ChartTransaction'], exact: true })
+                    queryClient.invalidateQueries({ queryKey: ['TransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['BookTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChartTransaction'] }),
+                    queryClient.invalidateQueries({ queryKey: ['WeeklyTransactionList'] })
                 ])
             },
             onError: (error) => {
@@ -120,11 +155,11 @@ export const useDeleteTransactionBook = (title: string) => {
 
 export const useFetchWeeklyTransaction = (bookId: string) => {
     return useQuery(
-        ['LatestTransactionList'],
+        ['WeeklyTransactionList', bookId],
         () => getWeeklyTransaction(bookId),
         {
             onError: (error) => {
-                console.error('Failed to fetch latest transaction:', error);
+                console.error('Failed to fetch weekly transaction:', error);
             },
         }
     )

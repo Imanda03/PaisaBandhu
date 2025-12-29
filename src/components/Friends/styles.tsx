@@ -15,7 +15,7 @@ export const createStyles = () => {
             borderRadius: 12,
 
             elevation: 5,
-            shadowColor: '#000',
+            shadowColor: theme.SHADOW,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
             shadowRadius: 12,
@@ -39,7 +39,7 @@ export const createStyles = () => {
             marginLeft: 10,
             fontSize: 12,
             fontWeight: 600,
-            color: 'gray'
+            color: theme.LIGHT_TEXT
         },
         actions: {
             flexDirection: 'row',

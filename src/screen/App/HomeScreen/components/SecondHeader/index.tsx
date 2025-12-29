@@ -3,9 +3,11 @@ import React from 'react';
 import { createStyles } from './styles';
 import { getFormattedDate, getGreeting } from '../../../../../utils/helper';
 import { useFetchUserDetails } from '../../../../../ReactQueryHook/auth.hook';
+import { useTheme } from '../../../../../utils/colors';
 
 const SecondHeader = () => {
   const styles = createStyles();
+  const { theme } = useTheme();
   const { data: userData, isLoading } = useFetchUserDetails();
 
   // Get first name from fullName or use 'User' as fallback
@@ -21,7 +23,7 @@ const SecondHeader = () => {
         </View>
         <View style={styles.avatar}>
           {isLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={theme.SECONDARY} />
           ) : (
             <Text style={styles.avatarText}>{avatarLetter}</Text>
           )}
