@@ -1,4 +1,4 @@
-export const API_URL = 'https://fed57494492c.ngrok-free.app/api';
+export const API_URL = 'https://3755dcb83b18.ngrok-free.app/api';
 
 export const getGreeting = (name: string) => {
   const hour = new Date().getHours();

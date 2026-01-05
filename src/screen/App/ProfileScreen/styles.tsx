@@ -1,86 +1,300 @@
-import { StyleSheet } from "react-native"
-import { useTheme } from "../../../utils/colors"
+import { StyleSheet, Platform, StatusBar, Dimensions } from 'react-native';
+import { useTheme } from '../../../utils/colors';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const STATUS_BAR_HEIGHT = StatusBar.currentHeight || 0;
 
 export const createStyles = () => {
-    const { theme } = useTheme()
+    const { theme } = useTheme();
+
     return StyleSheet.create({
         root: {
             flex: 1,
             backgroundColor: theme.PURPLE,
-            paddingTop: '10%',
-            paddingHorizontal: '5%',
+        },
+        headerSection: {
+            paddingTop: Platform.OS === 'ios' ? 50 : STATUS_BAR_HEIGHT + 8,
+            paddingBottom: 16,
+            paddingHorizontal: 16,
+            backgroundColor: theme.PURPLE,
+        },
+        headerContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
         },
         headerText: {
             color: theme.SECONDARY,
-            fontSize: 24,
-            fontWeight: '700',
-            fontFamily: 'Open Sans',
-            marginBottom: 20,
+            fontSize: 32,
+            fontWeight: '800',
+            letterSpacing: 0.5,
         },
-        headContainer: {
+        scrollContent: {
+            flexGrow: 1,
+            paddingBottom: 100, // Extra padding to clear the bottom tab bar
+        },
+        avatarSection: {
             alignItems: 'center',
-            justifyContent: 'center',
+            paddingVertical: 20,
+            paddingHorizontal: 16,
         },
-        profileContainer: {
-            flexDirection: 'row',
-            gap: 10
-        },
-        profileText: {
-            color: theme.SECONDARY, fontSize: 22, fontWeight: '600'
+        avatarWrapper: {
+            position: 'relative',
+            marginBottom: 16,
         },
         avatar: {
+            width: 90,
+            height: 90,
+            borderRadius: 45,
             backgroundColor: theme.SECONDARY,
-            width: 70,
-            height: 70,
-            borderRadius: 40,
             justifyContent: 'center',
             alignItems: 'center',
-            marginBottom: 10,
+            borderWidth: 3,
+            borderColor: theme.PURPLE + '30',
+            shadowColor: theme.SHADOW,
+            shadowOffset: {
+                width: 0,
+                height: 6,
+            },
+            shadowOpacity: 0.2,
+            shadowRadius: 12,
+            elevation: 6,
         },
         avatarText: {
-            fontSize: 40,
+            fontSize: 38,
             color: theme.PURPLE,
-            fontWeight: 'bold',
+            fontWeight: '800',
+            letterSpacing: 1,
+        },
+        editAvatarButton: {
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: theme.PURPLE,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 3,
+            borderColor: theme.SECONDARY,
+            shadowColor: theme.SHADOW,
+            shadowOffset: {
+                width: 0,
+                height: 4,
+            },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 6,
+        },
+        nameSection: {
+            alignItems: 'center',
+            gap: 8,
+        },
+        userName: {
+            fontSize: 24,
+            fontWeight: '700',
+            color: theme.SECONDARY,
+            letterSpacing: 0.3,
+        },
+        editButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: theme.SECONDARY,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 20,
+            marginTop: 4,
+        },
+        editButtonText: {
+            fontSize: 13,
+            fontWeight: '700',
+            color: theme.PURPLE,
+            letterSpacing: 0.3,
         },
         card: {
-            backgroundColor: theme.BACKGROUND,
-            borderTopLeftRadius: 30,
-            borderTopRightRadius: 30,
-            paddingVertical: 20,
-            paddingHorizontal: 30,
-            marginHorizontal: '-5%',
-            marginTop: 20,
-            flexGrow: 1,
-            flex: 1
+            backgroundColor: theme.BACKGROUND_LIGHT,
+            borderRadius: 20,
+            marginHorizontal: 16,
+            marginBottom: 14,
+            padding: 18,
+            borderWidth: 1,
+            borderColor: theme.BORDER_COLOR + '20',
+            shadowColor: theme.SHADOW,
+            shadowOffset: {
+                width: 0,
+                height: 3,
+            },
+            shadowOpacity: 0.08,
+            shadowRadius: 10,
+            elevation: 3,
+        },
+        cardHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 16,
+            paddingBottom: 14,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.BORDER_COLOR + '30',
+        },
+        cardTitle: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: theme.TEXT,
+            letterSpacing: 0.3,
+        },
+        infoSection: {
+            gap: 0,
         },
         row: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 15,
+            paddingVertical: 14,
             borderBottomWidth: 1,
-            borderBottomColor: theme.BORDER_COLOR,
+            borderBottomColor: theme.BORDER_COLOR + '20',
         },
-        icon: {
-            marginRight: 15,
+        iconContainer: {
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            backgroundColor: theme.PURPLE + '12',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 14,
         },
         labelContainer: {
             flex: 1,
-        },
-        valueText: {
-            fontSize: 16,
-            fontWeight: '600',
-            color: theme.TEXT
+            gap: 4,
         },
         labelText: {
             fontSize: 12,
-            color: theme.LIGHT_TEXT
-        },
-        logoutText: {
-            fontSize: 16,
             fontWeight: '600',
-            color: theme.TEXT
+            color: theme.LIGHT_TEXT,
+            letterSpacing: 0.2,
+            textTransform: 'uppercase',
         },
-        switch: {
-        }
+        valueText: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: theme.TEXT,
+            letterSpacing: 0.2,
+        },
+        settingsSection: {
+            gap: 0,
+        },
+        settingRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 14,
+        },
+        settingLeft: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+            marginRight: 14,
+        },
+        settingIconContainer: {
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 14,
+        },
+        settingContent: {
+            flex: 1,
+            gap: 4,
+        },
+        settingLabel: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: theme.TEXT,
+            letterSpacing: 0.2,
+        },
+        settingDescription: {
+            fontSize: 12,
+            fontWeight: '500',
+            color: theme.LIGHT_TEXT,
+            opacity: 0.8,
+        },
+        logoutButton: {
+            marginHorizontal: 16,
+            marginTop: 6,
+            marginBottom: 6,
+            backgroundColor: theme.ERROR_LIGHT,
+            borderRadius: 14,
+            paddingVertical: 14,
+            borderWidth: 1.5,
+            borderColor: theme.ERROR + '30',
+            shadowColor: theme.ERROR,
+            shadowOffset: {
+                width: 0,
+                height: 3,
+            },
+            shadowOpacity: 0.12,
+            shadowRadius: 6,
+            elevation: 3,
+        },
+        logoutButtonContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+        },
+        logoutButtonText: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: theme.ERROR,
+            letterSpacing: 0.3,
+        },
+        bottomSpacer: {
+            height: 10,
+        },
+        statsContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            paddingVertical: 8,
+        },
+        statItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+            justifyContent: 'center',
+        },
+        statIconContainer: {
+            width: 50,
+            height: 50,
+            borderRadius: 12,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+        },
+        statContent: {
+            alignItems: 'flex-start',
+        },
+        statValue: {
+            fontSize: 28,
+            fontWeight: '800',
+            color: theme.TEXT,
+            letterSpacing: 0.5,
+        },
+        statLabel: {
+            fontSize: 12,
+            fontWeight: '600',
+            color: theme.LIGHT_TEXT,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+            marginTop: 2,
+        },
+        statDivider: {
+            width: 1,
+            height: 50,
+            backgroundColor: theme.BORDER_COLOR + '40',
+            marginHorizontal: 8,
+        },
     });
-}
+};

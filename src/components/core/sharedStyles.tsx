@@ -58,13 +58,13 @@ export const createStyles = () => {
     },
     optionItem: {
       padding: 15,
-      backgroundColor: '#fff',
+      backgroundColor: theme.BACKGROUND_LIGHT,
       marginBottom: 10,
-      borderRadius: 8,
+      borderRadius: 12,
     },
     optionText: {
       fontSize: 16,
-      color: '#333',
+      color: theme.TEXT,
     },
   });
 };

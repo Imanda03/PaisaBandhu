@@ -63,10 +63,10 @@ const TransactionListItem = ({
     const renderRightActions = () => (
         <View style={styles.rightActionWrapper}>
             <TouchableOpacity onPress={onEdit} style={[styles.actionButton, styles.viewButton]}>
-                <FeatherIcon name="eye" size={24} color={theme.SECONDARY} />
+                <FeatherIcon name="eye" size={20} color={theme.SECONDARY} />
             </TouchableOpacity>
             <TouchableOpacity onPress={onDelete} style={[styles.actionButton, styles.deleteButton]}>
-                <FeatherIcon name="trash-2" size={24} color={theme.SECONDARY} />
+                <FeatherIcon name="trash-2" size={20} color={theme.SECONDARY} />
             </TouchableOpacity>
         </View>
     );
@@ -75,47 +75,48 @@ const TransactionListItem = ({
         <View style={[
             styles.transactionItem,
             isGesture && { paddingVertical: 6, paddingHorizontal: 14, gap: 5 }
-        ]} key={_id}>
+        ]}>
             <View style={styles.container}>
                 <View style={styles.leftContainer}>
-                    <View style={[styles.iconContainer, { backgroundColor: theme.DARK_TEXT }]}>
+                    <View style={styles.iconContainer}>
                         <Text style={styles.icon}>{selectedIcon}</Text>
                     </View>
-                    <View style={[styles.titleContainer, { gap: isGesture ? 4 : '' }]}>
-                        <Text style={[styles.text, isGesture && { fontSize: 18 }]}>{title}</Text>
-                        {/* <Text style={styles.bottomText}>{formatTimeAgo(date)}</Text> */}
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.text} numberOfLines={1}>{title}</Text>
                         {categoryId?.title && (
                             <View style={styles.categoryRow}>
-                                <Text style={styles.categoryText}>{categoryId.title}</Text>
+                                <View style={styles.categoryBadge}>
+                                    <Text style={styles.categoryText}>{categoryId.title}</Text>
+                                </View>
                                 <Text style={styles.bottomText}> • {formatTimeAgo(date)}</Text>
                             </View>
                         )}
-
                     </View>
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                    <Text
-                        style={[
-                            styles.price,
-                            { color: type === 'income' ? theme.SUCCESS : theme.PRICE_ERROR },
-                        ]}
-                    >
-                        <EntypoIcon
-                            name={type === 'income' ? 'chevron-up' : 'chevron-down'}
-                            size={16}
-                            color={type === 'income' ? theme.SUCCESS : theme.PRICE_ERROR}
-                        />{' '}
-                        Rs.{price}
-                    </Text>
-                    {friendId?.name && (
-                        <Text style={styles.friendName}>
-                            {friendId?.name}
+                <View style={styles.priceContainer}>
+                    <View style={styles.priceWrapper}>
+                        <Text
+                            style={[
+                                styles.price,
+                                { color: type === 'income' ? theme.SUCCESS : theme.PRICE_ERROR },
+                            ]}
+                        >
+                            <EntypoIcon
+                                name={type === 'income' ? 'chevron-up' : 'chevron-down'}
+                                size={18}
+                                color={type === 'income' ? theme.SUCCESS : theme.PRICE_ERROR}
+                            />{' '}
+                            Rs.{price}
                         </Text>
-                    )}
+                        {friendId?.name && (
+                            <Text style={styles.friendName}>
+                                {friendId?.name}
+                            </Text>
+                        )}
+                    </View>
                 </View>
 
             </View>
-            <View style={styles.bar} />
         </View>
     );
 

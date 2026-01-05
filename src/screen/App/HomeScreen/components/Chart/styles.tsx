@@ -5,10 +5,20 @@ export const createStyles = () => {
   const { theme } = useTheme();
   return StyleSheet.create({
     container: {
-      backgroundColor: theme.LIGHT_PURPLE,
-      marginVertical: '2%',
-      padding: '2%',
-      borderRadius: 10,
+      backgroundColor: 'rgba(255, 255, 255, 0.12)',
+      borderRadius: 24,
+      padding: 10,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.2)',
+      shadowColor: theme.SHADOW,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 5,
     },
     chartContainer: {
       alignItems: 'center',
@@ -57,7 +67,7 @@ export const createStyles = () => {
       position: 'relative',
       zIndex: 2,
       marginBottom: -10,
-      paddingHorizontal: 15,
+      paddingHorizontal: 5,
     },
 
     tooltipContainer: {
@@ -70,7 +80,7 @@ export const createStyles = () => {
       borderColor: theme.BORDER_COLOR,
       borderWidth: 0.5,
       maxWidth: 200,
-      shadowColor: '#000',
+      shadowColor: theme.SHADOW,
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.2,
       shadowRadius: 2,

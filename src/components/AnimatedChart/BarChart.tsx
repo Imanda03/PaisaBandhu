@@ -36,8 +36,22 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
     title,
 }) => {
     const { theme } = useTheme();
-    const maxValue = Math.max(...data.map(item => item.value));
-    const barWidth = (width - 60) / data.length - 10;
+    
+    if (!data || data.length === 0) {
+        return (
+            <View style={[styles.container, { backgroundColor: theme.BACKGROUND }]}>
+                {title && (
+                    <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
+                )}
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                    <Text style={{ color: theme.TEXT, opacity: 0.6 }}>No data available</Text>
+                </View>
+            </View>
+        );
+    }
+    
+    const maxValue = Math.max(...data.map(item => item.value), 1);
+    const barWidth = Math.max((width - 60) / data.length - 10, 20);
     const chartHeight = height - 80;
 
     const animatedValues = data.map(() => useSharedValue(0));

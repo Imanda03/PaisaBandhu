@@ -2,7 +2,6 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
 import { createStyles } from './styles';
 import { useTheme } from '../../../../../utils/colors';
-import { PieChart } from 'react-native-gifted-charts';
 import { useFetchChartTransaction } from '../../../../../ReactQueryHook/transaction.hook';
 import { MaterialIcons } from '../../../../../utils/Icons';
 import {
@@ -11,20 +10,14 @@ import {
 } from '../../../../../components/AnimatedChart/DonutChart';
 
 const Chart = () => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const styles = createStyles();
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const {
-    data: chartData,
-    isLoading: refreshing,
-    refetch,
-  } = useFetchChartTransaction();
-  // ===== MOCK DATA START =====
+  const { data: chartData, isLoading: refreshing } = useFetchChartTransaction();
   const income = chartData?.income;
   const expense = chartData?.expense;
   const total = income + expense;
-  console.log('Chart Data:', chartData);
   const hasNoData = total === 0;
 
   const data = {
@@ -55,8 +48,15 @@ const Chart = () => {
       );
     }
 
-    let savingsPercentage =
-      income > 0 ? ((income - expense) / income) * 100 : 0;
+    // Calculate savings percentage
+    // If income is 0, show -100% if there are expenses (overspending), otherwise 0%
+    let savingsPercentage = 0;
+    if (income > 0) {
+      savingsPercentage = ((income - expense) / income) * 100;
+    } else if (expense > 0) {
+      // No income but has expenses = overspending
+      savingsPercentage = -100;
+    }
 
     // Cap the value between -100 and 100
     savingsPercentage = Math.max(
@@ -90,8 +90,15 @@ const Chart = () => {
       return 'No Data - Add transactions';
     }
 
-    let savingsPercentage =
-      income > 0 ? ((income - expense) / income) * 100 : 0;
+    // Calculate savings percentage
+    // If income is 0, show -100% if there are expenses (overspending), otherwise 0%
+    let savingsPercentage = 0;
+    if (income > 0) {
+      savingsPercentage = ((income - expense) / income) * 100;
+    } else if (expense > 0) {
+      // No income but has expenses = overspending
+      savingsPercentage = -100;
+    }
 
     savingsPercentage = Math.max(
       Math.min(Math.round(savingsPercentage), 100),
@@ -109,31 +116,6 @@ const Chart = () => {
 
     return `${savingsPercentage}% - ${savingsMessage}`;
   };
-
-  // ===== MOCK DATA END =====
-
-  const pieData = hasNoData
-    ? [
-        {
-          value: 1,
-          color: theme.BORDER_COLOR,
-          gradientCenterColor: theme.BACKGROUND_LIGHT,
-          focused: true,
-        },
-      ]
-    : [
-        {
-          value: (income * 100) / total,
-          color: theme.INCOME_PIE,
-          gradientCenterColor: theme.SUCCESS_LIGHT,
-          // focused: true,
-        },
-        {
-          value: (expense * 100) / total,
-          color: theme.EXPENSE_PIE,
-          gradientCenterColor: theme.ERROR_LIGHT,
-        },
-      ];
 
   return (
     <View
@@ -191,15 +173,6 @@ const Chart = () => {
         </View>
       </View>
     </View>
-    // <AnimatedDonutChart
-    //   data={donutData}
-    //   // title="Expense Breakdown"
-    //   showLabels={true}
-    //   showPercentages={true}
-    //   centerText={renderCenterLabelText()}
-    //   animationDuration={1200}
-    //   size={240}
-    // />
   );
 };
 

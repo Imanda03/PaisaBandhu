@@ -7,7 +7,7 @@ export const createStyles = () => {
         modalOverlay: {
             flex: 1,
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(33, 52, 72, 0.7)',
             padding: 20,
         },
         modalContainer: {
@@ -36,7 +36,7 @@ export const createStyles = () => {
             marginRight: 10,
         },
         cancelText: {
-            color: '#888',
+            color: theme.LIGHT_TEXT,
             fontSize: 16,
         },
         confirmButton: {

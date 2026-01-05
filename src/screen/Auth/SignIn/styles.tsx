@@ -66,7 +66,7 @@ export const createStyles = () => {
             backgroundColor: theme.SHADOW,
             borderRadius: 100,
             bottom: 10,
-            shadowColor: '#000',
+            shadowColor: theme.SHADOW,
             shadowOffset: { width: 0, height: 5 },
             shadowOpacity: theme.SHADOW_OPACITY,
             shadowRadius: 10,
