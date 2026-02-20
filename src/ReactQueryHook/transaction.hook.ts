@@ -3,7 +3,7 @@ import { useToast } from "../context/ToastContext";
 import { useModal } from "../context/ModalContext";
 import { AxiosError } from "axios";
 import { ApiError, transactionDataProps } from "../utils/types";
-import { createTransaction, deleteTransaction, getBalanceTransaction, getBookTransaction, getLatestTransaction, getWeeklyTransaction } from "../services/TransactionService";
+import { createTransaction, updateTransaction, deleteTransaction, getBalanceTransaction, getBookTransaction, getLatestTransaction, getWeeklyTransaction, getTransactionOverview } from "../services/TransactionService";
 
 export const useCreateTransaction = (setError: any) => {
     const queryClient = useQueryClient();
@@ -45,13 +45,12 @@ export const useCreateTransaction = (setError: any) => {
                     queryClient.invalidateQueries({ queryKey: ['BookTransactionList'] }),
                     queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'] }),
                     queryClient.invalidateQueries({ queryKey: ['ChartTransaction'] }),
+                    queryClient.invalidateQueries({ queryKey: ['TransactionOverview'] }),
                     queryClient.invalidateQueries({ queryKey: ['WeeklyTransactionList'] }),
                     // Invalidate challenge queries to refresh progress
                     queryClient.invalidateQueries({ queryKey: ['Challenges'] }),
                     queryClient.invalidateQueries({ queryKey: ['ChallengeProgress'] }),
-                    queryClient.invalidateQueries({ queryKey: ['ChallengeLeaderboard'] }),
-                    // Invalidate feed to show new challenge completion items
-                    queryClient.invalidateQueries({ queryKey: ['Feed'] })
+                    queryClient.invalidateQueries({ queryKey: ['ChallengeLeaderboard'] })
                 ]);
 
             },
@@ -75,6 +74,55 @@ export const useCreateTransaction = (setError: any) => {
             },
         }
     );
+};
+
+export const useUpdateTransaction = (setError: any) => {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+  const { showModal } = useModal();
+
+  return useMutation<any, AxiosError<ApiError>, { id: string; data: Partial<transactionDataProps> }>(
+    async ({ id, data }) => updateTransaction(id, data),
+    {
+      onSuccess: async (response, variables) => {
+        showToast('Transaction updated successfully', 'success');
+        if (response?.challengeWarnings && response.challengeWarnings.length > 0) {
+          const warnings = response.challengeWarnings;
+          const errorWarnings = warnings.filter((w: any) => w.severity === 'error');
+          const warningWarnings = warnings.filter((w: any) => w.severity === 'warning');
+          if (errorWarnings.length > 0) {
+            const messages = errorWarnings.map((w: any) => `• ${w.message}`).join('\n\n');
+            showModal({ title: '⚠️ Challenge Alert', message: `This transaction affects your challenges:\n\n${messages}`, type: 'error' });
+          } else if (warningWarnings.length > 0) {
+            const messages = warningWarnings.map((w: any) => `• ${w.message}`).join('\n\n');
+            showModal({ title: 'Challenge Warning', message: `This transaction affects your challenges:\n\n${messages}`, type: 'warning' });
+          }
+        }
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['TransactionList'] }),
+          queryClient.invalidateQueries({ queryKey: ['BookTransactionList'] }),
+          queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'] }),
+          queryClient.invalidateQueries({ queryKey: ['ChartTransaction'] }),
+          queryClient.invalidateQueries({ queryKey: ['TransactionOverview'] }),
+          queryClient.invalidateQueries({ queryKey: ['WeeklyTransactionList'] }),
+          queryClient.invalidateQueries({ queryKey: ['Challenges'] }),
+          queryClient.invalidateQueries({ queryKey: ['ChallengeProgress'] }),
+          queryClient.invalidateQueries({ queryKey: ['ChallengeLeaderboard'] }),
+        ]);
+      },
+      onError: (error: any) => {
+        if (error?.response?.data?.errors) {
+          const backendErrors = error.response.data.errors;
+          backendErrors.forEach(({ field, message }: any) => {
+            field && setError(field as any, { type: 'manual', message });
+          });
+          showToast('Please check the form for errors', 'error');
+        } else {
+          showToast(error.response?.data?.message || 'Failed to update transaction', 'error');
+        }
+      },
+    }
+  );
 };
 
 export const useFetchTransaction = (bookId: string) => {
@@ -101,13 +149,28 @@ export const useFetchLatestTransaction = () => {
     )
 }
 
-export const useFetchChartTransaction = () => {
+export const useFetchChartTransaction = (params?: {
+    startDate?: string;
+    endDate?: string;
+}) => {
     return useQuery(
-        ['ChartTransaction'],
-        () => getBalanceTransaction(),
+        ['ChartTransaction', params?.startDate, params?.endDate],
+        () => getBalanceTransaction(params),
         {
             onError: (error) => {
                 console.error('Failed to fetch chart details:', error);
+            },
+        }
+    )
+}
+
+export const useFetchTransactionOverview = () => {
+    return useQuery(
+        ['TransactionOverview'],
+        () => getTransactionOverview(),
+        {
+            onError: (error) => {
+                console.error('Failed to fetch transaction overview:', error);
             },
         }
     )
@@ -131,6 +194,7 @@ export const useDeleteTransactionBook = (title: string) => {
                     queryClient.invalidateQueries({ queryKey: ['BookTransactionList'] }),
                     queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'] }),
                     queryClient.invalidateQueries({ queryKey: ['ChartTransaction'] }),
+                    queryClient.invalidateQueries({ queryKey: ['TransactionOverview'] }),
                     queryClient.invalidateQueries({ queryKey: ['WeeklyTransactionList'] })
                 ])
             },

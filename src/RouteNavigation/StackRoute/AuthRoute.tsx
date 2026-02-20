@@ -2,8 +2,7 @@ import React from 'react';
 import { Dimensions, Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LandingScreen from '../../screen/Auth/LandingScreen';
-import SignIn from '../../screen/Auth/SignIn';
-import SignUp from '../../screen/Auth/SignUp';
+import OtpFlow from '../../screen/Auth/OtpFlow';
 
 const Stack = createNativeStackNavigator();
 const { width: screenWidth } = Dimensions.get('window');
@@ -83,8 +82,7 @@ const AuthRoute = () => {
                     animationTypeForReplace: 'pop',
                 }}
             />
-            <Stack.Screen name="SignUp" component={SignUp} />
-            <Stack.Screen name="SignIn" component={SignIn} />
+            <Stack.Screen name="OtpFlow" component={OtpFlow} />
         </Stack.Navigator>
     );
 };

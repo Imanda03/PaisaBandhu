@@ -9,7 +9,7 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -87,40 +87,42 @@ const BookScreen = () => {
     );
   }, []);
 
-  const handleBookPress = (book: BookInterfaceProps) => {
-    console.log('book', book);
+  const handleBookPress = useCallback((book: BookInterfaceProps) => {
     navigation.navigate('InnerScreen', {
       screen: 'Transactions',
-      params: { bookId: book.id, type: book.type, title: book.title },
+      params: { bookId: book.id, type: book.type, title: book.title, isShared: book.isShared },
     });
-  };
+  }, [navigation]);
 
-  const renderBookList = ({ item, index }: any) => {
-    return (
-      <AnimatedView
-        entering={FadeInDown.delay(index * 100)
-          .springify()
-          .damping(15)}
-      >
-        <BookListItem
-          item={item}
-          onEditPress={() => openEditBookModal(item)}
-          onPress={() => handleBookPress(item)}
-        />
-      </AnimatedView>
-    );
-  };
-
-  const openAddBookModal = () => {
+  const openAddBookModal = useCallback(() => {
     setIsAddMode(true);
     setBottomSheetVisible(true);
-  };
+  }, []);
 
-  const openEditBookModal = (bookItem: BookInterfaceProps) => {
+  const openEditBookModal = useCallback((bookItem: BookInterfaceProps) => {
     setIsAddMode(false);
     setBottomSheetVisible(true);
     setSelectedBook(bookItem);
-  };
+  }, []);
+
+  const renderBookList = useCallback(({ item, index }: any) => (
+    <AnimatedView
+      entering={FadeInDown.delay(index * 100)
+        .springify()
+        .damping(15)}
+    >
+      <BookListItem
+        item={item}
+        onEditPress={() => openEditBookModal(item)}
+        onPress={() => handleBookPress(item)}
+      />
+    </AnimatedView>
+  ), [handleBookPress, openEditBookModal]);
+
+  const handleCloseSheet = useCallback(() => {
+    setBottomSheetVisible(false);
+    setSelectedBook({ id: '', title: '', type: 'single' });
+  }, []);
 
   // Animated styles
   const headerAnimatedStyle = useAnimatedStyle(() => ({
@@ -144,7 +146,7 @@ const BookScreen = () => {
         entering={FadeInDown.delay(400).springify()}
         style={styles.emptyIconContainer}
       >
-        <MaterialIcons name="menu-book" size={80} color={theme.PURPLE} />
+        <MaterialIcons name="menu-book" size={80} color={theme.ICON_COLOR} />
       </AnimatedView>
       <AnimatedView entering={FadeInDown.delay(500).springify()}>
         <Text style={[styles.emptyText, { color: theme.TEXT }]}>
@@ -182,7 +184,7 @@ const BookScreen = () => {
               onPress={openAddBookModal}
               activeOpacity={0.7}
             >
-              <IoniconsIcon name="add" size={28} color={theme.PURPLE} />
+              <IoniconsIcon name="add" size={28} color={theme.NAVBAR_ACTIVE_TEXT} />
             </AnimatedTouchableOpacity>
           </View>
         </View>
@@ -203,9 +205,8 @@ const BookScreen = () => {
             <RefreshControl
               refreshing={fetchLoading}
               onRefresh={refetch}
-              colors={[theme.PURPLE]}
-              tintColor={theme.PURPLE}
-              progressBackgroundColor={theme.SECONDARY}
+              colors={[theme.SECONDARY || '#C6A56B']}
+              tintColor={theme.SECONDARY || '#C6A56B'}
             />
           }
           ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -215,10 +216,7 @@ const BookScreen = () => {
 
       <BookFormSheet
         isVisible={isBottomSheetVisible}
-        onClose={() => {
-          setBottomSheetVisible(false);
-          setSelectedBook({ id: '', title: '', type: 'single' });
-        }}
+        onClose={handleCloseSheet}
         isAddMode={isAddMode}
         selectedBook={selectedBook}
       />

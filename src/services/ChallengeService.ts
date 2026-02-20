@@ -85,14 +85,20 @@ class ChallengeService {
 
   // Get all challenges
   async getChallenges(params?: {
-    status?: string;
+    status?: string | string[];
     type?: string;
     limit?: number;
     skip?: number;
   }): Promise<Challenge[]> {
     try {
       const queryParams = new URLSearchParams();
-      if (params?.status) queryParams.append('status', params.status);
+      if (params?.status) {
+        const s =
+          Array.isArray(params.status)
+            ? params.status.join(",")
+            : params.status;
+        queryParams.append("status", s);
+      }
       if (params?.type) queryParams.append('type', params.type);
       if (params?.limit) queryParams.append('limit', String(params.limit));
       if (params?.skip) queryParams.append('skip', String(params.skip));
@@ -109,8 +115,16 @@ class ChallengeService {
         }));
       }
       return [];
-    } catch (error) {
-      console.error('Error fetching challenges:', error);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const isServerError = status >= 500 && status < 600;
+      if (isServerError) {
+        console.warn(
+          `Challenges API unavailable (${status}). Server may be restarting.`,
+        );
+      } else {
+        console.error('Error fetching challenges:', error);
+      }
       return [];
     }
   }
@@ -156,6 +170,38 @@ class ChallengeService {
       return null;
     } catch (error) {
       console.error('Error fetching progress:', error);
+      return null;
+    }
+  }
+
+  // Update challenge
+  async updateChallenge(
+    challengeId: string,
+    data: {
+      title?: string;
+      description?: string;
+      type?: Challenge['type'];
+      targetAmount?: number;
+      targetCategory?: string;
+      endDate?: Date;
+    },
+  ): Promise<Challenge | null> {
+    try {
+      const payload: any = { ...data };
+      if (data.endDate) payload.endDate = data.endDate.toISOString();
+      const response = await apiClient.patch(`/challenges/${challengeId}`, payload);
+      if (response.data.success) {
+        const challenge = response.data.data.challenge || response.data.data;
+        return {
+          ...challenge,
+          startDate: challenge.startDate ? new Date(challenge.startDate) : new Date(),
+          endDate: challenge.endDate ? new Date(challenge.endDate) : new Date(),
+          createdAt: challenge.createdAt ? new Date(challenge.createdAt) : new Date(),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error updating challenge:', error);
       return null;
     }
   }

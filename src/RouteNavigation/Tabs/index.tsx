@@ -13,7 +13,6 @@ import { IoniconsIcon } from '../../utils/Icons';
 import HomeScreen from '../../screen/App/HomeScreen';
 import BookScreen from '../../screen/App/BookScreen';
 import ProfileScreen from '../../screen/App/ProfileScreen';
-import SocialFeedScreen from '../../screen/App/SocialFeedScreen';
 import ChallengesScreen from '../../screen/App/ChallengesScreen';
 import AchievementsScreen from '../../screen/App/AchievementsScreen';
 import SavingsGoalsScreen from '../../screen/App/SavingsGoalsScreen';
@@ -31,8 +30,6 @@ const Tabs = () => {
           let iconName: string;
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Feed') {
-            iconName = focused ? 'people' : 'people-outline';
           } else if (route.name === 'Challenges') {
             // Use medal icon - more reliable in Ionicons
             iconName = focused ? 'medal' : 'medal-outline';
@@ -44,8 +41,8 @@ const Tabs = () => {
             iconName = focused ? 'person' : 'person-outline';
           }
           const iconColor = focused
-            ? theme.NAVBAR_ACTIVE_TEXT || '#E3E3E3'
-            : theme.NAVBAR_INACTIVE_TEXT || '#456882';
+            ? theme.SECONDARY
+            : theme.NAVBAR_INACTIVE_TEXT;
           const iconSize = size || 24;
 
           return (
@@ -60,7 +57,7 @@ const Tabs = () => {
                 styles.tabLabel,
                 {
                   color: focused
-                    ? theme.NAVBAR_ACTIVE_TEXT
+                    ? theme.SECONDARY
                     : theme.NAVBAR_INACTIVE_TEXT,
                 },
               ]}
@@ -92,14 +89,6 @@ const Tabs = () => {
       <Tab.Screen
         name="Challenges"
         component={ChallengesScreen}
-        options={{
-          tabBarButton: props => <TabBarButton {...props} />,
-        }}
-      />
-
-      <Tab.Screen
-        name="Feed"
-        component={SocialFeedScreen}
         options={{
           tabBarButton: props => <TabBarButton {...props} />,
         }}

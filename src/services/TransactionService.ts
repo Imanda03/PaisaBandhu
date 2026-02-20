@@ -11,6 +11,18 @@ export const createTransaction = async (data: transactionDataProps) => {
   }
 };
 
+export const updateTransaction = async (
+  id: string,
+  data: Partial<transactionDataProps>,
+) => {
+  try {
+    const response = await apiClient.put(`${API_URL}/transaction/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getBookTransaction = async (bookId: string) => {
   try {
     const response = await apiClient.get(
@@ -41,9 +53,32 @@ export const getLatestTransaction = async () => {
   }
 };
 
-export const getBalanceTransaction = async () => {
+export const getBalanceTransaction = async (params?: {
+  startDate?: string;
+  endDate?: string;
+}) => {
   try {
-    const response = await apiClient.get(`${API_URL}/transaction/totalBalance`);
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+
+    const url = `${API_URL}/transaction/totalBalance${
+      queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getTransactionOverview = async () => {
+  try {
+    const response = await apiClient.get(`${API_URL}/transaction/overview`);
     return response.data;
   } catch (error) {
     throw error;

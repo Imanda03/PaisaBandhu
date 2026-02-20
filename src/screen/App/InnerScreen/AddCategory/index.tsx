@@ -1,19 +1,25 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
+import React from 'react';
+import { View, ScrollView } from 'react-native';
 import { createStyles } from './styles';
 import AuthHeader from '../../../../components/core/AuthHeader';
 import AddCategoryForm from '../../../../components/CategoryForm';
 
-const AddCategories = () => {
+const AddCategories = React.memo(() => {
     const styles = createStyles();
     return (
         <View style={styles.root}>
             <AuthHeader title="Add Category" />
-            <View style={styles.container}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
                 <AddCategoryForm />
-            </View>
+            </ScrollView>
         </View>
     );
-};
+});
 
+AddCategories.displayName = 'AddCategories';
 export default AddCategories;

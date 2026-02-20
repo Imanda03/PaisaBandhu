@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
-import { Swipeable } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { formatReadableDate, formatTimeAgo, ICONS } from '../../utils/helper';
 import { createStyles } from './styles';
 import { useTheme } from '../../utils/colors';

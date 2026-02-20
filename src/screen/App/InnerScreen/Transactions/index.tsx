@@ -5,7 +5,7 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { createStyles } from './styles';
 import AuthHeader from '../../../../components/core/AuthHeader';
 import { useTheme } from '../../../../utils/colors';
@@ -34,6 +34,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFetchTransaction } from '../../../../ReactQueryHook/transaction.hook';
 import { useFetchFriend } from '../../../../ReactQueryHook/friend.hook';
 import { getPositiveNumber } from '../../../../utils/helper';
+import ShareBookSheet from '../../BookScreen/Components/ShareBookSheet';
 
 const AnimatedPressable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -55,6 +56,7 @@ const Transactions = () => {
   const bookTitle: string = route?.params?.title;
   const bookType: 'single' | 'group' = route?.params?.type;
   const bookId: string = route?.params?.bookId;
+  const isSharedBook: boolean = route?.params?.isShared === true;
 
   const {
     data: transactionData,
@@ -66,8 +68,8 @@ const Transactions = () => {
     refetch: friendRefetch,
     isLoading: fetching,
   } = useFetchFriend(bookId);
-  console.log('transaction ==>', transactionData);
-  const IncomeExpense = [
+
+  const IncomeExpense = useMemo(() => [
     {
       type: 'income',
       total: transactionData?.totals?.income,
@@ -76,16 +78,16 @@ const Transactions = () => {
       type: 'Expenses',
       total: transactionData?.totals?.expense,
     },
-  ];
+  ], [transactionData?.totals?.income, transactionData?.totals?.expense]);
 
-  const filteredTransactions =
+  const filteredTransactions = useMemo(() =>
     filter === 'all'
       ? transactionData?.transactions
       : transactionData?.transactions?.filter(
           (transaction: any) => transaction.type === filter,
-        );
+        ), [filter, transactionData?.transactions]);
 
-  const renderRecentTransaction = ({ item, index }: any) => {
+  const renderRecentTransaction = useCallback(({ item, index }: any) => {
     return (
       <AnimatedView
         entering={FadeInDown.delay(index * 50)
@@ -95,16 +97,22 @@ const Transactions = () => {
         <BookTransactionItem
           {...item}
           bookId={bookId}
+          canEdit={true}
           onEdit={() => {
-            // Handle edit action
-            console.log('Edit transaction', item);
+            navigation.navigate('AddTransaction', {
+              type: item.type,
+              bookType,
+              bookId,
+              transactionId: item._id || item.id,
+              transaction: item,
+            });
           }}
         />
       </AnimatedView>
     );
-  };
+  }, [navigation, bookId, bookType, isSharedBook]);
 
-  const EmptyListComponent = () => (
+  const EmptyListComponent = useCallback(() => (
     <AnimatedView
       entering={FadeIn.delay(300).springify()}
       style={styles.emptyState}
@@ -113,7 +121,7 @@ const Transactions = () => {
         entering={FadeInDown.delay(400).springify()}
         style={styles.emptyIconContainer}
       >
-        <MaterialIcons name="receipt-long" size={72} color={theme.PURPLE} />
+        <MaterialIcons name="receipt-long" size={72} color={theme.ICON_COLOR} />
       </AnimatedView>
       <Text style={[styles.emptyText, { color: theme.TEXT }]}>
         {refreshing
@@ -126,11 +134,11 @@ const Transactions = () => {
           : 'Add your first transaction to get started'}
       </Text>
     </AnimatedView>
-  );
+  ), [refreshing, theme]);
 
   const isExpanded = useSharedValue(false);
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     if (bookType === 'group') {
       return navigation.navigate('AddTransaction', {
         type: 'expense',
@@ -139,7 +147,14 @@ const Transactions = () => {
       });
     }
     isExpanded.value = !isExpanded.value;
-  };
+  }, [bookType, bookId, navigation]);
+
+  const viewFriend = useCallback(() => {
+    navigation.navigate('Friends', { bookId, isShared: isSharedBook });
+  }, [navigation, bookId, isSharedBook]);
+
+  const keyExtractor = useCallback((item: any, index: number) =>
+    item?._id || item?.id || `transaction-${index}`, []);
 
   const plusIconStyle = useAnimatedStyle(() => {
     const moveValue = interpolate(Number(isExpanded.value), [0, 1], [0, 2]);
@@ -215,23 +230,22 @@ const Transactions = () => {
     );
   };
 
-  const viewFriend = () => {
-    navigation.navigate('Friends', { bookId });
-  };
+  const [shareSheetVisible, setShareSheetVisible] = React.useState(false);
 
-  const keyExtractor = 1;
   return (
     <View style={styles.root}>
       <View style={styles.headerWrapper}>
         <AuthHeader
           title={`${bookTitle}'s Transactions`}
           showRightIcon={true}
-          rightIconName="chart-bar"
-          onRightIconPress={() =>
-            navigation.navigate('InnerScreen', {
-              screen: 'TransactionChart',
-              params: { bookId },
-            })
+          rightIconName={'chart-bar'}
+          rightIconSize={isSharedBook ? 18 : 26}
+          onRightIconPress={
+           () =>
+                  navigation.navigate('InnerScreen', {
+                    screen: 'TransactionChart',
+                    params: { bookId },
+                  })
           }
         />
       </View>
@@ -318,19 +332,16 @@ const Transactions = () => {
         <View style={styles.content}>
           {bookType === 'single' ? (
             <FilterBar
-              key={keyExtractor}
-              filter={filter}
-              setFilter={setFilter}
-            />
+            filter={filter}
+            setFilter={setFilter}
+            key="filter-bar"
+          />
           ) : (
             <View style={styles.friendsStatsRow}>
               <View style={styles.friendsStats}>
                 <Text style={styles.friendsMainStat}>Group</Text>
-                <Text style={styles.friendsSubStat}>{`( ${
-                  friendData?.length ?? 0
-                } members)`}</Text>
+                <Text style={styles.friendsSubStat}>{`(${friendData?.length ?? 0} members)`}</Text>
               </View>
-
               <TouchableOpacity onPress={viewFriend}>
                 <Text style={styles.seeFriendText}>See Friend</Text>
               </TouchableOpacity>
@@ -339,9 +350,7 @@ const Transactions = () => {
           <FlatList
             data={filteredTransactions}
             renderItem={renderRecentTransaction}
-            keyExtractor={(item, index) =>
-              item?._id || item?.id || `transaction-${index}`
-            }
+            keyExtractor={keyExtractor}
             showsVerticalScrollIndicator={false}
             style={styles.flatList}
             scrollEnabled={true}
@@ -354,9 +363,8 @@ const Transactions = () => {
                   friendRefetch();
                   refetch();
                 }}
-                colors={[theme.PRIMARY]}
-                tintColor={theme.PURPLE}
-                progressBackgroundColor={theme.SECONDARY}
+                colors={[theme.SECONDARY]}
+                tintColor={theme.SECONDARY}
               />
             }
             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
@@ -386,6 +394,14 @@ const Transactions = () => {
           type="expense"
         />
       </View>
+      {isSharedBook && (
+        <ShareBookSheet
+          isVisible={shareSheetVisible}
+          onClose={() => setShareSheetVisible(false)}
+          bookId={bookId}
+          bookTitle={bookTitle}
+        />
+      )}
     </View>
   );
 };

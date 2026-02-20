@@ -9,7 +9,7 @@ import {
     TextStyle,
     KeyboardTypeOptions,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { createStyles } from './styles';
 import ButtonIconComponent from '../../../components/core/ButtonIcon';
@@ -26,7 +26,7 @@ interface SignUpProps {
     };
 }
 
-const SignUp: React.FC<SignUpProps> = ({ navigation }) => {
+const SignUp = React.memo<SignUpProps>(({ navigation }) => {
     const styles = createStyles();
     const { showToast } = useToast();
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -59,11 +59,11 @@ const SignUp: React.FC<SignUpProps> = ({ navigation }) => {
         };
     }, []);
 
-    const onSubmit: SubmitHandler<userDataProps> = (data: userDataProps): void => {
-        registerUser(data)
-    };
+    const onSubmit = useCallback<SubmitHandler<userDataProps>>((data: userDataProps) => {
+        registerUser(data);
+    }, [registerUser]);
 
-    const formFields = getFormFields(watch);
+    const formFields = useMemo(() => getFormFields(watch), [watch]);
 
     return (
         <View style={{ flex: 1 }}>
@@ -129,6 +129,7 @@ const SignUp: React.FC<SignUpProps> = ({ navigation }) => {
         </View>
 
     );
-};
+});
 
+SignUp.displayName = 'SignUp';
 export default SignUp;

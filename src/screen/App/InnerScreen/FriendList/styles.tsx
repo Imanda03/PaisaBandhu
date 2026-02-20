@@ -7,7 +7,7 @@ export const createStyles = () => {
     return StyleSheet.create({
         root: {
             flex: 1,
-            backgroundColor: theme.PURPLE,
+            backgroundColor: theme.HEADER_BACKGROUND,
             paddingTop: '10%',
         },
         container: {

@@ -1,14 +1,16 @@
 import { View, Text, TouchableOpacity } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { createStyles } from './styles';
 import { useTheme } from '../../utils/colors';
-import { FeatherIcon, MaterialIcons } from '../../utils/Icons';
+import { FeatherIcon, MaterialIcons, IoniconsIcon } from '../../utils/Icons';
 
 interface BookItem {
   id: string;
   title: string;
   transactionCount: number;
-  type: 'single' | 'personal';
+  type: 'single' | 'group' | 'personal';
+  isShared?: boolean;
+  ownerName?: string | null;
 }
 
 interface BookListItemProps {
@@ -18,50 +20,77 @@ interface BookListItemProps {
 }
 
 const BookListItem = ({ item, onEditPress, onPress }: BookListItemProps) => {
-  const styles = createStyles();
   const { theme } = useTheme();
-  console.log('items', item);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const isSingle = item.type === 'single' || item.type === 'personal';
+  const isSharedBook = item.isShared === true;
+  const accentColor = isSharedBook
+    ? theme.SECONDARY
+    : isSingle
+      ? theme.SUCCESS
+      : theme.WARNING;
+  const iconBgColor = isSharedBook
+    ? theme.SECONDARY + '20'
+    : isSingle
+      ? theme.SUCCESS_LIGHT
+      : theme.WARNING_LIGHT;
+  const iconColor = isSharedBook
+    ? theme.SECONDARY
+    : isSingle
+      ? theme.SUCCESS
+      : theme.WARNING;
+
   return (
     <TouchableOpacity
-      style={styles.cardContainer}
-      activeOpacity={0.5}
+      style={[styles.cardContainer, isSharedBook && styles.sharedCard]}
+      activeOpacity={0.7}
       onPress={onPress}
     >
-      <View style={styles.contentContainer}>
-        {/* Left Section - Icon and Info */}
+      <View style={[styles.accentStrip, { backgroundColor: accentColor }]} />
+      <View style={styles.contentWrapper}>
         <View style={styles.leftSection}>
-          <View style={[styles.iconContainer, {
-            backgroundColor: item.type === 'single' 
-              ? theme.SUCCESS_LIGHT 
-              : theme.WARNING_LIGHT
-          }]}>
-          <MaterialIcons 
-            name={item.type === 'single' ? 'account-balance-wallet' : 'group'} 
-            size={24} 
-            color={item.type === 'single' ? theme.SUCCESS : theme.WARNING} 
-          />
+          <View
+            style={[styles.iconContainer, { backgroundColor: iconBgColor }]}
+          >
+            <MaterialIcons
+              name={isSharedBook ? 'people-outline' : isSingle ? 'account-balance-wallet' : 'group'}
+              size={26}
+              color={iconColor}
+            />
           </View>
           <View style={styles.textContainer}>
             <Text style={styles.title} numberOfLines={1}>
               {item.title}
             </Text>
+            {isSharedBook && item.ownerName && (
+              <View style={styles.sharedBadge}>
+                <Text style={styles.sharedBadgeText}>
+                  Shared by {item.ownerName}
+                </Text>
+              </View>
+            )}
             <View style={styles.subtitleContainer}>
-              <MaterialIcons name="receipt-long" size={15} color={theme.LIGHT_TEXT} />
+              <MaterialIcons
+                name="receipt-long"
+                size={16}
+                color={theme.ICON_MUTED}
+              />
               <Text style={styles.subtitle}>
-                {item.transactionCount || 0} {item.transactionCount === 1 ? 'txn' : 'txns'}
+                {item.transactionCount || 0}{' '}
+                {item.transactionCount === 1 ? 'txn' : 'txns'}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Right Section - Actions */}
         <View style={styles.rightSection}>
           <View
             style={[
               styles.typeBadge,
               {
-                backgroundColor:
-                  item.type === 'single'
+                backgroundColor: isSharedBook
+                  ? theme.SECONDARY + '20'
+                  : isSingle
                     ? theme.SUCCESS_LIGHT
                     : theme.WARNING_LIGHT,
               },
@@ -71,22 +100,33 @@ const BookListItem = ({ item, onEditPress, onPress }: BookListItemProps) => {
               style={[
                 styles.typeText,
                 {
-                  color: item.type === 'single' ? theme.SUCCESS : theme.WARNING,
+                  color: isSharedBook
+                    ? theme.SECONDARY
+                    : isSingle
+                      ? theme.SUCCESS
+                      : theme.WARNING,
                 },
               ]}
             >
-              {item?.type?.toUpperCase() || 'SINGLE'}
+              {isSharedBook ? 'SHARED' : (item?.type?.toUpperCase() || 'SINGLE')}
             </Text>
           </View>
-          <TouchableOpacity
-            onPress={onEditPress}
-            style={styles.editButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <View style={styles.editButtonContainer}>
-              <FeatherIcon name="edit-3" size={17} color={theme.PURPLE} />
-            </View>
-          </TouchableOpacity>
+          {!isSharedBook && (
+            <TouchableOpacity
+              onPress={onEditPress}
+              style={styles.editButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <FeatherIcon name="edit-3" size={18} color={theme.ICON_COLOR} />
+            </TouchableOpacity>
+          )}
+          <View style={styles.chevronContainer}>
+            <IoniconsIcon
+              name="chevron-forward"
+              size={20}
+              color={theme.ICON_MUTED}
+            />
+          </View>
         </View>
       </View>
     </TouchableOpacity>

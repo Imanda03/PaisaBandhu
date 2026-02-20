@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -54,21 +54,21 @@ const ReferralScreen: React.FC = () => {
   const loading =
     loadingReferral || loadingStats || loadingFriends || loadingLeaderboard;
 
-  const handleShareReferral = async () => {
+  const handleShareReferral = useCallback(async () => {
     if (!referral || !referral.code) return;
 
     try {
-      const message = `Join me on PaisaBandhu! Use my referral code: ${referral.code}\n\nTrack expenses, split bills, and save money together! 🎉`;
+      const message = `Join me on Kharcha Split! Use my referral code: ${referral.code}\n\nTrack expenses, split bills, and save money together! 🎉`;
       await Share.share({
         message,
-        title: 'Join PaisaBandhu',
+        title: 'Join Kharcha Split',
       });
-    } catch (error) {
-      console.error('Error sharing referral:', error);
+    } catch {
+      // Share cancelled or failed
     }
-  };
+  }, [referral]);
 
-  const handleUseCode = async () => {
+  const handleUseCode = useCallback(async () => {
     if (!useCodeInput.trim()) {
       await showAlert('Error', 'Please enter a referral code', 'error');
       return;
@@ -77,12 +77,11 @@ const ReferralScreen: React.FC = () => {
     useReferralCodeMutation(useCodeInput.trim(), {
       onSuccess: () => {
         setUseCodeInput('');
-        // Data will be automatically refetched by React Query
       },
     });
-  };
+  }, [useCodeInput, useReferralCodeMutation, showAlert]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (loading) {
     return (
@@ -110,7 +109,7 @@ const ReferralScreen: React.FC = () => {
                 size={24}
               />
             </TouchableOpacity>
-            <MaterialIcons name="people" size={28} color={theme.SECONDARY} />
+            <MaterialIcons name="people" size={28} color={theme.ICON_COLOR} />
             <Text style={styles.headerText}>Referrals</Text>
           </View>
         </View>
@@ -337,7 +336,7 @@ const ReferralScreen: React.FC = () => {
                             <MaterialIcons
                               name="receipt"
                               size={14}
-                              color={theme.LIGHT_TEXT}
+                              color={theme.ICON_MUTED}
                             />
                             <Text
                               style={[
@@ -352,7 +351,7 @@ const ReferralScreen: React.FC = () => {
                             <MaterialIcons
                               name="people"
                               size={14}
-                              color={theme.LIGHT_TEXT}
+                              color={theme.ICON_MUTED}
                             />
                             <Text
                               style={[
@@ -433,17 +432,18 @@ const ReferralScreen: React.FC = () => {
   );
 };
 
-const createStyles = (theme: any) =>
-  StyleSheet.create({
+const createStyles = (theme: any) => {
+  const headerBg = theme.HEADER_BACKGROUND ?? theme.PURPLE;
+  return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: headerBg,
     },
     headerContainer: {
       paddingTop: Platform.OS === 'ios' ? '15%' : '10%',
       paddingHorizontal: 20,
       paddingBottom: 20,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: headerBg,
     },
     headerContent: {
       flexDirection: 'row',
@@ -689,5 +689,6 @@ const createStyles = (theme: any) =>
       marginTop: 4,
     },
   });
+};
 
 export default ReferralScreen;

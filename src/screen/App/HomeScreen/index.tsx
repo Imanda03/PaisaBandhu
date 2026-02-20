@@ -1,263 +1,317 @@
-import { View, Text, FlatList, RefreshControl, Dimensions } from 'react-native';
-import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+  RefreshControl,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedGestureHandler,
   withTiming,
   withSpring,
   FadeInDown,
-  interpolate,
-  Extrapolation,
+  FadeIn,
+  SlideInDown,
 } from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles } from './styles';
 import Header from './components/Header';
 import SecondHeader from './components/SecondHeader';
 import Chart from './components/Chart';
 import { MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
+import { spacing } from '../../../utils/responsive';
 import TransactionList from '../../../components/transaction';
-import { useFetchLatestTransaction } from '../../../ReactQueryHook/transaction.hook';
+import {
+  useFetchLatestTransaction,
+  useFetchChartTransaction,
+} from '../../../ReactQueryHook/transaction.hook';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const AnimatedView = Animated.createAnimatedComponent(View);
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-// Collapsed and expanded heights
-const COLLAPSED_HEIGHT = SCREEN_HEIGHT * 0.35; // 35% of screen
-const EXPANDED_HEIGHT = SCREEN_HEIGHT * 0.85; // 85% of screen
-const MIN_HEIGHT = SCREEN_HEIGHT * 0.25; // Minimum 25%
-
-const HomeScreen = () => {
-  const styles = createStyles();
+const HomeScreen = React.memo(() => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const navigation = useNavigation();
+  const [refreshing, setRefreshing] = useState(false);
+
   const {
     data: transactionData,
-    isLoading: refreshing,
-    refetch,
+    refetch: refetchTransactions,
   } = useFetchLatestTransaction();
+  const {
+    data: chartData,
+    refetch: refetchChart,
+  } = useFetchChartTransaction();
 
-  const fadeAnim = useSharedValue(0);
-  const slideAnim = useSharedValue(50);
-
-  // Draggable panel animation values
-  const translateY = useSharedValue(0);
-  const panelHeight = useSharedValue(COLLAPSED_HEIGHT);
-  const isExpanded = useSharedValue(false);
+  const fadeAnim = useSharedValue(1);
+  const slideAnim = useSharedValue(0);
 
   useEffect(() => {
-    fadeAnim.value = withTiming(1, { duration: 600 });
-    slideAnim.value = withSpring(0, {
-      damping: 15,
-      stiffness: 100,
-    });
-    panelHeight.value = withSpring(COLLAPSED_HEIGHT, {
-      damping: 20,
-      stiffness: 100,
-    });
+    fadeAnim.value = withTiming(1, { duration: 500 });
+    slideAnim.value = withSpring(0, { damping: 22 });
   }, []);
 
-  const animatedHeaderStyle = useAnimatedStyle(() => ({
+  const headerStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value,
     transform: [{ translateY: slideAnim.value }],
   }));
 
-  // Gesture handler for dragging
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, ctx: any) => {
-      ctx.startY = translateY.value;
-      ctx.startHeight = panelHeight.value;
-    },
-    onActive: (event, ctx: any) => {
-      // Calculate new height based on drag direction (negative = up)
-      const newHeight = ctx.startHeight - event.translationY;
-      const clampedHeight = Math.max(
-        MIN_HEIGHT,
-        Math.min(EXPANDED_HEIGHT, newHeight),
-      );
-      panelHeight.value = clampedHeight;
-      translateY.value = event.translationY;
-    },
-    onEnd: event => {
-      const currentHeight = panelHeight.value;
-      const velocity = event.velocityY;
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchTransactions(), refetchChart()]);
+    setRefreshing(false);
+  }, [refetchTransactions, refetchChart]);
 
-      // Determine target height based on velocity and current position
-      let targetHeight = COLLAPSED_HEIGHT;
-      const midPoint = (COLLAPSED_HEIGHT + EXPANDED_HEIGHT) / 2;
+  const income = chartData?.income || 0;
+  const expense = chartData?.expense || 0;
+  const balance = income - expense;
 
-      if (velocity < -500 || (velocity < 0 && currentHeight > midPoint)) {
-        // Fast upward swipe or already past midpoint - expand
-        targetHeight = EXPANDED_HEIGHT;
-        isExpanded.value = true;
-      } else if (velocity > 500 || (velocity > 0 && currentHeight < midPoint)) {
-        // Fast downward swipe or below midpoint - collapse
-        targetHeight = COLLAPSED_HEIGHT;
-        isExpanded.value = false;
-      } else {
-        // Snap to nearest position
-        targetHeight =
-          currentHeight > midPoint ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT;
-        isExpanded.value = targetHeight === EXPANDED_HEIGHT;
-      }
-
-      panelHeight.value = withSpring(targetHeight, {
-        damping: 20,
-        stiffness: 100,
-        mass: 0.8,
-      });
-      translateY.value = withSpring(0, {
-        damping: 20,
-        stiffness: 100,
-      });
-    },
-  });
-
-  // Animated style for the draggable panel
-  const panelAnimatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      panelHeight.value,
-      [COLLAPSED_HEIGHT, EXPANDED_HEIGHT],
-      [0.95, 1],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      height: panelHeight.value,
-      opacity,
-      transform: [{ translateY: translateY.value }],
-    };
-  });
-
-  // Animated style for the drag handle
-  const handleAnimatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(
-      panelHeight.value,
-      [COLLAPSED_HEIGHT, EXPANDED_HEIGHT],
-      [1, 1.2],
-      Extrapolation.CLAMP,
-    );
-    return {
-      transform: [{ scale }],
-    };
-  });
-
-  const EmptyListComponent = () => (
-    <AnimatedView
-      entering={FadeInDown.delay(200).springify()}
-      style={styles.emptyState}
-    >
-      <View style={styles.emptyIconContainer}>
-        <MaterialIcons name="receipt-long" size={56} color={theme.PURPLE} />
-      </View>
-      <Text style={[styles.emptyText, { color: theme.TEXT }]}>
-        {refreshing ? 'Loading transactions...' : 'No transactions yet'}
-      </Text>
-      <Text style={[styles.emptySubText, { color: theme.TEXT }]}>
-        {refreshing
-          ? 'Please wait while we fetch your data'
-          : 'Start tracking your expenses by adding your first transaction'}
-      </Text>
-    </AnimatedView>
+  const formatCurrency = useCallback(
+    (amount: number) =>
+      `₹${Math.abs(amount).toLocaleString('en-IN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}`,
+    [],
   );
 
-  const renderRecentTransaction = ({ item, index }: any) => {
-    return (
-      <AnimatedView entering={FadeInDown.delay(index * 50).springify()}>
-        <TransactionList {...item} />
-      </AnimatedView>
-    );
-  };
+  const quickActions = useMemo(
+    () => [
+      {
+        icon: 'category' as const,
+        label: 'Categories',
+        color: theme.SECONDARY,
+        onPress: () => {
+          // @ts-ignore
+          navigation.navigate('InnerScreen', { screen: 'Categories' });
+        },
+      },
+      {
+        icon: 'book' as const,
+        label: 'Books',
+        color: theme.SUCCESS,
+        onPress: () => {
+          // @ts-ignore
+          navigation.navigate('Tabs', { screen: 'Book' });
+        },
+      },
+      {
+        icon: 'insights' as const,
+        label: 'Reports',
+        color: theme.WARNING,
+        onPress: () => {
+          // @ts-ignore
+          navigation.navigate('InnerScreen', { screen: 'Reports' });
+        },
+      },
+    ],
+    [theme, navigation],
+  );
 
   return (
     <View style={styles.root}>
-      {/* Header Section with smooth animation */}
-      <AnimatedView style={[styles.headerSection, animatedHeaderStyle]}>
-        <Header />
-        <SecondHeader />
-      </AnimatedView>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={theme.HEADER_BACKGROUND}
+      />
 
-      {/* Chart Section with gap */}
-      <AnimatedView
-        entering={FadeInDown.delay(100).springify()}
-        style={styles.chartSection}
+      {/* Header gradient - flows seamlessly into body */}
+      <LinearGradient
+        colors={[...theme.HEADER_GRADIENT]}
+        style={[styles.headerWrapper, { paddingTop: insets.top + 12 }]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
       >
-        <Chart />
-      </AnimatedView>
+        <AnimatedView style={[styles.headerSection, headerStyle]}>
+          <Header />
+          <SecondHeader />
+        </AnimatedView>
+      </LinearGradient>
 
-      {/* Draggable Transactions Panel */}
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <AnimatedView style={[styles.draggablePanel, panelAnimatedStyle]}>
-          {/* Drag Handle */}
-          <View style={styles.dragHandleContainer}>
-            <Animated.View style={[styles.dragHandle, handleAnimatedStyle]}>
-              <View
-                style={[styles.dragHandleBar, { backgroundColor: theme.TEXT }]}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[theme.SECONDARY]}
+            tintColor={theme.SECONDARY}
+          />
+        }
+      >
+        {/* Balance hero */}
+        <AnimatedView
+          entering={SlideInDown.delay(60).springify()}
+          style={styles.balanceCard}
+        >
+          <View style={styles.balanceTopRow}>
+            <View>
+              <Text style={[styles.balanceLabel, { color: theme.LIGHT_TEXT }]}>
+                Total Balance
+              </Text>
+              <Text style={[styles.balanceAmount, { color: theme.TEXT }]}>
+                {formatCurrency(balance)}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh}>
+              <MaterialIcons
+                name="refresh"
+                size={24}
+                color={theme.SECONDARY}
+                style={{ transform: [{ rotate: refreshing ? '180deg' : '0deg' }] }}
               />
-            </Animated.View>
+            </TouchableOpacity>
           </View>
 
-          {/* Section Header */}
-          <AnimatedView
-            entering={FadeInDown.delay(150).springify()}
-            style={styles.panelHeader}
-          >
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleContainer}>
+          {/* Income & Expense */}
+          <View style={styles.incomeExpenseRow}>
+            <AnimatedView
+              entering={FadeInDown.delay(120).springify()}
+              style={[
+                styles.incomeExpenseItem,
+                { backgroundColor: theme.SUCCESS_LIGHT },
+              ]}
+            >
+              <View
+                style={[
+                  styles.incomeExpenseIcon,
+                  { backgroundColor: theme.SUCCESS + '22' },
+                ]}
+              >
+                <MaterialIcons name="trending-up" size={22} color={theme.SUCCESS} />
+              </View>
+              <View style={styles.incomeExpenseContent}>
+                <Text style={[styles.incomeExpenseLabel, { color: theme.LIGHT_TEXT }]}>
+                  Income
+                </Text>
+                <Text
+                  style={[styles.incomeExpenseValue, { color: theme.SUCCESS }]}
+                  numberOfLines={1}
+                >
+                  {formatCurrency(income)}
+                </Text>
+              </View>
+            </AnimatedView>
+            <AnimatedView
+              entering={FadeInDown.delay(160).springify()}
+              style={[
+                styles.incomeExpenseItem,
+                { backgroundColor: theme.ERROR_LIGHT },
+              ]}
+            >
+              <View
+                style={[
+                  styles.incomeExpenseIcon,
+                  { backgroundColor: theme.ERROR + '22' },
+                ]}
+              >
+                <MaterialIcons name="trending-down" size={22} color={theme.ERROR} />
+              </View>
+              <View style={styles.incomeExpenseContent}>
+                <Text style={[styles.incomeExpenseLabel, { color: theme.LIGHT_TEXT }]}>
+                  Expense
+                </Text>
+                <Text
+                  style={[styles.incomeExpenseValue, { color: theme.ERROR }]}
+                  numberOfLines={1}
+                >
+                  {formatCurrency(expense)}
+                </Text>
+              </View>
+            </AnimatedView>
+          </View>
+        </AnimatedView>
+
+        {/* Quick actions grid */}
+        <View style={styles.quickActionsGrid}>
+          {quickActions.map((action, index) => (
+            <AnimatedTouchable
+              key={action.label}
+              entering={FadeInDown.delay(200 + index * 60).springify()}
+              style={styles.quickActionItem}
+              onPress={action.onPress}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.quickActionIconWrap,
+                  { backgroundColor: action.color + '1A' },
+                ]}
+              >
+                <MaterialIcons name={action.icon} size={20} color={action.color} />
+              </View>
+              <Text style={[styles.quickActionLabel, { color: theme.TEXT }]}>
+                {action.label}
+              </Text>
+            </AnimatedTouchable>
+          ))}
+        </View>
+
+        {/* Chart */}
+        <AnimatedView
+          entering={FadeInDown.delay(420).springify()}
+          style={styles.chartWrapper}
+        >
+          <Chart />
+        </AnimatedView>
+
+        {/* Recent transactions */}
+        <AnimatedView entering={FadeInDown.delay(480).springify()}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.TEXT }]}>
+              Recent Transactions
+            </Text>
+          </View>
+
+          {transactionData && transactionData.length > 0 ? (
+            <View style={styles.transactionsCard}>
+              {transactionData.slice(0, 5).map((item: any, index: number) => (
+                <View
+                  key={item?._id || item?.id || `tx-${index}`}
+                  style={[
+                    styles.transactionItem,
+                    index === 4 && styles.transactionItemLast,
+                  ]}
+                >
+                  <TransactionList {...item} />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <AnimatedView
+              entering={FadeIn.delay(520).springify()}
+              style={[styles.transactionsCard, styles.emptyState]}
+            >
+              <View style={styles.emptyIcon}>
                 <MaterialIcons
                   name="receipt-long"
-                  size={26}
-                  color={theme.PURPLE}
+                  size={44}
+                  color={theme.ICON_MUTED}
                 />
-                <View style={styles.titleWithHint}>
-                  <Text style={[styles.sectionTitle, { color: theme.TEXT }]}>
-                    Latest Transactions
-                  </Text>
-                  <Text style={[styles.dragHint, { color: theme.TEXT }]}>
-                    drag up
-                  </Text>
-                </View>
               </View>
-              {transactionData && transactionData.length > 0 && (
-                <View style={styles.countBadge}>
-                  <Text style={[styles.countText, { color: theme.SECONDARY }]}>
-                    {transactionData.length}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </AnimatedView>
-
-          {/* Transactions List */}
-          <AnimatedFlatList
-            data={transactionData}
-            renderItem={renderRecentTransaction}
-            keyExtractor={(item: any, index) =>
-              item?._id || item?.id || `transaction-${index}`
-            }
-            showsVerticalScrollIndicator={false}
-            style={styles.transactionsList}
-            scrollEnabled={true}
-            bounces={true}
-            contentContainerStyle={styles.listContentContainer}
-            ListEmptyComponent={EmptyListComponent}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={refetch}
-                colors={[theme.PURPLE]}
-                tintColor={theme.PURPLE}
-                progressBackgroundColor={theme.SECONDARY}
-                progressViewOffset={20}
-              />
-            }
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-          />
+              <Text style={[styles.emptyTitle, { color: theme.TEXT }]}>
+                No transactions yet
+              </Text>
+              <Text style={[styles.emptySubtitle, { color: theme.LIGHT_TEXT }]}>
+                Add your first transaction to start tracking your finances
+              </Text>
+            </AnimatedView>
+          )}
         </AnimatedView>
-      </PanGestureHandler>
+      </ScrollView>
     </View>
   );
-};
+});
 
+HomeScreen.displayName = 'HomeScreen';
 export default HomeScreen;

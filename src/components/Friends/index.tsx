@@ -13,12 +13,14 @@ interface FriendProps {
     name: string;
     email: string;
     id: string;
+    canManage?: boolean;
 }
 
 export const Friend: React.FC<FriendProps> = ({
     name,
     email,
     id,
+    canManage = true,
 }) => {
     const [isConfirmation, setIsConfirmation] = useState<boolean>(false)
     const { mutate: deleteMember } = useDeleteFriend()
@@ -46,11 +48,13 @@ export const Friend: React.FC<FriendProps> = ({
                     </Text>
                 </View>
             </View>
-            <View style={styles.actions}>
-                <TouchableOpacity onPress={() => setIsConfirmation(true)} style={styles.deleteButton}>
-                    <Icon name="delete" size={20} color={theme.ERROR} />
-                </TouchableOpacity>
-            </View>
+            {canManage && (
+                <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => setIsConfirmation(true)} style={styles.deleteButton}>
+                        <Icon name="delete" size={20} color={theme.ERROR} />
+                    </TouchableOpacity>
+                </View>
+            )}
             <CustomConfirmationModal visible={isConfirmation} onConfirm={handleDelete}
                 onCancel={() => setIsConfirmation(false)}
                 description='You want to delete the member. This cannot be undo'

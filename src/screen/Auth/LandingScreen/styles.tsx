@@ -1,49 +1,50 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { ThemeColors } from '../../../utils/colors';
-
-const { width, height } = Dimensions.get('window');
+import { scale, verticalScale, fontSize, spacing } from '../../../utils/responsive';
 
 export const createStyles = (theme: ThemeColors) =>
     StyleSheet.create({
         root: {
             flex: 1,
-            backgroundColor: theme.PURPLE, // Header background
+            backgroundColor: theme.PURPLE,
         },
         body: {
             flex: 1,
             backgroundColor: theme.BACKGROUND,
-            borderTopLeftRadius: 40,
-            borderTopRightRadius: 40,
-            paddingHorizontal: 20,
-            paddingTop: 30,
+            borderTopLeftRadius: scale(48),
+            borderTopRightRadius: scale(48),
+            paddingHorizontal: spacing(24),
+            paddingTop: verticalScale(36),
         },
         bodyContent: {
-            paddingBottom: 30,
+            paddingBottom: verticalScale(30),
         },
         image: {
             width: '90%',
-            height: height * 0.3,
+            height: verticalScale(260),
             alignSelf: 'center',
         },
         textContainer: {
             flexDirection: 'row',
             justifyContent: 'center',
-            marginTop: 20,
+            marginTop: verticalScale(20),
         },
         text: {
-            fontSize: 32,
+            fontSize: fontSize(34),
             color: theme.TEXT,
-            fontWeight: '600',
+            fontWeight: '700',
+            letterSpacing: -0.5,
         },
         textDescription: {
-            fontSize: 14,
-            color: theme.TEXT,
+            fontSize: fontSize(15),
+            color: theme.LIGHT_TEXT,
             textAlign: 'center',
-            marginTop: 14,
-            paddingHorizontal: 10,
+            marginTop: verticalScale(16),
+            paddingHorizontal: spacing(16),
+            lineHeight: fontSize(22),
         },
         ButtonContainer: {
             marginTop: '20%',
-            gap: 20,
+            gap: spacing(16),
         },
     });

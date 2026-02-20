@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -35,7 +35,7 @@ const SavingsGoalsScreen: React.FC = () => {
     loadGoals();
   }, []);
 
-  const loadGoals = async () => {
+  const loadGoals = useCallback(async () => {
     try {
       const data = await savingsGoalService.getGoals({ status: 'active' });
       setGoals(data);
@@ -45,14 +45,14 @@ const SavingsGoalsScreen: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     setRefreshing(true);
     loadGoals();
-  };
+  }, [loadGoals]);
 
-  const handleCreateGoal = async () => {
+  const handleCreateGoal = useCallback(async () => {
     if (!newGoal.title || !newGoal.targetAmount) {
       await showAlert('Error', 'Please fill all required fields', 'error');
       return;
@@ -76,9 +76,9 @@ const SavingsGoalsScreen: React.FC = () => {
       });
       loadGoals();
     }
-  };
+  }, [newGoal, showAlert, loadGoals]);
 
-  const renderGoal = ({ item, index }: { item: SavingsGoal; index: number }) => {
+  const renderGoal = useCallback(({ item, index }: { item: SavingsGoal; index: number }) => {
     const progress = (item.currentAmount / item.targetAmount) * 100;
     const remaining = item.targetAmount - item.currentAmount;
     const daysLeft = Math.ceil(
@@ -139,13 +139,13 @@ const SavingsGoalsScreen: React.FC = () => {
 
             <View style={styles.footer}>
               <View style={styles.infoItem}>
-                <MaterialIcons name="schedule" size={16} color={theme.LIGHT_TEXT} />
+                <MaterialIcons name="schedule" size={16} color={theme.ICON_MUTED} />
                 <Text style={[styles.infoText, { color: theme.LIGHT_TEXT }]}>
                   {daysLeft > 0 ? `${daysLeft} days left` : 'Goal reached!'}
                 </Text>
               </View>
               <View style={styles.infoItem}>
-                <MaterialIcons name="people" size={16} color={theme.LIGHT_TEXT} />
+                <MaterialIcons name="people" size={16} color={theme.ICON_MUTED} />
                 <Text style={[styles.infoText, { color: theme.LIGHT_TEXT }]}>
                   {item.participants.length} {item.participants.length === 1 ? 'person' : 'people'}
                 </Text>
@@ -155,9 +155,9 @@ const SavingsGoalsScreen: React.FC = () => {
         </TouchableOpacity>
       </Animated.View>
     );
-  };
+  }, [theme]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.container}>
@@ -172,7 +172,7 @@ const SavingsGoalsScreen: React.FC = () => {
           style={[styles.createButton, { backgroundColor: theme.PURPLE }]}
           onPress={() => setShowCreateModal(true)}
         >
-          <MaterialIcons name="add" size={24} color={theme.SECONDARY} />
+          <MaterialIcons name="add" size={24} color={theme.NAVBAR_ACTIVE_TEXT} />
         </TouchableOpacity>
       </View>
 
@@ -186,13 +186,13 @@ const SavingsGoalsScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[theme.PURPLE]}
-            tintColor={theme.PURPLE}
+            colors={[theme.SECONDARY]}
+            tintColor={theme.SECONDARY}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="savings" size={64} color={theme.PURPLE} />
+            <MaterialIcons name="savings" size={64} color={theme.ICON_COLOR} />
             <Text style={[styles.emptyText, { color: theme.TEXT }]}>No savings goals yet</Text>
             <Text style={[styles.emptySubtext, { color: theme.LIGHT_TEXT }]}>
               Create a goal and start saving!

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { createStyles } from './styles';
@@ -13,7 +13,7 @@ import ButtonIconComponent from '../../../../components/core/ButtonIcon';
 import AuthHeader from '../../../../components/core/AuthHeader';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFetchCategories } from '../../../../ReactQueryHook/category.hook';
-import { useCreateTransaction } from '../../../../ReactQueryHook/transaction.hook';
+import { useCreateTransaction, useUpdateTransaction } from '../../../../ReactQueryHook/transaction.hook';
 import { CategoryFormData } from '../../../../utils/types';
 import { useFetchFriend } from '../../../../ReactQueryHook/friend.hook';
 
@@ -32,6 +32,9 @@ const AddTransaction: React.FC<any> = () => {
   const type = route.params?.type;
   const bookType: 'single' | 'group' = route.params?.bookType;
   const bookId: string = route?.params?.bookId;
+  const transactionId = route.params?.transactionId;
+  const transaction = route.params?.transaction;
+  const isEditMode = !!transactionId && !!transaction;
 
   const navigation: any = useNavigation();
   const {
@@ -47,6 +50,8 @@ const AddTransaction: React.FC<any> = () => {
   const { data: friendList, refetch: refetchFriend } = useFetchFriend(bookId);
   const { mutate: createTransaction, isLoading: isCreating } =
     useCreateTransaction(setError);
+  const { mutate: updateTransaction, isLoading: isUpdating } =
+    useUpdateTransaction(setError);
 
   const formReset = {
     price: '',
@@ -58,30 +63,55 @@ const AddTransaction: React.FC<any> = () => {
   };
 
   useEffect(() => {
-    reset(formReset);
-  }, [type, reset]);
+    if (isEditMode && transaction) {
+      reset({
+        title: transaction.title || '',
+        price: transaction.price?.toString() || transaction.amount?.toString() || '',
+        categoryId: transaction.categoryId?._id || transaction.categoryId?.id || transaction.categoryId || '',
+        date: transaction.date ? new Date(transaction.date) : new Date(),
+        description: transaction.description || transaction.title || '',
+        friendId: transaction.friendId?._id || transaction.friendId?.id || transaction.friendId || '',
+      });
+    } else {
+      reset(formReset);
+    }
+  }, [type, reset, isEditMode, transaction]);
 
-  const onSubmit = (data: FormData) => {
-    const submitData = {
-      ...data,
-      type: type,
-      bookId: bookId,
-    };
-    console.log('submit data', submitData);
-    createTransaction(submitData, {
-      onSuccess: () => {
-        navigation.goBack();
-      },
-    });
-  };
+  const onSubmit = useCallback((data: FormData) => {
+    if (isEditMode && transactionId) {
+      updateTransaction(
+        {
+          id: transactionId,
+          data: {
+            ...data,
+            type,
+            bookId,
+            price: data.price,
+            categoryId: data.categoryId,
+            date: data.date?.toISOString?.() || new Date().toISOString(),
+            title: data.title,
+            description: data.description,
+            friendId: data.friendId || undefined,
+          } as any,
+        },
+        { onSuccess: () => navigation.goBack() },
+      );
+    } else {
+      createTransaction(
+        { ...data, type, bookId },
+        { onSuccess: () => navigation.goBack() },
+      );
+    }
+  }, [createTransaction, updateTransaction, type, bookId, navigation, isEditMode, transactionId]);
 
-  const filteredCategories: any = (
-    categoriesData as CategoryFormData[]
-  )?.filter(category => category.type === type);
+  const filteredCategories:any = useMemo(() =>
+    (categoriesData as CategoryFormData[])?.filter(category => category.type === type) || [],
+    [categoriesData, type],
+  );
 
   return (
     <View style={styles.root}>
-      <AuthHeader title={`Add ${type === 'income' ? 'Income' : 'Expense'}`} />
+      <AuthHeader title={isEditMode ? `Edit ${type === 'income' ? 'Income' : 'Expense'}` : `Add ${type === 'income' ? 'Income' : 'Expense'}`} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}
@@ -189,9 +219,9 @@ const AddTransaction: React.FC<any> = () => {
 
           <View style={styles.buttonWrapper}>
             <ButtonIconComponent
-              title="Save Transaction"
+              title={isEditMode ? 'Update Transaction' : 'Save Transaction'}
               onPress={handleSubmit(onSubmit)}
-              loading={isCreating}
+              loading={isCreating || isUpdating}
             />
           </View>
         </View>

@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { scale, fontSize, spacing } from '../../utils/responsive';
 import Svg, { Rect, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, {
     useSharedValue,
@@ -29,17 +30,24 @@ interface AnimatedBarChartProps {
 
 export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
     data,
-    width = 350,
-    height = 250,
+    width: widthProp,
+    height: heightProp,
     showValues = true,
     animationDuration = 1000,
     title,
 }) => {
     const { theme } = useTheme();
-    
+    const { width: screenWidth } = useWindowDimensions();
+    const chartDimensions = useMemo(() => {
+        const w = widthProp ?? Math.max(screenWidth - spacing(48), scale(280));
+        const h = heightProp ?? Math.min(scale(320), w * 0.75);
+        return { width: w, height: h };
+    }, [screenWidth, widthProp, heightProp]);
+    const { width, height } = chartDimensions;
+
     if (!data || data.length === 0) {
         return (
-            <View style={[styles.container, { backgroundColor: theme.BACKGROUND }]}>
+            <View style={[styles.container, { backgroundColor: theme.BACKGROUND_LIGHT }]}>
                 {title && (
                     <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
                 )}
@@ -51,8 +59,16 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
     }
     
     const maxValue = Math.max(...data.map(item => item.value), 1);
-    const barWidth = Math.max((width - 60) / data.length - 10, 20);
-    const chartHeight = height - 80;
+    const barGap = scale(12);
+    // Calculate spacing values outside worklets to avoid UI thread errors
+    const spacing40 = spacing(40);
+    const spacing35 = spacing(35);
+    const spacing45 = spacing(45);
+    const spacing50 = spacing(50);
+    const spacing80 = spacing(80);
+    const spacing20 = spacing(20);
+    const barWidth = Math.max((width - spacing80) / data.length - barGap, scale(24));
+    const chartHeight = height - spacing80;
 
     const animatedValues = data.map(() => useSharedValue(0));
 
@@ -83,7 +99,7 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.BACKGROUND }]}>
+        <View style={[styles.container, { backgroundColor: theme.BACKGROUND_LIGHT }]}>
             {title && (
                 <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
             )}
@@ -109,17 +125,17 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
                 {[0, 0.25, 0.5, 0.75, 1].map((percentage, index) => (
                     <React.Fragment key={`grid-${index}`}>
                         <Rect
-                            x={40}
-                            y={40 + chartHeight * percentage}
-                            width={width - 80}
+                            x={spacing40}
+                            y={spacing40 + chartHeight * percentage}
+                            width={width - spacing80}
                             height={1}
                             fill={theme.BORDER_COLOR}
                             opacity={0.3}
                         />
                         <SvgText
-                            x={35}
-                            y={45 + chartHeight * percentage}
-                            fontSize="10"
+                            x={spacing35}
+                            y={spacing45 + chartHeight * percentage}
+                            fontSize={fontSize(10)}
                             fill={theme.LIGHT_TEXT}
                             textAnchor="end"
                         >
@@ -134,11 +150,11 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
                         const barHeight = (animatedValues[index].value / maxValue) * chartHeight;
                         return {
                             height: barHeight,
-                            y: height - 40 - barHeight,
+                            y: height - spacing40 - barHeight,
                         };
                     });
 
-                    const x = 50 + index * (barWidth + 10);
+                    const x = spacing50 + index * (barWidth + barGap);
 
                     return (
                         <React.Fragment key={`bar-${index}`}>
@@ -146,15 +162,15 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
                                 x={x}
                                 width={barWidth}
                                 fill={`url(#gradient-${index})`}
-                                rx={4}
+                                rx={scale(6)}
                                 animatedProps={animatedProps}
                             />
 
                             {/* Labels */}
                             <SvgText
                                 x={x + barWidth / 2}
-                                y={height - 20}
-                                fontSize="10"
+                                y={height - spacing20}
+                                fontSize={fontSize(10)}
                                 fill={theme.TEXT}
                                 textAnchor="middle"
                             >
@@ -165,8 +181,8 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
                             {showValues && (
                                 <SvgText
                                     x={x + barWidth / 2}
-                                    y={height - 50}
-                                    fontSize="12"
+                                    y={height - spacing50}
+                                    fontSize={fontSize(12)}
                                     fill={theme.TEXT}
                                     textAnchor="middle"
                                     fontWeight="bold"
@@ -184,21 +200,20 @@ export const AnimatedBarChart: React.FC<AnimatedBarChartProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        // padding: 16,
-        borderRadius: 12,
-        margin: 8,
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        padding: spacing(20),
+        borderRadius: scale(20),
+        margin: spacing(8),
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.04)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 6,
     },
     title: {
-        fontSize: 18,
+        fontSize: fontSize(18),
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 16,
+        marginBottom: spacing(16),
     },
 });

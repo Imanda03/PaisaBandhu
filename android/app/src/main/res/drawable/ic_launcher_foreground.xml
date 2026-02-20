@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kharcha Split app icon: wallet with division symbol (expense splitting) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Wallet body (golden-tan) -->
+    <path
+        android:fillColor="#C6A56B"
+        android:pathData="M34,36 L74,36 Q82,36 82,44 L82,68 Q82,76 74,76 L34,76 Q26,76 26,68 L26,44 Q26,36 34,36 Z" />
+    <!-- Wallet flap -->
+    <path
+        android:fillColor="#D4B87A"
+        android:pathData="M28,40 L80,40 L80,48 L28,48 Z" />
+    <!-- Wallet clasp/button -->
+    <path
+        android:fillColor="#C6A56B"
+        android:pathData="M78,42 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0" />
+    <!-- Division symbol: horizontal line (centered on wallet) -->
+    <path
+        android:fillColor="#1E1E24"
+        android:pathData="M40,56 L68,56 L68,60 L40,60 Z" />
+    <!-- Division symbol: top dot -->
+    <path
+        android:fillColor="#1E1E24"
+        android:pathData="M50,46 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0" />
+    <!-- Division symbol: bottom dot -->
+    <path
+        android:fillColor="#1E1E24"
+        android:pathData="M50,70 m-4,0 a4,4 0 1,1 8,0 a4,4 0 1,1 -8,0" />
+</vector>

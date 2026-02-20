@@ -1,7 +1,6 @@
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTheme } from '../../../utils/colors';
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+import { scale, verticalScale, spacing } from '../../../utils/responsive';
 
 export const createStyles = () => {
     const { theme } = useTheme();
@@ -28,11 +27,11 @@ export const createStyles = () => {
         content: {
             flex: 1,
             backgroundColor: theme.BACKGROUND,
-            borderTopLeftRadius: 40,
-            borderTopRightRadius: 40,
-            paddingHorizontal: 20,
-            paddingTop: 30,
-            marginTop: -40, // Make this match your radius
+            borderTopLeftRadius: scale(40),
+            borderTopRightRadius: scale(40),
+            paddingHorizontal: spacing(20),
+            paddingTop: verticalScale(30),
+            marginTop: -verticalScale(40),
             zIndex: 1,
             elevation: 5,
         },

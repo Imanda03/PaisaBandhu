@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import { scale, fontSize, spacing } from '../../utils/responsive';
 import Svg, {
   Circle,
   Text as SvgText,
@@ -16,7 +17,7 @@ import Animated, {
   Easing,
   interpolate,
 } from 'react-native-reanimated';
-import { COLORS, useTheme } from '../../utils/colors';
+import { useTheme } from '../../utils/colors';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -39,8 +40,8 @@ interface AnimatedDonutChartProps {
 
 export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
   data,
-  size = 250,
-  strokeWidth = 40,
+  size: sizeProp,
+  strokeWidth: strokeWidthProp,
   animationDuration = 1200,
   title,
   showLabels = true,
@@ -48,6 +49,13 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
   centerText,
 }) => {
   const { theme } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const responsiveSize = useMemo(
+    () => Math.min(screenWidth - spacing(80), scale(320)),
+    [screenWidth],
+  );
+  const size = sizeProp ?? responsiveSize;
+  const strokeWidth = strokeWidthProp ?? Math.round(size * 0.16);
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
@@ -178,8 +186,8 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
                     <SvgText
                       // x={labelX}
                       // y={labelY - 5}
-                      fontSize="12"
-                      fill={COLORS.secondary}
+                      fontSize={fontSize(12)}
+                      fill={theme.SECONDARY}
                       textAnchor="middle"
                       fontWeight="bold"
                     >
@@ -189,7 +197,7 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
                       <SvgText
                         // x={labelX}
                         // y={labelY + 10}
-                        fontSize="10"
+                        fontSize={fontSize(10)}
                         fill={theme.SECONDARY}
                         textAnchor="middle"
                       >
@@ -207,7 +215,7 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
             <SvgText
               x={center}
               y={center}
-              fontSize="14"
+              fontSize={fontSize(14)}
               fill={theme.SECONDARY}
               textAnchor="middle"
               fontWeight="bold"
@@ -252,16 +260,8 @@ export const AnimatedDonutChart: React.FC<AnimatedDonutChartProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 10,
-    borderRadius: 12,
-    // margin: 8,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    // elevation: 3,
+    padding: spacing(16),
+    borderRadius: scale(20),
   },
   title: {
     fontSize: 18,

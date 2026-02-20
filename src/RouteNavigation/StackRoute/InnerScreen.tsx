@@ -2,8 +2,9 @@ import React from 'react';
 import { Dimensions, Platform } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Transactions from '../../screen/App/InnerScreen/Transactions';
-import AddTransaction from '../../screen/App/InnerScreen/AddTransaction';
 import { WeeklyChart } from '../../screen/App/InnerScreen/WeeklyChart';
+import Categories from '../../screen/App/InnerScreen/Categories';
+import Reports from '../../screen/App/InnerScreen/Reports';
 
 const Stack = createNativeStackNavigator();
 const { width: screenWidth } = Dimensions.get('window');
@@ -76,28 +77,6 @@ const InnerScreen = () => {
 
   return (
     <Stack.Navigator screenOptions={screenOptions}>
-      {/* <Stack.Screen
-                name="AddTransaction"
-                component={AddTransaction}
-                options={{
-                    animationTypeForReplace: 'pop',
-                }}
-            /> */}
-      {/* <Stack.Screen
-                name="AddCategory"
-                component={categories}
-                options={{
-                    animationTypeForReplace: 'pop',
-                }}
-            />
-            <Stack.Screen
-                name="AddCategoryForm"
-                component={AddCategories}
-                options={{
-                    animationTypeForReplace: 'pop',
-                }}
-            /> */}
-
       <Stack.Screen
         name="Transactions"
         component={Transactions}
@@ -106,6 +85,20 @@ const InnerScreen = () => {
         }}
       />
       <Stack.Screen name="TransactionChart" component={WeeklyChart} />
+      <Stack.Screen
+        name="Categories"
+        component={Categories}
+        options={{
+          animationTypeForReplace: 'pop',
+        }}
+      />
+      <Stack.Screen
+        name="Reports"
+        component={Reports}
+        options={{
+          animationTypeForReplace: 'pop',
+        }}
+      />
     </Stack.Navigator>
   );
 };

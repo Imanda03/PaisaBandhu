@@ -1,290 +1,242 @@
-import { StyleSheet, Dimensions, Platform } from 'react-native';
-import { useTheme } from '../../../utils/colors';
+import { StyleSheet, Platform } from 'react-native';
+import { ThemeColors } from '../../../utils/colors';
+import { scale, verticalScale, fontSize, spacing } from '../../../utils/responsive';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+export const createStyles = (theme: ThemeColors) => {
+  const isDark = theme.HEADER_BACKGROUND === '#0F1012';
 
-export const createStyles = () => {
-  const { theme } = useTheme();
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: theme.PURPLE,
-    },
-    headerSection: {
-      paddingTop: Platform.OS === 'ios' ? '15%' : '10%',
-      paddingHorizontal: 20,
-      paddingBottom: 12,
-      backgroundColor: theme.PURPLE,
-    },
-    chartSection: {
-      paddingHorizontal: 20,
-      marginBottom: 24,
-    },
-    scrollContent: {
-      flexGrow: 1,
-    },
-    draggablePanel: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
       backgroundColor: theme.BACKGROUND,
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR + '15',
-      borderBottomWidth: 0,
-      // Premium shadow for elevation
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -10 },
-          shadowOpacity: 0.3,
-          shadowRadius: 25,
-        },
-        android: {
-          elevation: 25,
-        },
-      }),
-    },
-    dragHandleContainer: {
-      alignItems: 'center',
-      paddingTop: 10,
-      //   paddingBottom: 12,
-      backgroundColor: 'transparent',
-    },
-    dragHandle: {
-      width: 52,
-      height: 5,
-      borderRadius: 3,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: theme.TEXT + '15',
-    },
-    dragHandleBar: {
-      width: 52,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: theme.TEXT,
-      opacity: 0.35,
-    },
-    panelHeader: {
-      paddingHorizontal: 20,
-      paddingTop: 4,
-      paddingBottom: 12,
-      borderBottomWidth: 1.5,
-      borderBottomColor: theme.BORDER_COLOR + '25',
-      marginBottom: 6,
-      backgroundColor: 'transparent',
-    },
-    transactionsList: {
-      flex: 1,
-      paddingHorizontal: 20,
-      paddingTop: 4,
-    },
-    separator: {
-      height: 0,
-    },
-    flatList: {
-      flex: 1,
-      backgroundColor: theme.BACKGROUND,
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      marginTop: 20,
-      paddingTop: 16,
-      paddingHorizontal: 16,
-      // Premium shadow for elevation
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-        },
-        android: {
-          elevation: 8,
-        },
-      }),
-    },
-    emptyState: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingVertical: SCREEN_HEIGHT * 0.15,
-      paddingHorizontal: 40,
-    },
-    emptyIconContainer: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      backgroundColor: theme.BACKGROUND_LIGHT,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 24,
-      // Soft shadow
-      ...Platform.select({
-        ios: {
-          shadowColor: theme.SHADOW,
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 16,
-        },
-        android: {
-          elevation: 8,
-        },
-      }),
-    },
-    emptyText: {
-      fontSize: 20,
-      fontWeight: '700',
-      marginTop: 16,
-      marginBottom: 8,
-      letterSpacing: 0.3,
-    },
-    emptySubText: {
-      fontSize: 15,
-      fontWeight: '400',
-      textAlign: 'center',
-      lineHeight: 22,
-      opacity: 0.7,
-    },
-    listContentContainer: {
-      paddingBottom: 100,
-      paddingTop: 4,
-      flexGrow: 1,
-    },
-    pullIndicatorContainer: {
-      alignItems: 'center',
-      paddingTop: 8,
-      paddingBottom: 12,
-    },
-    pullIndicator: {
-      width: 36,
-      height: 4,
-      borderRadius: 2,
-      opacity: 0.3,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 6,
-      marginBottom: 4,
-    },
-    sectionTitleContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 16,
-      flex: 1,
-    },
-    titleWithHint: {
-      flexDirection: 'column',
-    },
-    sectionTitle: {
-      fontSize: 20,
-      fontWeight: '800',
-      letterSpacing: 0.5,
-      color: theme.TEXT,
-    },
-    dragHint: {
-      fontSize: 10,
-      fontWeight: '400',
-      opacity: 0.5,
-      marginTop: 2,
-      textTransform: 'lowercase',
-    },
-    countBadge: {
-      backgroundColor: theme.PURPLE,
-      paddingHorizontal: 14,
-      paddingVertical: 5,
-      borderRadius: 25,
-      minWidth: 36,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: theme.PURPLE,
-      shadowOffset: {
-        width: 0,
-        height: 3,
-      },
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 4,
-    },
-    countText: {
-      fontSize: 15,
-      fontWeight: '800',
-      color: theme.SECONDARY,
     },
 
-    transactionItem: {
+    // Header - seamless gradient into body with rounded bottom
+    headerWrapper: {
+      paddingHorizontal: spacing(24),
+      paddingBottom: verticalScale(36),
+      borderBottomLeftRadius: scale(28),
+      borderBottomRightRadius: scale(28),
+      overflow: 'hidden',
+      minHeight: verticalScale(160),
+    },
+    headerSection: {},
+
+    scrollView: {
+      flex: 1,
+      backgroundColor: 'transparent',
+    },
+    scrollContent: {
+      paddingTop: verticalScale(20),
+      paddingHorizontal: spacing(20),
+      paddingBottom: verticalScale(130),
+      flexGrow: 1,
+    },
+
+    // Balance hero - premium floating card
+    balanceCard: {
+      borderRadius: scale(24),
+      padding: spacing(26),
+      marginBottom: verticalScale(24),
+      backgroundColor: theme.BACKGROUND_LIGHT,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(198, 165, 107, 0.15)' : 'rgba(198, 165, 107, 0.2)',
+      ...Platform.select({
+        ios: {
+          shadowColor: isDark ? '#000' : theme.PURPLE,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: isDark ? 0.5 : 0.1,
+          shadowRadius: 24,
+        },
+        android: { elevation: 10 },
+      }),
+    },
+    balanceTopRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.BORDER_COLOR,
+      alignItems: 'flex-start',
+      marginBottom: verticalScale(22),
     },
-    // New drag indicator styles
-    dragIndicatorContainer: {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: [{ translateX: -50 }, { translateY: -50 }],
-      alignItems: 'center',
-      zIndex: 20,
+    balanceLabel: {
+      fontSize: fontSize(12),
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      opacity: 0.75,
+      marginBottom: verticalScale(6),
     },
-    dragIndicator: {
-      width: 60,
-      height: 60,
-      borderRadius: 30,
+    balanceAmount: {
+      fontSize: fontSize(40),
+      fontWeight: '800',
+      letterSpacing: -1.5,
+    },
+    refreshBtn: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
       justifyContent: 'center',
       alignItems: 'center',
-      elevation: 8,
-      shadowColor: theme.SHADOW,
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.3,
-      shadowRadius: 4.65,
+      backgroundColor: isDark ? 'rgba(198, 165, 107, 0.12)' : 'rgba(198, 165, 107, 0.1)',
+      borderWidth: 1,
+      borderColor: 'rgba(198, 165, 107, 0.25)',
     },
-    dragText: {
-      marginTop: 8,
-      fontSize: 14,
-      fontWeight: '600',
-      textAlign: 'center',
+
+    // Income & Expense - premium bars
+    incomeExpenseRow: {
+      flexDirection: 'row',
+      gap: spacing(14),
     },
-    swipeableContainer: {
-      marginVertical: 2,
-    },
-    actionBackground: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: 12,
-      marginHorizontal: 16,
-    },
-    actionContainer: {
+    incomeExpenseItem: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 20,
+      padding: spacing(16),
+      borderRadius: scale(16),
+      gap: spacing(12),
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.2 : 0.04,
+          shadowRadius: 8,
+        },
+        android: { elevation: 3 },
+      }),
     },
-    leftAction: {
-      alignItems: 'center',
+    incomeExpenseIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
       justifyContent: 'center',
-    },
-    rightAction: {
       alignItems: 'center',
-      justifyContent: 'center',
     },
-    actionText: {
-      color: theme.SECONDARY,
-      fontSize: 12,
+    incomeExpenseContent: {
+      flex: 1,
+    },
+    incomeExpenseLabel: {
+      fontSize: fontSize(11),
       fontWeight: '600',
-      marginTop: 4,
+      letterSpacing: 0.3,
+      textTransform: 'uppercase',
+      opacity: 0.8,
+      marginBottom: 4,
+    },
+    incomeExpenseValue: {
+      fontSize: fontSize(16),
+      fontWeight: '800',
+      letterSpacing: 0.2,
+    },
+
+    // Quick actions - compact row
+    quickActionsGrid: {
+      flexDirection: 'row',
+      gap: spacing(10),
+      marginBottom: verticalScale(24),
+    },
+    quickActionItem: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: spacing(14),
+      paddingHorizontal: spacing(8),
+      borderRadius: scale(14),
+      backgroundColor: theme.BACKGROUND_LIGHT,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowRadius: 10,
+        },
+        android: { elevation: 4 },
+      }),
+    },
+    quickActionIconWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: spacing(6),
+    },
+    quickActionLabel: {
+      fontSize: fontSize(11),
+      fontWeight: '600',
+      letterSpacing: 0.2,
+      textAlign: 'center',
+    },
+
+    chartWrapper: {
+      marginBottom: verticalScale(28),
+    },
+
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: verticalScale(18),
+      paddingHorizontal: spacing(4),
+    },
+    sectionTitle: {
+      fontSize: fontSize(19),
+      fontWeight: '800',
+      letterSpacing: 0.3,
+    },
+
+    transactionsCard: {
+      borderRadius: scale(24),
+      padding: spacing(22),
+      backgroundColor: theme.BACKGROUND_LIGHT,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowRadius: 20,
+        },
+        android: { elevation: 6 },
+      }),
+    },
+    transactionItem: {
+      marginBottom: spacing(14),
+    },
+    transactionItemLast: {
+      marginBottom: 0,
+    },
+
+    emptyState: {
+      paddingVertical: verticalScale(56),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyIcon: {
+      width: 88,
+      height: 88,
+      borderRadius: 44,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: spacing(24),
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    },
+    emptyTitle: {
+      fontSize: fontSize(19),
+      fontWeight: '700',
+      marginBottom: verticalScale(10),
+      textAlign: 'center',
+    },
+    emptySubtitle: {
+      fontSize: fontSize(15),
+      opacity: 0.75,
+      textAlign: 'center',
+      lineHeight: fontSize(22),
+      paddingHorizontal: spacing(28),
     },
   });
 };

@@ -1,6 +1,7 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider, clearAuth } from './src/context/AuthContext';
+import { AuthProvider } from './src/context/AuthContext';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { triggerLogout } from './src/services/authCallback';
 import { AppContent } from './AppContent';
 import { StyleSheet } from 'react-native';
 import 'react-native-reanimated';
@@ -11,17 +12,22 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
+      retry: (failureCount, error: any) => {
+        if (error?.response?.status === 401) {
+          return false;
+        }
+        return failureCount < 2;
+      },
       onError: async (error: any) => {
         if (error?.response?.status === 401) {
-          await clearAuth(queryClient);
+          await triggerLogout();
         }
       },
     },
     mutations: {
       onError: async (error: any) => {
         if (error?.response?.status === 401) {
-          await clearAuth(queryClient);
+          await triggerLogout();
         }
       },
     },

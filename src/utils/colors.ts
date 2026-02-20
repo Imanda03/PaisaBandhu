@@ -1,30 +1,34 @@
 import { useContext } from 'react';
 import { ThemeContext, ThemeOptions } from '../context/ThemeProvider';
 
-// New Color Palette
+// Luxe Charcoal + Brushed Gold - high-end classic
 export const COLORS = {
-  primary: '#1B3C53', // Dark blue - main dark color
-  secondary: '#E3E3E3', // Light gray - light backgrounds
-  accent: '#234C6A', // Medium-dark blue - primary accent
-  light: '#456882', // Medium blue - secondary elements
+  primary: '#1E1E24',      // Charcoal
+  primaryLight: '#2A2A30', // Surface / dark cards
+  accent: '#C6A56B',       // Soft gold
+  background: '#F4F4F6',   // Light gray
+  surface: '#2A2A30',      // Dark cards
+  textLight: '#F7F7F8',    // Light text on dark
+  muted: '#9A9AA0',        // Muted
+  border: '#E8E8EC',       // Subtle border
 } as const;
 
 const common = {
-  WARNING: '#FFB74D',
-  ERROR: '#E57373',
-  SUCCESS: '#81C784',
-  PURPLE: '#234C6A', // Medium-dark blue as primary
-  PRIMARY: '#1B3C53', // Dark blue
-  SECONDARY: '#E3E3E3', // Light gray
-  PRICE_ERROR: '#E57373',
-  WARNING_LIGHT: '#FFF3E0',
-  ERROR_LIGHT: '#FFEBEE',
-  SUCCESS_LIGHT: '#E8F5E9',
-  DARK_PURPLE: '#1B3C53', // Dark blue
-  DARK_PURPLE_2: '#234C6A', // Medium-dark blue
-  LIGHT_PURPLE: '#456882', // Medium blue
-  INCOME_PIE: '#81C784', // Success green
-  EXPENSE_PIE: '#E57373', // Error red
+  WARNING: '#E5A854',
+  ERROR: '#D45D5D',
+  SUCCESS: '#5BA56B',
+  PURPLE: '#1E1E24',
+  PRIMARY: '#1E1E24',
+  SECONDARY: '#C6A56B',
+  PRICE_ERROR: '#D45D5D',
+  WARNING_LIGHT: '#FDF8ED',
+  ERROR_LIGHT: '#FDF2F2',
+  SUCCESS_LIGHT: '#F0F9F1',
+  DARK_PURPLE: '#1E1E24',
+  DARK_PURPLE_2: '#2A2A30',
+  LIGHT_PURPLE: '#C6A56B',
+  INCOME_PIE: '#5BA56B',
+  EXPENSE_PIE: '#D45D5D',
 } as const;
 
 export interface ThemeColors {
@@ -61,50 +65,62 @@ export interface ThemeColors {
   INCOME_PIE: string;
   EXPENSE_PIE: string;
   LIGHT_TEXT: string;
+  ICON_COLOR: string;
+  ICON_MUTED: string;
+  HEADER_BACKGROUND: string;
+  HEADER_GRADIENT: readonly [string, string, string, string];
 }
 
 const lightTheme: ThemeColors = {
   ...common,
-  BACKGROUND: '#E3E3E3', // Light gray background
-  TEXT: '#1B3C53', // Dark blue text
-  SHADOW: 'rgba(27, 60, 83, 0.15)', // Dark blue shadow
-  SHADOW_OPACITY: 0.15,
-  INPUT_BACKGROUND: '#FFFFFF', // White inputs
-  PLACEHOLDER_COLOR: 'rgba(27, 60, 83, 0.5)',
-  BORDER_COLOR: '#456882', // Medium blue borders
-  NAVBAR_BACKGROUND: '#1B3C53', // Dark blue navbar
-  NAVBAR_ACTIVE_BACKGROUND: '#234C6A', // Medium-dark blue active
-  NAVBAR_ACTIVE_TEXT: '#E3E3E3', // Light gray text on active
-  NAVBAR_INACTIVE_TEXT: '#456882', // Medium blue inactive
-  INNER_SHADOw: 'rgba(27, 60, 83, 0.1)',
-  CARD_SHADOW: 'rgba(35, 76, 106, 0.2)',
-  DARK_BG: COLORS.primary, // #1B3C53
-  DARK_TEXT: COLORS.secondary, // #E3E3E3
-  BACKGROUND_LIGHT: '#FFFFFF', // White cards
-  LIST_BG: '#FFFFFF', // White list background
-  LIGHT_TEXT: '#456882', // Medium blue for secondary text
+  BACKGROUND: '#F0F2F5',
+  TEXT: '#0F1114',
+  SHADOW: 'rgba(30, 30, 36, 0.08)',
+  SHADOW_OPACITY: 0.08,
+  INPUT_BACKGROUND: '#FFFFFF',
+  PLACEHOLDER_COLOR: 'rgba(26, 26, 30, 0.5)',
+  BORDER_COLOR: '#DDE1E6',
+  NAVBAR_BACKGROUND: '#FFFFFF',
+  NAVBAR_ACTIVE_BACKGROUND: '#C6A56B',
+  NAVBAR_ACTIVE_TEXT: '#1A1A1E',
+  NAVBAR_INACTIVE_TEXT: '#9A9AA0',
+  INNER_SHADOw: 'rgba(30, 30, 36, 0.04)',
+  CARD_SHADOW: 'rgba(30, 30, 36, 0.06)',
+  DARK_BG: COLORS.primary,
+  DARK_TEXT: '#C6A56B',
+  BACKGROUND_LIGHT: '#FFFFFF',
+  LIST_BG: '#FFFFFF',
+  LIGHT_TEXT: '#6B7280',
+  ICON_COLOR: '#1E1E24',
+  ICON_MUTED: '#6B7280',
+  HEADER_BACKGROUND: '#3D3D45',
+  HEADER_GRADIENT: ['#3D3D45', '#484850', '#53535B', '#5E5E66'] as const,
 };
 
 const darkTheme: ThemeColors = {
   ...common,
-  BACKGROUND: '#152532', // Darker version of #1B3C53
-  TEXT: '#E3E3E3', // Light gray text
-  SHADOW: 'rgba(0, 0, 0, 0.3)',
-  SHADOW_OPACITY: 0.25,
-  INPUT_BACKGROUND: '#1B3C53', // Dark blue inputs
-  PLACEHOLDER_COLOR: 'rgba(227, 227, 227, 0.5)',
-  BORDER_COLOR: '#456882', // Medium blue borders
-  NAVBAR_BACKGROUND: '#1B3C53', // Dark blue navbar
-  NAVBAR_ACTIVE_BACKGROUND: '#234C6A', // Medium-dark blue active
-  NAVBAR_ACTIVE_TEXT: '#E3E3E3', // Light gray text on active
-  NAVBAR_INACTIVE_TEXT: '#456882', // Medium blue inactive
-  INNER_SHADOw: 'rgba(35, 76, 106, 0.2)',
+  BACKGROUND: '#1C1C20',
+  TEXT: '#F7F7F8',
+  SHADOW: 'rgba(0, 0, 0, 0.4)',
+  SHADOW_OPACITY: 0.4,
+  INPUT_BACKGROUND: '#2A2A30',
+  PLACEHOLDER_COLOR: 'rgba(247, 247, 248, 0.5)',
+  BORDER_COLOR: '#3A3A42',
+  NAVBAR_BACKGROUND: '#2A2A30',
+  NAVBAR_ACTIVE_BACKGROUND: '#C6A56B',
+  NAVBAR_ACTIVE_TEXT: '#1A1A1E',
+  NAVBAR_INACTIVE_TEXT: '#B8B8C0',
+  INNER_SHADOw: 'rgba(198, 165, 107, 0.15)',
   CARD_SHADOW: 'rgba(0, 0, 0, 0.3)',
-  DARK_BG: COLORS.secondary, // #E3E3E3
-  DARK_TEXT: COLORS.primary, // #1B3C53
-  BACKGROUND_LIGHT: '#1B3C53', // Dark blue cards
-  LIST_BG: '#1B3C53', // Dark blue list
-  LIGHT_TEXT: '#456882', // Medium blue for secondary text
+  DARK_BG: COLORS.accent,
+  DARK_TEXT: '#1A1A1E',
+  BACKGROUND_LIGHT: '#242428',
+  LIST_BG: '#242428',
+  LIGHT_TEXT: '#B8B8C0',
+  ICON_COLOR: '#C6A56B',
+  ICON_MUTED: '#B8B8C0',
+  HEADER_BACKGROUND: '#0F1012',
+  HEADER_GRADIENT: ['#0A0B0D', '#0F1012', '#16161A', '#1C1C20'] as const,
 };
 
 interface UseThemeReturn {

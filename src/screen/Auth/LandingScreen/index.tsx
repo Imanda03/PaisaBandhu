@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { useTheme } from '../../../utils/colors';
 import ButtonIconComponent from '../../../components/core/ButtonIcon';
@@ -12,9 +12,9 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 
-const LandingScreen = ({ navigation }: any) => {
+const LandingScreen = React.memo(({ navigation }: any) => {
     const { theme } = useTheme();
-    const styles = createStyles(theme);
+    const styles = useMemo(() => createStyles(theme), [theme]);
 
     // Animation values
     const imageOpacity = useSharedValue(0);
@@ -84,6 +84,8 @@ const LandingScreen = ({ navigation }: any) => {
         transform: [{ translateY: buttonTranslateY.value }],
     }));
 
+    const handleGetStartedPress = useCallback(() => navigation.navigate('OtpFlow'), [navigation]);
+
     return (
         <View style={styles.root}>
             <Header />
@@ -113,13 +115,8 @@ const LandingScreen = ({ navigation }: any) => {
 
                     <Animated.View style={[styles.ButtonContainer, animatedButtonStyle]}>
                         <ButtonIconComponent
-                            title="Login"
-                            onPress={() => navigation.navigate('SignIn')}
-                            iconName="login"
-                        />
-                        <ButtonIconComponent
-                            title="Register"
-                            onPress={() => navigation.navigate('SignUp')}
+                            title="Get Started"
+                            onPress={handleGetStartedPress}
                             iconName="arrow-with-circle-right"
                         />
                     </Animated.View>
@@ -127,6 +124,7 @@ const LandingScreen = ({ navigation }: any) => {
             </View>
         </View>
     );
-};
+});
 
+LandingScreen.displayName = 'LandingScreen';
 export default LandingScreen;

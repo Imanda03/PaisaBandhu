@@ -2,7 +2,7 @@ import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../utils/colors';
 
 export const createStyles = () => {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
 
     return StyleSheet.create({
         transactionItem: {
@@ -77,18 +77,18 @@ export const createStyles = () => {
             lineHeight: 20,
         },
         categoryBadge: {
-            backgroundColor: theme.PURPLE + '20',
+            backgroundColor: isDark ? theme.SECONDARY + '30' : theme.PURPLE + '20',
             borderRadius: 6,
             paddingHorizontal: 7,
             paddingVertical: 3,
             marginRight: 8,
             borderWidth: 0.5,
-            borderColor: theme.PURPLE + '35',
+            borderColor: isDark ? theme.SECONDARY + '50' : theme.PURPLE + '35',
         },
         categoryText: {
             fontSize: 10,
             fontWeight: '700',
-            color: theme.PURPLE,
+            color: isDark ? theme.SECONDARY : theme.PURPLE,
             letterSpacing: 0.5,
             textTransform: 'uppercase',
         },

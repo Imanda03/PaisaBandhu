@@ -1,4 +1,5 @@
 import { useTheme } from '../../../../utils/colors';
+import { useMemo } from 'react';
 import {
   AnimatedBarChart,
   BarChartData,
@@ -19,9 +20,11 @@ import {
   AnimatedRadialChart,
   RadialChartData,
 } from '../../../../components/AnimatedChart/RadialProgrssChart';
-import { ScrollView, View, Text, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, ActivityIndicator, StatusBar, Platform, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons, IoniconsIcon } from '../../../../utils/Icons';
 import { createStyles } from './styles';
-import AuthHeader from '../../../../components/core/AuthHeader';
 import {
   AnimatedSpendingTracker,
   SpendingData,
@@ -44,13 +47,16 @@ import {
 } from '../../../../components/AnimatedChart/FitnessProgressChart';
 import { useFetchTransaction } from '../../../../ReactQueryHook/transaction.hook';
 import { useFetchFinancialBook } from '../../../../ReactQueryHook/book.hook';
-import { useMemo } from 'react';
 import { FriendExpenses } from './RenderExpenseItem';
 import { useFetchFriend } from '../../../../ReactQueryHook/friend.hook';
 
+const STATUS_BAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
+
 export const WeeklyChart = ({ route }: any) => {
   const { theme } = useTheme();
-  const styles = createStyles();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { bookId } = route?.params || {};
 
   // Fetch book and transaction data
@@ -313,16 +319,37 @@ export const WeeklyChart = ({ route }: any) => {
     };
   }, [transactionsData, friendsData]);
 
+  const headerBg = theme.HEADER_BACKGROUND ?? theme.PURPLE;
+  const headerPaddingTop = Platform.OS === 'ios' ? insets.top + 16 : STATUS_BAR_HEIGHT + 16;
+
   return (
     <View style={styles.root}>
-      <AuthHeader title={`${currentBook?.title || 'Transaction'}'s Chart`} />
-      <ScrollView
-        style={[styles.container]}
-        showsVerticalScrollIndicator={false}
-      >
+      <StatusBar barStyle="light-content" backgroundColor={headerBg} />
+      <View style={[styles.headerContainer, { paddingTop: headerPaddingTop }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerTitleContainer}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <IoniconsIcon name="arrow-back" color={theme.SECONDARY} size={24} />
+            </TouchableOpacity>
+            <MaterialIcons name="analytics" size={28} color={theme.SECONDARY} />
+            <Text style={styles.headerText}>
+              {currentBook?.title || 'Transaction'}'s Chart
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.content}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.PURPLE} />
+            <ActivityIndicator size="large" color={theme.ICON_COLOR} />
             <Text style={[styles.loadingText, { color: theme.SECONDARY }]}>
               Loading chart data...
             </Text>
@@ -395,7 +422,8 @@ export const WeeklyChart = ({ route }: any) => {
               )}
           </>
         )}
-      </ScrollView>
+        </ScrollView>
+      </View>
     </View>
   );
 };

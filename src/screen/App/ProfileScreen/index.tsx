@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
-  Platform,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -16,7 +16,6 @@ import Animated, {
   withSpring,
   withDelay,
   FadeInDown,
-  FadeIn,
 } from 'react-native-reanimated';
 import { FeatherIcon, IoniconsIcon, MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
@@ -26,6 +25,7 @@ import {
   useUserLogout,
 } from '../../../ReactQueryHook/auth.hook';
 import EditInformation from '../../../components/EditInformation';
+import TermsModal from '../../../components/TermsModal';
 import { useNavigation } from '@react-navigation/native';
 import { useFetchChallenges } from '../../../ReactQueryHook/challenge.hook';
 import { useFetchAchievements } from '../../../ReactQueryHook/achievement.hook';
@@ -41,6 +41,7 @@ type InfoRowProps = {
   value?: string;
   index: number;
   onPress?: () => void;
+  styles: ReturnType<typeof createStyles>;
 };
 
 const InfoRow: React.FC<InfoRowProps> = ({
@@ -49,9 +50,8 @@ const InfoRow: React.FC<InfoRowProps> = ({
   value,
   index,
   onPress,
+  styles,
 }) => {
-  const styles = createStyles();
-  const { theme } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -100,9 +100,11 @@ const InfoRow: React.FC<InfoRowProps> = ({
 };
 
 const ProfileScreen: React.FC = () => {
-  const styles = createStyles();
   const { isDark, setTheme, theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [termsModalVisible, setTermsModalVisible] = useState<boolean>(false);
   const navigation: any = useNavigation();
 
   const { mutate: UserLogout } = useUserLogout();
@@ -115,14 +117,14 @@ const ProfileScreen: React.FC = () => {
 
   // Calculate challenge statistics
   const challengeStats = React.useMemo(() => {
-    if (!allChallenges) return { completed: 0, failed: 0 };
+    if (!allChallenges) return { completed: 0, cancelled: 0 };
 
     const completed = allChallenges.filter(
       c => c.status === 'completed',
     ).length;
-    const failed = allChallenges.filter(c => c.status === 'failed').length;
+    const cancelled = allChallenges.filter(c => c.status === 'cancelled').length;
 
-    return { completed, failed };
+    return { completed, cancelled };
   }, [allChallenges]);
 
   const achievementCount = achievements?.totalUnlocked || 0;
@@ -130,46 +132,30 @@ const ProfileScreen: React.FC = () => {
   const loadingStats = loadingAchievements || loadingReferralStats;
 
   const avatarScale = useSharedValue(0);
-  const headerOpacity = useSharedValue(0);
 
   useEffect(() => {
     avatarScale.value = withDelay(100, withSpring(1, { damping: 12 }));
-    headerOpacity.value = withTiming(1, { duration: 600 });
   }, []);
 
   const avatarAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: avatarScale.value }],
   }));
 
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-    transform: [{ translateY: (1 - headerOpacity.value) * -20 }],
-  }));
-
-  const handleThemeToggle = () => {
+  const handleThemeToggle = useCallback(() => {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-  };
+  }, [setTheme]);
 
-  const handleLogout = () => {
-    UserLogout();
-  };
+  const handleLogout = useCallback(() => UserLogout(), [UserLogout]);
 
   return (
     <View style={styles.root}>
       <StatusBar
         translucent
         backgroundColor="transparent"
-        barStyle="light-content"
+        barStyle={isDark ? 'light-content' : 'dark-content'}
       />
-      {/* Header Section */}
-      <AnimatedView style={[styles.headerSection, headerAnimatedStyle]}>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerText}>Profile</Text>
-        </View>
-      </AnimatedView>
-
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -177,7 +163,6 @@ const ProfileScreen: React.FC = () => {
             onRefresh={refetch}
             colors={[theme.SECONDARY]}
             tintColor={theme.SECONDARY}
-            progressBackgroundColor={theme.PURPLE}
           />
         }
       >
@@ -212,7 +197,7 @@ const ProfileScreen: React.FC = () => {
               style={styles.editButton}
               activeOpacity={0.7}
             >
-              <FeatherIcon name="edit-3" size={18} color={theme.PURPLE} />
+              <FeatherIcon name="edit-3" size={18} color={theme.ICON_COLOR} />
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </AnimatedView>
@@ -227,7 +212,7 @@ const ProfileScreen: React.FC = () => {
             <MaterialIcons
               name="person-outline"
               size={22}
-              color={theme.PURPLE}
+              color={theme.ICON_COLOR}
             />
             <Text style={styles.cardTitle}>Personal Information</Text>
           </View>
@@ -235,27 +220,30 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.infoSection}>
             <InfoRow
               icon={
-                <MaterialIcons name="badge" size={20} color={theme.PURPLE} />
+                <MaterialIcons name="badge" size={20} color={theme.ICON_COLOR} />
               }
               label="Full Name"
               value={UserDetails?.fullName}
               index={0}
+              styles={styles}
             />
             <InfoRow
               icon={
-                <MaterialIcons name="phone" size={20} color={theme.PURPLE} />
+                <MaterialIcons name="phone" size={20} color={theme.ICON_COLOR} />
               }
               label="Phone Number"
               value={UserDetails?.phoneNumber}
               index={1}
+              styles={styles}
             />
             <InfoRow
               icon={
-                <MaterialIcons name="email" size={20} color={theme.PURPLE} />
+                <MaterialIcons name="email" size={20} color={theme.ICON_COLOR} />
               }
               label="Email Address"
               value={UserDetails?.email}
               index={2}
+              styles={styles}
             />
           </View>
         </AnimatedView>
@@ -266,7 +254,7 @@ const ProfileScreen: React.FC = () => {
           style={styles.card}
         >
           <View style={styles.cardHeader}>
-            <MaterialIcons name="emoji-events" size={22} color={theme.PURPLE} />
+            <MaterialIcons name="emoji-events" size={22} color={theme.ICON_COLOR} />
             <Text style={styles.cardTitle}>Challenge Statistics</Text>
           </View>
 
@@ -300,7 +288,7 @@ const ProfileScreen: React.FC = () => {
                 <MaterialIcons name="cancel" size={24} color={theme.ERROR} />
               </View>
               <View style={styles.statContent}>
-                <Text style={styles.statValue}>{challengeStats.failed}</Text>
+                <Text style={styles.statValue}>{challengeStats.cancelled}</Text>
                 <Text style={styles.statLabel}>Failed</Text>
               </View>
             </View>
@@ -313,7 +301,7 @@ const ProfileScreen: React.FC = () => {
           style={styles.card}
         >
           <View style={styles.cardHeader}>
-            <MaterialIcons name="star-outline" size={22} color={theme.PURPLE} />
+            <MaterialIcons name="star-outline" size={22} color={theme.ICON_COLOR} />
             <Text style={styles.cardTitle}>Features</Text>
           </View>
 
@@ -323,7 +311,7 @@ const ProfileScreen: React.FC = () => {
                 <MaterialIcons
                   name="emoji-events"
                   size={20}
-                  color={theme.PURPLE}
+                  color={theme.ICON_COLOR}
                 />
               }
               label="Achievements"
@@ -332,31 +320,33 @@ const ProfileScreen: React.FC = () => {
               }
               index={3}
               onPress={() => navigation.navigate('Achievements')}
+              styles={styles}
             />
             <InfoRow
               icon={
-                <IoniconsIcon name="medal" size={20} color={theme.PURPLE} />
+                <IoniconsIcon name="medal" size={20} color={theme.ICON_COLOR} />
               }
               label="Challenges"
               value="View challenges"
               index={4}
               onPress={() => {
-                // Navigate to Challenges tab - ProfileScreen is already in Tabs navigator
                 navigation.navigate('Challenges');
               }}
+              styles={styles}
             />
             <InfoRow
               icon={
                 <MaterialIcons
                   name="card-giftcard"
                   size={20}
-                  color={theme.PURPLE}
+                  color={theme.ICON_COLOR}
                 />
               }
               label="Referrals"
               value={loadingStats ? 'Loading...' : `${referralCount} referrals`}
               index={5}
               onPress={() => navigation.navigate('Referral')}
+              styles={styles}
             />
           </View>
         </AnimatedView>
@@ -367,7 +357,7 @@ const ProfileScreen: React.FC = () => {
           style={styles.card}
         >
           <View style={styles.cardHeader}>
-            <MaterialIcons name="settings" size={22} color={theme.PURPLE} />
+            <MaterialIcons name="settings" size={22} color={theme.ICON_COLOR} />
             <Text style={styles.cardTitle}>Settings</Text>
           </View>
 
@@ -403,12 +393,101 @@ const ProfileScreen: React.FC = () => {
                   false: theme.BORDER_COLOR + '50',
                   true: theme.PURPLE + '80',
                 }}
-                thumbColor={isDark ? theme.PURPLE : theme.SECONDARY}
+                thumbColor={ theme.SECONDARY}
                 ios_backgroundColor={theme.BORDER_COLOR + '50'}
               />
             </AnimatedView>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Permissions')}
+              style={styles.settingRow}
+              activeOpacity={0.8}
+            >
+              <View style={styles.settingLeft}>
+                <View
+                  style={[
+                    styles.settingIconContainer,
+                    { backgroundColor: theme.SUCCESS_LIGHT },
+                  ]}
+                >
+                  <FeatherIcon
+                    name="shield"
+                    size={20}
+                    color={theme.SUCCESS}
+                  />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={styles.settingLabel}>App permissions</Text>
+                  <Text style={styles.settingDescription}>
+                    Notifications, storage & more
+                  </Text>
+                </View>
+              </View>
+              <FeatherIcon name="chevron-right" size={22} color={theme.LIGHT_TEXT} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setTermsModalVisible(true)}
+              style={styles.settingRow}
+              activeOpacity={0.8}
+            >
+              <View style={styles.settingLeft}>
+                <View
+                  style={[
+                    styles.settingIconContainer,
+                    { backgroundColor: theme.SECONDARY + '25' },
+                  ]}
+                >
+                  <FeatherIcon
+                    name="file-text"
+                    size={20}
+                    color={theme.SECONDARY}
+                  />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={styles.settingLabel}>Terms and Conditions</Text>
+                  <Text style={styles.settingDescription}>
+                    App terms & conditions
+                  </Text>
+                </View>
+              </View>
+              <FeatherIcon name="chevron-right" size={22} color={theme.LIGHT_TEXT} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('privacy-policies')}
+              style={styles.settingRow}
+              activeOpacity={0.8}
+            >
+              <View style={styles.settingLeft}>
+                <View
+                  style={[
+                    styles.settingIconContainer,
+                    { backgroundColor: theme.SECONDARY + '25' },
+                  ]}
+                >
+                  <FeatherIcon
+                    name="shield"
+                    size={20}
+                    color={theme.SECONDARY}
+                  />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={styles.settingLabel}>Privacy Policy</Text>
+                  <Text style={styles.settingDescription}>
+                    How we protect your data
+                  </Text>
+                </View>
+              </View>
+              <FeatherIcon name="chevron-right" size={22} color={theme.LIGHT_TEXT} />
+            </TouchableOpacity>
           </View>
         </AnimatedView>
+
+        <TermsModal
+          visible={termsModalVisible}
+          onClose={() => setTermsModalVisible(false)}
+        />
 
         {/* Logout Button */}
         <AnimatedTouchableOpacity

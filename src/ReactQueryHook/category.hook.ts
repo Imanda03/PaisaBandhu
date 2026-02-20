@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useToast } from "../context/ToastContext";
 import { AxiosError } from "axios";
 import { ApiError, CategoryFormData } from "../utils/types";
-import { createCategory, getCategory } from "../services/CategoryService";
+import { createCategory, getCategory, deleteCategory } from "../services/CategoryService";
 
 
 export const useCreateCategory = () => {
@@ -32,6 +32,25 @@ export const useCreateCategory = () => {
                         'Category created failed. Please try again.';
                     showToast(errorMessage, 'error');
                 }
+            },
+        }
+    );
+};
+
+export const useDeleteCategory = () => {
+    const queryClient = useQueryClient();
+    const { showToast } = useToast();
+
+    return useMutation<any, AxiosError<ApiError>, string>(
+        async (id) => deleteCategory(id),
+        {
+            onSuccess: async () => {
+                showToast('Category deleted successfully', 'success');
+                await queryClient.invalidateQueries({ queryKey: ['Category'], exact: true });
+            },
+            onError: (error: AxiosError<ApiError>) => {
+                const msg = error.response?.data?.message || 'Failed to delete category';
+                showToast(msg, 'error');
             },
         }
     );

@@ -1,20 +1,19 @@
-import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../../utils/colors';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { scale, verticalScale, fontSize, spacing } from '../../../utils/responsive';
 
 export const createStyles = () => {
   const { theme } = useTheme();
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerContainer: {
       paddingTop: Platform.OS === 'ios' ? '15%' : '10%',
-      paddingHorizontal: 20,
-      paddingBottom: 20,
-      backgroundColor: theme.PURPLE,
+      paddingHorizontal: spacing(20),
+      paddingBottom: verticalScale(20),
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerContent: {
       flexDirection: 'row',
@@ -84,9 +83,9 @@ export const createStyles = () => {
     content: {
       flex: 1,
       backgroundColor: theme.BACKGROUND,
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      paddingTop: 24,
+      borderTopLeftRadius: scale(32),
+      borderTopRightRadius: scale(32),
+      paddingTop: verticalScale(24),
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -113,8 +112,8 @@ export const createStyles = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingVertical: SCREEN_WIDTH * 0.3,
-      paddingHorizontal: 40,
+      paddingVertical: verticalScale(100),
+      paddingHorizontal: spacing(40),
     },
     emptyIconContainer: {
       width: 140,
@@ -152,6 +151,10 @@ export const createStyles = () => {
       lineHeight: 22,
       opacity: 0.7,
       marginTop: 8,
+    },
+    modalContent: {
+      padding: 20,
+      gap: 12,
     },
     input: {
       borderWidth: 1.5,

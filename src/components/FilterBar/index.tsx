@@ -15,8 +15,9 @@ export const FilterBar = ({
     setShowToPicker,
     style,
 }: any) => {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
     const styles = createStyles();
+    const selectedIconColor = isDark ? '#FFFFFF' : theme.SECONDARY;
     const [showDateFilters, setShowDateFilters] = useState(false);
 
 
@@ -83,12 +84,12 @@ export const FilterBar = ({
                         <MaterialIcons
                             name="list"
                             size={20}
-                            color={filter === 'all' ? theme.SECONDARY : theme.TEXT}
+                            color={filter === 'all' ? selectedIconColor : theme.TEXT}
                         />
                         <Text
                             style={[
                                 styles.buttonText,
-                                { color: filter === 'all' ? theme.SECONDARY : theme.TEXT },
+                                { color: filter === 'all' ? selectedIconColor : theme.TEXT },
                             ]}>
                             All
                         </Text>
@@ -105,12 +106,12 @@ export const FilterBar = ({
                         <MaterialIcons
                             name="trending-up"
                             size={20}
-                            color={filter === 'income' ? theme.SECONDARY : theme.TEXT}
+                            color={filter === 'income' ? selectedIconColor : theme.TEXT}
                         />
                         <Text
                             style={[
                                 styles.buttonText,
-                                { color: filter === 'income' ? theme.SECONDARY : theme.TEXT },
+                                { color: filter === 'income' ? selectedIconColor : theme.TEXT },
                             ]}>
                             Income
                         </Text>
@@ -127,12 +128,12 @@ export const FilterBar = ({
                         <MaterialIcons
                             name="trending-down"
                             size={20}
-                            color={filter === 'expense' ? theme.SECONDARY : theme.TEXT}
+                            color={filter === 'expense' ? selectedIconColor : theme.TEXT}
                         />
                         <Text
                             style={[
                                 styles.buttonText,
-                                { color: filter === 'expense' ? theme.SECONDARY : theme.TEXT },
+                                { color: filter === 'expense' ? selectedIconColor : theme.TEXT },
                             ]}>
                             Expense
                         </Text>

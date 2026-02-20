@@ -2,12 +2,14 @@ import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   Animated,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../../../../utils/colors';
+import { scale, fontSize, spacing } from '../../../../utils/responsive';
+import { MaterialIcons } from '../../../../utils/Icons';
 
 interface Expense {
   title: string;
@@ -233,16 +235,14 @@ const FriendCard: React.FC<{
 
         {/* Expenses List */}
         <View style={styles.expensesList}>
-          <FlatList
-            data={item.expenses}
-            renderItem={({ item: expense, index: idx }) => (
+          {item.expenses.map((expense, idx) => (
+            <View key={`expense-${index}-${idx}`}>
               <ExpenseItem item={expense} index={idx} theme={theme} />
-            )}
-            keyExtractor={(expense, idx) => `expense-${index}-${idx}`}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-            ItemSeparatorComponent={() => <View style={{ height: 6 }} />}
-          />
+              {idx < item.expenses.length - 1 && (
+                <View style={{ height: 6 }} />
+              )}
+            </View>
+          ))}
         </View>
       </View>
     </Animated.View>
@@ -275,24 +275,53 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
 
   const peopleCount = participantCount || data.length;
 
+  const isDark = theme.HEADER_BACKGROUND === '#0F1012';
+  const cardBorder = isDark ? 'rgba(198, 165, 107, 0.15)' : 'rgba(198, 165, 107, 0.2)';
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.TEXT }]}>Group Split</Text>
+        <View style={styles.headerBadge}>
+          <MaterialIcons name="group" size={22} color={theme.SECONDARY} />
+          <Text style={[styles.title, { color: theme.TEXT }]}>Group Split</Text>
+        </View>
         <Text style={[styles.subtitle, { color: theme.LIGHT_TEXT }]}>
           {peopleCount} {peopleCount === 1 ? 'person' : 'people'} • Tap to view
           who owes whom
         </Text>
       </View>
 
-      <View style={[styles.summaryCard, { backgroundColor: theme.LIST_BG }]}>
+      <View
+        style={[
+          styles.summaryCard,
+          {
+            backgroundColor: theme.BACKGROUND_LIGHT,
+            borderWidth: 1,
+            borderColor: cardBorder,
+            ...Platform.select({
+              ios: {
+                shadowColor: isDark ? '#000' : theme.PURPLE,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: isDark ? 0.3 : 0.1,
+                shadowRadius: 16,
+              },
+              android: { elevation: 8 },
+            }),
+          },
+        ]}
+      >
         <View style={styles.summaryRow}>
           <View
             style={[
               styles.statPill,
-              { backgroundColor: theme.BACKGROUND_LIGHT },
+              {
+                backgroundColor: theme.SECONDARY + '18',
+                borderWidth: 1,
+                borderColor: theme.SECONDARY + '30',
+              },
             ]}
           >
+            <MaterialIcons name="account-balance-wallet" size={18} color={theme.SECONDARY} />
             <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
               Group total
             </Text>
@@ -304,9 +333,14 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
           <View
             style={[
               styles.statPill,
-              { backgroundColor: theme.BACKGROUND_LIGHT },
+              {
+                backgroundColor: theme.SECONDARY + '18',
+                borderWidth: 1,
+                borderColor: theme.SECONDARY + '30',
+              },
             ]}
           >
+            <MaterialIcons name="person" size={18} color={theme.SECONDARY} />
             <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
               Per person
             </Text>
@@ -318,9 +352,15 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
           <View
             style={[
               styles.statPill,
-              { backgroundColor: theme.BACKGROUND_LIGHT, marginRight: 0 },
+              styles.statPillLast,
+              {
+                backgroundColor: theme.SECONDARY + '18',
+                borderWidth: 1,
+                borderColor: theme.SECONDARY + '30',
+              },
             ]}
           >
+            <MaterialIcons name="groups" size={18} color={theme.SECONDARY} />
             <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
               People
             </Text>
@@ -333,8 +373,27 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => setShowDetails(prev => !prev)}
-          style={[styles.toggleButton, { backgroundColor: theme.PURPLE }]}
+          style={[
+            styles.toggleButton,
+            {
+              backgroundColor: theme.SECONDARY,
+              ...Platform.select({
+                ios: {
+                  shadowColor: theme.SECONDARY,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 10,
+                },
+                android: { elevation: 6 },
+              }),
+            },
+          ]}
         >
+          <MaterialIcons
+            name={showDetails ? 'expand-less' : 'expand-more'}
+            size={22}
+            color="#1A1A1E"
+          />
           <Text style={styles.toggleButtonText}>
             {showDetails ? 'Hide split details' : 'View split details'}
           </Text>
@@ -342,48 +401,63 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
 
         {showDetails && (
           <View style={styles.settlementContainer}>
-            <Text style={[styles.settlementTitle, { color: theme.TEXT }]}>
-              Settlement plan
-            </Text>
+            <View style={styles.settlementHeader}>
+              <MaterialIcons name="swap-horiz" size={18} color={theme.SECONDARY} />
+              <Text style={[styles.settlementTitle, { color: theme.TEXT }]}>
+                Settlement plan
+              </Text>
+            </View>
 
             {settlements.length === 0 ? (
-              <Text
-                style={[styles.settlementEmpty, { color: theme.LIGHT_TEXT }]}
-              >
-                Everyone is balanced for now.
-              </Text>
+              <View style={styles.settlementEmptyCard}>
+                <MaterialIcons name="check-circle" size={36} color={theme.SUCCESS} />
+                <Text
+                  style={[styles.settlementEmpty, { color: theme.LIGHT_TEXT }]}
+                >
+                  Everyone is balanced for now.
+                </Text>
+              </View>
             ) : (
               settlements.map((settlement, idx) => (
                 <View
                   key={`${settlement.from}-${settlement.to}-${idx}`}
-                  style={styles.settlementRow}
+                  style={[
+                    styles.settlementRow,
+                    {
+                      borderBottomColor: theme.BORDER_COLOR + '40',
+                    },
+                  ]}
                 >
                   <View style={styles.settlementNames}>
                     <Text
                       style={[styles.settlementName, { color: theme.TEXT }]}
+                      numberOfLines={1}
                     >
                       {settlement.from}
                     </Text>
-                    <Text
-                      style={[
-                        styles.settlementArrow,
-                        { color: theme.LIGHT_TEXT },
-                      ]}
-                    ></Text>
+                    <MaterialIcons
+                      name="arrow-forward"
+                      size={16}
+                      color={theme.SECONDARY}
+                      style={{ marginHorizontal: 8 }}
+                    />
                     <Text
                       style={[styles.settlementName, { color: theme.TEXT }]}
+                      numberOfLines={1}
                     >
                       {settlement.to}
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.settlementAmount,
-                      { color: theme.EXPENSE_PIE },
-                    ]}
-                  >
-                    ₹{formatAmount(settlement.amount)}
-                  </Text>
+                  <View style={[styles.settlementAmountBadge, { backgroundColor: theme.ERROR + '20' }]}>
+                    <Text
+                      style={[
+                        styles.settlementAmount,
+                        { color: theme.ERROR },
+                      ]}
+                    >
+                      ₹{formatAmount(settlement.amount)}
+                    </Text>
+                  </View>
                 </View>
               ))
             )}
@@ -391,26 +465,27 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
         )}
       </View>
 
-      <FlatList
-        data={data}
-        renderItem={({ item, index }) => (
-          <FriendCard
-            item={item}
-            index={index}
-            theme={theme}
-            avatarColor={getAvatarColor(index)}
-          />
-        )}
-        keyExtractor={(item, index) => `friend-${index}`}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-        ListEmptyComponent={() => (
+      <View style={styles.listContent}>
+        {data.length === 0 ? (
           <Text style={[styles.settlementEmpty, { color: theme.LIGHT_TEXT }]}>
             Add a friend and record a shared expense to see the split.
           </Text>
+        ) : (
+          data.map((item, index) => (
+            <View key={`friend-${index}`}>
+              <FriendCard
+                item={item}
+                index={index}
+                theme={theme}
+                avatarColor={getAvatarColor(index)}
+              />
+              {index < data.length - 1 && (
+                <View style={{ height: 12 }} />
+              )}
+            </View>
+          ))
         )}
-      />
+      </View>
     </View>
   );
 };
@@ -418,132 +493,172 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: spacing(10),
   },
   header: {
-    marginBottom: 16,
+    marginBottom: spacing(20),
+  },
+  headerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(10),
+    marginBottom: spacing(6),
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    marginBottom: 4,
+    fontSize: fontSize(22),
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: fontSize(14),
     fontWeight: '500',
+    opacity: 0.9,
   },
   summaryCard: {
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
+    borderRadius: scale(20),
+    padding: spacing(20),
+    marginBottom: spacing(20),
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: spacing(14),
   },
   statPill: {
     flex: 1,
-    padding: 12,
-    borderRadius: 12,
-    marginRight: 10,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-    textTransform: 'uppercase',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 4,
-    letterSpacing: 0.3,
-  },
-  toggleButton: {
-    marginTop: 6,
-    borderRadius: 12,
-    paddingVertical: 10,
+    padding: spacing(14),
+    borderRadius: scale(16),
+    marginRight: spacing(10),
+    gap: spacing(6),
     alignItems: 'center',
   },
-  toggleButtonText: {
-    color: '#ffffff',
+  statPillLast: {
+    marginRight: 0,
+  },
+  statLabel: {
+    fontSize: fontSize(11),
     fontWeight: '700',
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  statValue: {
+    fontSize: fontSize(18),
+    fontWeight: '800',
+    marginTop: spacing(2),
+    letterSpacing: 0.3,
+    textAlign: 'center',
+  },
+  toggleButton: {
+    marginTop: spacing(8),
+    borderRadius: scale(14),
+    paddingVertical: spacing(14),
+    paddingHorizontal: spacing(18),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing(10),
+  },
+  toggleButtonText: {
+    color: '#1A1A1E',
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    fontSize: fontSize(15),
   },
   settlementContainer: {
-    marginTop: 12,
-    paddingTop: 4,
+    marginTop: spacing(16),
+    paddingTop: spacing(12),
+  },
+  settlementHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(8),
+    marginBottom: spacing(12),
   },
   settlementTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 6,
-    letterSpacing: 0.2,
+    fontSize: fontSize(15),
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  settlementEmptyCard: {
+    alignItems: 'center',
+    paddingVertical: spacing(24),
+    paddingHorizontal: spacing(20),
+    borderRadius: scale(14),
+    backgroundColor: 'rgba(91, 165, 107, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(91, 165, 107, 0.2)',
   },
   settlementEmpty: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: fontSize(14),
+    fontWeight: '600',
+    marginTop: spacing(10),
+    textAlign: 'center',
   },
   settlementRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: spacing(12),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   settlementNames: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 10,
+    marginRight: spacing(12),
   },
   settlementName: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: fontSize(14),
+    fontWeight: '700',
+    flex: 1,
   },
-  settlementArrow: {
-    fontSize: 12,
-    marginHorizontal: 8,
+  settlementAmountBadge: {
+    paddingHorizontal: spacing(12),
+    paddingVertical: spacing(6),
+    borderRadius: scale(10),
   },
   settlementAmount: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: fontSize(14),
+    fontWeight: '800',
   },
   listContent: {
-    paddingBottom: 16,
+    paddingBottom: spacing(24),
   },
   friendCard: {
-    borderRadius: 14,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    borderRadius: scale(20),
+    padding: spacing(18),
+    borderWidth: 1,
+    borderColor: 'rgba(198, 165, 107, 0.12)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 14,
+      },
+      android: { elevation: 6 },
+    }),
   },
   friendHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    paddingBottom: 12,
+    marginBottom: spacing(14),
+    paddingBottom: spacing(14),
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderBottomColor: 'rgba(198, 165, 107, 0.12)',
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: scale(48),
+    height: scale(48),
+    borderRadius: scale(24),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: spacing(12),
   },
   avatarText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: fontSize(17),
+    fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
@@ -551,71 +666,71 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   friendName: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
+    fontSize: fontSize(16),
+    fontWeight: '800',
+    marginBottom: spacing(2),
     letterSpacing: 0.2,
   },
   expenseCount: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: fontSize(12),
+    fontWeight: '600',
   },
   totalRight: {
     alignItems: 'flex-end',
   },
   totalLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: fontSize(10),
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
+    letterSpacing: 0.6,
+    marginBottom: spacing(2),
   },
   totalAmount: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: fontSize(16),
+    fontWeight: '800',
     letterSpacing: 0.3,
   },
   shareText: {
-    fontSize: 12,
+    fontSize: fontSize(12),
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: spacing(4),
   },
   netPill: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginTop: 6,
+    borderRadius: scale(12),
+    paddingHorizontal: spacing(12),
+    paddingVertical: spacing(8),
+    marginTop: spacing(8),
   },
   netText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: fontSize(12),
+    fontWeight: '800',
     letterSpacing: 0.2,
   },
   expensesList: {
-    marginTop: 0,
+    marginTop: spacing(8),
   },
   expenseCard: {
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: scale(12),
+    padding: spacing(12),
   },
   expenseRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   typeIndicator: {
-    width: 3,
-    height: 32,
+    width: 4,
+    height: 36,
     borderRadius: 2,
-    marginRight: 10,
+    marginRight: spacing(12),
   },
   expenseContent: {
     flex: 1,
-    marginRight: 8,
+    marginRight: spacing(10),
   },
   expenseTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: fontSize(14),
+    fontWeight: '700',
+    marginBottom: spacing(4),
     letterSpacing: 0.1,
   },
   expenseMeta: {
@@ -623,20 +738,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoryText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: fontSize(11),
+    fontWeight: '600',
   },
   dotSeparator: {
-    fontSize: 11,
-    marginHorizontal: 4,
+    fontSize: fontSize(11),
+    marginHorizontal: spacing(4),
   },
   dateText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: fontSize(11),
+    fontWeight: '600',
   },
   amountText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: fontSize(15),
+    fontWeight: '800',
     letterSpacing: 0.2,
   },
 });

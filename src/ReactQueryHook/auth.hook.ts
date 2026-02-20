@@ -1,144 +1,97 @@
 import { AxiosError } from "axios";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { ApiError, currentUserPayload, LoginData, userDataProps } from "../utils/types";
-import { currentUser, loginUser, logoutUser, registerUser, updateProfile } from "../services/AuthService";
+import { ApiError, currentUserPayload } from "../utils/types";
+import { currentUser, logoutUser, sendOtp, verifyOtp, completeProfile, updateProfile } from "../services/AuthService";
 import { useToast } from "../context/ToastContext";
-import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 
-export const useUserRegister = (setError: any) => {
-    const { showToast } = useToast();
-    const navigation: any = useNavigation()
-    return useMutation<any, AxiosError<ApiError>, userDataProps>(
-        async (registerData) => registerUser(registerData),
-        {
-            onSuccess: (response, variables) => {
-                showToast(response.message, 'success');
-                navigation.replace('SignIn');
-            },
-            onError: (error: AxiosError<ApiError>) => {
-                if (error?.response?.data?.errors) {
-                    if (error.response.data.errors?.length === 1) {
-                        showToast(error.response.data.errors?.[0]?.message, 'error');
-                    } else {
-                        showToast('Please check the form for errors', 'error');
-                    }
-                    const backendErrors = error.response.data.errors;
+const getErrorMessage = (error: AxiosError<ApiError>): string => {
+    const data = error?.response?.data;
+    if (data?.errors?.length) {
+        return data.errors[0].message || "Something went wrong";
+    }
+    return (data as any)?.message || "Something went wrong";
+};
 
-                    backendErrors.forEach(({ field, message }: any) => {
-                        console.log(`Setting error for field ${field}:`, message);
-                        field &&
-                            setError(field as keyof userDataProps, {
-                                type: 'manual',
-                                message,
-                            });
-                    });
-                } else {
-                    const errorMessage =
-                        error.response?.data?.message ||
-                        'Registration failed. Please try again.';
-                    showToast(errorMessage, 'error');
-                }
-            },
+export const useSendOtp = (onSuccess?: () => void, onError?: (msg: string) => void) => {
+    return useMutation<any, AxiosError<ApiError>, string>(
+        (email) => sendOtp(email),
+        {
+            onSuccess: () => onSuccess?.(),
+            onError: (error) => onError?.(getErrorMessage(error)),
         }
     );
 };
 
-export const useUserLogin = (setError: any) => {
-    const { showToast } = useToast();
-    const { login } = useAuth();
-
-    return useMutation<any, AxiosError<ApiError>, LoginData>(
-        async (data) => loginUser(data),
+export const useVerifyOtp = (onSuccess?: (res: any) => void, onError?: (msg: string) => void) => {
+    return useMutation<any, AxiosError<ApiError>, { email: string; code: string }>(
+        ({ email, code }) => verifyOtp(email, code),
         {
-            onSuccess: async ({ token, data }) => {
-                if (token) {
-                    await login(token);
-                }
-                showToast(data.message || 'Login successful!', 'success');
-            },
-            onError: (error: AxiosError<ApiError>) => {
-                if (error?.response?.data?.errors) {
-                    const backendErrors = error.response.data.errors;
+            onSuccess: (res) => onSuccess?.(res),
+            onError: (error) => onError?.(getErrorMessage(error)),
+        }
+    );
+};
 
-                    if (backendErrors.length === 1) {
-                        showToast(backendErrors[0].message, 'error');
-                    } else {
-                        showToast('Please check your credentials', 'error');
-                    }
-
-                    backendErrors.forEach(({ field, message }: any) => {
-                        field &&
-                            setError(field as keyof userDataProps, {
-                                type: 'manual',
-                                message,
-                            });
-                    });
-                } else {
-                    const errorMessage =
-                        error.response?.data?.message ||
-                        'Login failed. Please try again.';
-                    showToast(errorMessage, 'error');
-                }
-            },
+export const useCompleteProfile = (onSuccess?: (res: any) => void, onError?: (msg: string) => void) => {
+    return useMutation<any, AxiosError<ApiError>, { registrationToken: string; fullName: string; phoneNumber: string }>(
+        (data) => completeProfile(data),
+        {
+            onSuccess: (res) => onSuccess?.(res),
+            onError: (error) => onError?.(getErrorMessage(error)),
         }
     );
 };
 
 export const useUserLogout = () => {
     const { showToast } = useToast();
-    const { logout } = useAuth()
-    return useMutation<any, AxiosError<ApiError>>(async () => logoutUser(),
-        {
-            onSuccess: async (data: any) => {
-                logout();
-                showToast(data.message || 'Login successful!', 'success');
-            },
-            onError: (error: AxiosError<ApiError>) => {
-                if (error?.response?.data?.errors) {
-                    const backendErrors = error.response.data.errors;
-
-                    if (backendErrors.length === 1) {
-                        showToast(backendErrors[0].message, 'error');
-                    } else {
-                        showToast('Something Went Wrong', 'error');
-                    }
-
-                } else {
-                    const errorMessage =
-                        error.response?.data?.message ||
-                        'Logout failed. Please try again.';
-                    showToast(errorMessage, 'error');
-                }
-            },
-        })
-}
+    const { logout } = useAuth();
+    return useMutation<any, AxiosError<ApiError>>(async () => logoutUser(), {
+        onSuccess: async (data: any) => {
+            logout();
+            showToast(data.message || "Logout successful!", "success");
+        },
+        onError: (error: AxiosError<ApiError>) => {
+            showToast(getErrorMessage(error), "error");
+        },
+    });
+};
 
 export const useFetchUserDetails = () => {
+    const { showToast } = useToast();
     return useQuery(
-        ['ProfileDetails'],
+        ["ProfileDetails"],
         () => currentUser(),
         {
-            staleTime: 0,
-            cacheTime: 0,
-            onError: (error) => {
-                console.error('Failed to Current User:', error);
+            staleTime: 5 * 60 * 1000,
+            cacheTime: 10 * 60 * 1000,
+            retry: (failureCount, error: any) => {
+                if (error?.response?.status === 429) return failureCount < 2;
+                return failureCount < 2;
+            },
+            retryDelay: (attemptIndex, error: any) => {
+                if (error?.response?.status === 429) {
+                    return Math.min(2000 * Math.pow(2, attemptIndex), 10000);
+                }
+                return 1000 * (attemptIndex + 1);
+            },
+            onError: (error: any) => {
+                if (error?.response?.status === 429) {
+                    showToast("Too many requests. Please try again in a moment.", "error");
+                }
             },
         }
-    )
-}
+    );
+};
 
 export const useUpdateProfile = () => {
     const queryClient = useQueryClient();
-
     return useMutation<any, AxiosError<ApiError>, currentUserPayload>(
-        async (data) => {
-            return updateProfile(data)
-        },
+        (data) => updateProfile(data),
         {
             onSuccess: async () => {
-                await queryClient.invalidateQueries({ queryKey: ["ProfileDetails"], exact: true, });
-            }
+                await queryClient.invalidateQueries({ queryKey: ["ProfileDetails"], exact: true });
+            },
         }
-    )
-}
+    );
+};

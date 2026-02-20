@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  useWindowDimensions,
+  Platform,
+} from 'react-native';
 import Svg, {
   Rect,
   Text as SvgText,
@@ -16,6 +22,8 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useTheme } from '../../utils/colors';
+import { scale, fontSize, spacing } from '../../utils/responsive';
+import { MaterialIcons } from '../../utils/Icons';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
@@ -34,33 +42,50 @@ interface Props {
   maxHeight?: number;
 }
 
+const formatAmount = (value: number) =>
+  value.toLocaleString('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
 export const AnimatedSpendingTracker: React.FC<Props> = ({
   data,
-  width = 350,
+  width: widthProp,
   title = 'Spending Comparison',
-  barHeight = 18,
-  rowHeight = 52,
+  barHeight: barHeightProp,
+  rowHeight: rowHeightProp,
   minHeight = 100,
   maxHeight = 600,
 }) => {
   const { theme } = useTheme();
-  const padding = 20;
+  const { width: screenWidth } = useWindowDimensions();
+  const width = useMemo(
+    () => widthProp ?? Math.max(screenWidth - spacing(48), scale(280)),
+    [screenWidth, widthProp],
+  );
+  const padding = spacing(24);
+  // Pre-calculate spacing values to avoid calling spacing() in worklets
+  const spacing20 = spacing(20);
+  const spacing30 = spacing(30);
+  const spacing12 = spacing(12);
+  const barHeight = barHeightProp ?? scale(20);
+  const rowHeight = rowHeightProp ?? scale(58);
+  const isDark = theme.HEADER_BACKGROUND === '#0F1012';
 
-  // Calculate dynamic height based on number of items
   const calculatedHeight = useMemo(() => {
     const contentHeight = padding * 2 + data.length * rowHeight;
     return Math.min(Math.max(contentHeight, minHeight), maxHeight);
-  }, [data.length, rowHeight, minHeight, maxHeight]);
+  }, [data.length, rowHeight, minHeight, maxHeight, padding]);
 
   const animatedValues = data.map(() => useSharedValue(0));
-  const maxSpent = Math.max(...data.map(item => item.spent));
+  const maxSpent = Math.max(...data.map(item => item.spent), 1);
 
   useEffect(() => {
     animatedValues.forEach((v, i) => {
       v.value = withDelay(
-        i * 120,
+        i * 100,
         withTiming(1, {
-          duration: 800,
+          duration: 900,
           easing: Easing.out(Easing.cubic),
         }),
       );
@@ -69,21 +94,72 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
 
   const getBarColor = (spent: number) => {
     if (spent === maxSpent) return theme.EXPENSE_PIE;
-    return theme.INCOME_PIE;
+    return theme.SECONDARY;
   };
 
+  const containerStyle = [
+    styles.container,
+    {
+      backgroundColor: theme.BACKGROUND_LIGHT,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(198, 165, 107, 0.15)' : 'rgba(198, 165, 107, 0.2)',
+      padding: spacing(24),
+      borderRadius: scale(24),
+      ...Platform.select({
+        ios: {
+          shadowColor: isDark ? '#000' : theme.PURPLE,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.28 : 0.1,
+          shadowRadius: 20,
+        },
+        android: { elevation: 10 },
+      }),
+    },
+  ];
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.BACKGROUND }]}>
-      {title && (
+    <View style={containerStyle}>
+      <View style={styles.header}>
+        <View style={[styles.headerIcon, { backgroundColor: theme.SECONDARY + '25' }]}>
+          <MaterialIcons
+            name="pie-chart"
+            size={scale(22)}
+            color={theme.SECONDARY}
+          />
+        </View>
         <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
-      )}
+      </View>
 
       <Svg width={width} height={calculatedHeight}>
         <Defs>
+          {data.map((item, i) => {
+            const barColor = getBarColor(item.spent);
+            return (
+              <LinearGradient
+                key={i}
+                id={`grad-${i}`}
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
+                <Stop
+                  offset="0%"
+                  stopColor={barColor}
+                  stopOpacity="0.75"
+                />
+                <Stop
+                  offset="100%"
+                  stopColor={barColor}
+                  stopOpacity="1"
+                />
+              </LinearGradient>
+            );
+          })}
           {data.map((item, i) => (
             <LinearGradient
-              key={i}
-              id={`grad-${i}`}
+              key={`bg-${i}`}
+              id={`bg-grad-${i}`}
               x1="0%"
               y1="0%"
               x2="100%"
@@ -91,13 +167,13 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
             >
               <Stop
                 offset="0%"
-                stopColor={getBarColor(item.spent)}
-                stopOpacity="0.6"
+                stopColor={theme.BORDER_COLOR}
+                stopOpacity={0.12}
               />
               <Stop
                 offset="100%"
-                stopColor={getBarColor(item.spent)}
-                stopOpacity="1"
+                stopColor={theme.BORDER_COLOR}
+                stopOpacity={0.06}
               />
             </LinearGradient>
           ))}
@@ -105,8 +181,9 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
 
         {data.map((item, index) => {
           const y = padding + index * rowHeight;
-          const barWidth = width - 100;
-          const percentage = item.spent / maxSpent;
+          const amountColumnWidth = scale(120);
+          const barWidth = width - amountColumnWidth - spacing(30);
+          const percentage = maxSpent > 0 ? item.spent / maxSpent : 0;
 
           const animatedProps = useAnimatedProps(() => ({
             width: interpolate(
@@ -117,53 +194,53 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
             opacity: animatedValues[index].value,
           }));
 
+          const isHighest = item.spent === maxSpent;
+
           return (
             <React.Fragment key={index}>
-              {/* Category */}
+              {/* Category label */}
               <SvgText
-                x={15}
-                y={y + 14}
-                fontSize="14"
+                x={spacing20}
+                y={y + scale(16)}
+                fontSize={fontSize(14)}
                 fill={theme.TEXT}
-                fontWeight="600"
+                fontWeight="700"
               >
                 {item.category}
               </SvgText>
 
               {/* Background bar */}
               <Rect
-                x={15}
-                y={y + 16}
+                x={spacing20}
+                y={y + scale(22)}
                 width={barWidth}
                 height={barHeight}
                 rx={barHeight / 2}
-                fill={getBarColor(item.spent)}
-                opacity={0.15}
+                fill={`url(#bg-grad-${index})`}
               />
 
               {/* Animated bar */}
               <AnimatedRect
-                x={15}
-                y={y + 16}
+                x={spacing20}
+                y={y + scale(22)}
                 height={barHeight}
                 rx={barHeight / 2}
                 fill={`url(#grad-${index})`}
                 animatedProps={animatedProps}
               />
 
-              {/* Highlight highest spender */}
-              {item.spent === maxSpent && (
-                <SvgText
-                  x={width - 40}
-                  y={y + 30}
-                  fontSize="11"
-                  fill={theme.EXPENSE_PIE}
-                  textAnchor="end"
-                  fontWeight="bold"
-                >
-                  Highest
-                </SvgText>
-              )}
+              {/* Amount label */}
+              <SvgText
+                x={width - spacing12}
+                y={y + scale(37)}
+                fontSize={fontSize(12)}
+                fill={isHighest ? theme.EXPENSE_PIE : theme.LIGHT_TEXT}
+                textAnchor="end"
+                fontWeight="800"
+              >
+                ₹{formatAmount(item.spent)}
+                {isHighest ? ' • Highest' : ''}
+              </SvgText>
             </React.Fragment>
           );
         })}
@@ -174,15 +251,24 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    borderRadius: 14,
-    margin: 10,
-    elevation: 4,
+    margin: spacing(8),
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing(12),
+    marginBottom: spacing(20),
+  },
+  headerIcon: {
+    width: scale(44),
+    height: scale(44),
+    borderRadius: scale(14),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-    textAlign: 'center',
+    fontSize: fontSize(20),
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 });

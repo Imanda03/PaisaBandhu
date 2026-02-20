@@ -1,7 +1,6 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTheme } from '../../../utils/colors';
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+import { scale, verticalScale, fontSize, spacing } from '../../../utils/responsive';
 
 export const createStyles = () => {
     const { theme } = useTheme();
@@ -40,10 +39,10 @@ export const createStyles = () => {
         content: {
             flex: 1,
             backgroundColor: theme.BACKGROUND,
-            borderTopLeftRadius: 40,
-            borderTopRightRadius: 40,
-            paddingHorizontal: 20,
-            paddingTop: 30,
+            borderTopLeftRadius: scale(40),
+            borderTopRightRadius: scale(40),
+            paddingHorizontal: spacing(20),
+            paddingTop: verticalScale(30),
         },
         scrollContent: {
             // flexGrow: 1,
@@ -55,14 +54,14 @@ export const createStyles = () => {
         },
         imageContainer: {
             alignItems: 'center',
-            marginVertical: 20,
-            height: SCREEN_HEIGHT * 0.25,
+            marginVertical: verticalScale(20),
+            height: verticalScale(200),
             justifyContent: 'center',
         },
         shadowContainer: {
             position: 'absolute',
-            width: SCREEN_WIDTH * 0.6,
-            height: SCREEN_HEIGHT * 0.12,
+            width: scale(220),
+            height: verticalScale(100),
             backgroundColor: theme.SHADOW,
             borderRadius: 100,
             bottom: 10,
@@ -73,8 +72,8 @@ export const createStyles = () => {
             elevation: 5,
         },
         image: {
-            width: SCREEN_WIDTH * 0.7,
-            height: SCREEN_HEIGHT * 0.25,
+            width: scale(260),
+            height: verticalScale(200),
         },
         loginField: {
             marginTop: 20,

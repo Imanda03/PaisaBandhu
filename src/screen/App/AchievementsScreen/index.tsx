@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -29,27 +29,25 @@ const AchievementsScreen: React.FC = () => {
     isRefetching,
   } = useFetchAchievements();
 
-  const handleRefresh = () => {
-    refetch();
-  };
+  const handleRefresh = useCallback(() => refetch(), [refetch]);
 
   const refreshing = isRefetching;
 
-  const categories = [
+  const categories = useMemo(() => [
     { id: null, name: 'All', icon: '🎯' },
     { id: 'streak', name: 'Streaks', icon: '🔥' },
     { id: 'transaction', name: 'Transactions', icon: '📝' },
     { id: 'savings', name: 'Savings', icon: '💰' },
     { id: 'social', name: 'Social', icon: '👥' },
     { id: 'milestone', name: 'Milestones', icon: '⭐' },
-  ];
+  ], []);
 
-  const filteredAchievements =
+  const filteredAchievements = useMemo(() =>
     achievements?.achievements?.filter(
       a => !selectedCategory || a.category === selectedCategory,
-    ) || [];
+    ) || [], [achievements?.achievements, selectedCategory]);
 
-  const renderAchievement = ({ item, index }: { item: any; index: number }) => {
+  const renderAchievement = useCallback(({ item, index }: { item: any; index: number }) => {
     const progressPercentage =
       item.target > 0 ? Math.min((item.progress / item.target) * 100, 100) : 0;
 
@@ -121,9 +119,9 @@ const AchievementsScreen: React.FC = () => {
         </TouchableOpacity>
       </Animated.View>
     );
-  };
+  }, [theme]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   if (loading && !achievements) {
     return (
@@ -151,7 +149,7 @@ const AchievementsScreen: React.FC = () => {
           </View>
         </View>
         <View style={styles.emptyContainer}>
-          <MaterialIcons name="emoji-events" size={64} color={theme.PURPLE} />
+          <MaterialIcons name="emoji-events" size={64} color={theme.ICON_COLOR} />
           <Text style={[styles.emptyText, { color: theme.TEXT }]}>
             Loading achievements...
           </Text>
@@ -187,7 +185,7 @@ const AchievementsScreen: React.FC = () => {
           </View>
         </View>
         <View style={styles.emptyContainer}>
-          <MaterialIcons name="emoji-events" size={64} color={theme.PURPLE} />
+          <MaterialIcons name="emoji-events" size={64} color={theme.ICON_COLOR} />
           <Text style={[styles.emptyText, { color: theme.TEXT }]}>
             No achievements available
           </Text>
@@ -307,7 +305,7 @@ const AchievementsScreen: React.FC = () => {
               refreshing={refreshing}
               onRefresh={handleRefresh}
               colors={[theme.PURPLE]}
-              tintColor={theme.PURPLE}
+              tintColor={theme.SECONDARY}
             />
           }
           ListEmptyComponent={
@@ -315,7 +313,7 @@ const AchievementsScreen: React.FC = () => {
               <MaterialIcons
                 name="emoji-events"
                 size={64}
-                color={theme.PURPLE}
+                color={theme.ICON_COLOR}
               />
               <Text style={[styles.emptyText, { color: theme.TEXT }]}>
                 No achievements yet
@@ -332,13 +330,13 @@ const createStyles = (theme: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerContainer: {
       paddingTop: Platform.OS === 'ios' ? '15%' : '10%',
       paddingHorizontal: 20,
       paddingBottom: 20,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerContent: {
       flexDirection: 'row',

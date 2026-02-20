@@ -30,7 +30,7 @@ const Header = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Expense Mate</Text>
+            <Text style={styles.header}>Kharcha Mate</Text>
             <View style={styles.rightActions}>
                 <AnimatedTouchable 
                     onPress={handlePress}

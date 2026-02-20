@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { MaterialIcons, IoniconsIcon } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
@@ -26,6 +27,7 @@ import Animated, {
 import {
   useFetchChallenges,
   useCreateChallenge,
+  useUpdateChallenge,
   useFetchMyChallengeProgress,
   useDeleteChallenge,
 } from '../../../ReactQueryHook/challenge.hook';
@@ -45,6 +47,8 @@ const ChallengesScreen: React.FC = () => {
   const navigation = useNavigation();
   const { userId } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [challengeFilter, setChallengeFilter] = useState<'active' | 'old'>('active');
+  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(
     null,
   );
@@ -57,14 +61,20 @@ const ChallengesScreen: React.FC = () => {
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   });
 
+  const challengeStatus =
+    challengeFilter === 'active'
+      ? 'active'
+      : ['completed', 'failed', 'cancelled'];
   const {
     data: challenges = [],
     isLoading: loading,
     refetch,
     isRefetching: refreshing,
-  } = useFetchChallenges({ status: 'active' });
+  } = useFetchChallenges({ status: challengeStatus, limit: 50 });
   const { mutate: createChallenge, isLoading: isCreating } =
     useCreateChallenge();
+  const { mutate: updateChallenge, isLoading: isUpdating } =
+    useUpdateChallenge();
   const { data: myProgress } = useFetchMyChallengeProgress(
     selectedChallenge?.id || '',
   );
@@ -88,11 +98,37 @@ const ChallengesScreen: React.FC = () => {
     return String(creatorId) === String(currentUserId);
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
+  const handleRefresh = useCallback(() => refetch(), [refetch]);
 
-  const handleCreateChallenge = async () => {
+  const resetChallengeForm = useCallback(() => {
+    setEditingChallenge(null);
+    setNewChallenge({
+      title: '',
+      description: '',
+      type: 'save_amount',
+      targetAmount: '',
+      targetCategory: '',
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+  }, []);
+
+  const openEditModal = useCallback((challenge: Challenge) => {
+    setEditingChallenge(challenge);
+    setNewChallenge({
+      title: challenge.title || '',
+      description: challenge.description || '',
+      type: challenge.type || 'save_amount',
+      targetAmount: challenge.targetAmount?.toString() || '',
+      targetCategory: challenge.targetCategory || '',
+      endDate: challenge.endDate
+        ? new Date(challenge.endDate)
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    setSelectedChallenge(null);
+    setShowCreateModal(true);
+  }, []);
+
+  const handleCreateChallenge = useCallback(async () => {
     if (!newChallenge.title || !newChallenge.description) {
       await showAlert('Error', 'Please fill all required fields', 'error');
       return;
@@ -110,38 +146,42 @@ const ChallengesScreen: React.FC = () => {
       return;
     }
 
-    createChallenge(
-      {
-        title: newChallenge.title,
-        description: newChallenge.description,
-        type: newChallenge.type,
-        targetAmount: newChallenge.targetAmount
-          ? parseFloat(newChallenge.targetAmount)
-          : undefined,
-        targetCategory: newChallenge.targetCategory || undefined,
-        endDate: newChallenge.endDate,
-      },
-      {
+    const payload = {
+      title: newChallenge.title,
+      description: newChallenge.description,
+      type: newChallenge.type,
+      targetAmount: newChallenge.targetAmount
+        ? parseFloat(newChallenge.targetAmount)
+        : undefined,
+      targetCategory: newChallenge.targetCategory || undefined,
+      endDate: newChallenge.endDate,
+    };
+
+    if (editingChallenge) {
+      updateChallenge(
+        { challengeId: editingChallenge.id, data: payload },
+        {
+          onSuccess: () => {
+            setShowCreateModal(false);
+            resetChallengeForm();
+          },
+        },
+      );
+    } else {
+      createChallenge(payload, {
         onSuccess: () => {
           setShowCreateModal(false);
-          setNewChallenge({
-            title: '',
-            description: '',
-            type: 'save_amount',
-            targetAmount: '',
-            targetCategory: '',
-            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          });
+          resetChallengeForm();
         },
-      },
-    );
-  };
+      });
+    }
+  }, [createChallenge, updateChallenge, newChallenge, editingChallenge, showAlert]);
 
-  const handleChallengePress = (challenge: Challenge) => {
+  const handleChallengePress = useCallback((challenge: Challenge) => {
     setSelectedChallenge(challenge);
-  };
+  }, []);
 
-  const handleDeleteChallenge = (challengeId: string) => {
+  const handleDeleteChallenge = useCallback((challengeId: string) => {
     showConfirm(
       'Delete Challenge',
       'Are you sure you want to delete this challenge? This action cannot be undone.',
@@ -155,9 +195,9 @@ const ChallengesScreen: React.FC = () => {
         });
       },
     );
-  };
+  }, [deleteChallenge, selectedChallenge, showConfirm]);
 
-  const renderChallenge = ({
+  const renderChallenge = useCallback(({
     item,
     index,
   }: {
@@ -179,9 +219,9 @@ const ChallengesScreen: React.FC = () => {
         />
       </Animated.View>
     );
-  };
+  }, [handleChallengePress, handleDeleteChallenge, isUserCreator]);
 
-  const challengeTypes = [
+  const challengeTypes = useMemo(() => [
     {
       id: 'save_amount',
       title: 'Save Amount',
@@ -202,30 +242,26 @@ const ChallengesScreen: React.FC = () => {
       title: 'Category Limit',
       description: 'Limit spending in a category',
     },
-  ];
+  ], []);
 
-  const filteredCategories =
-    (categoriesData as CategoryFormData[])?.filter(
-      category => category.type === 'expense',
-    ) || [];
+  const filteredCategories = useMemo(() =>
+    (categoriesData as CategoryFormData[])
+      ?.filter(category => category.type === 'expense')
+      .map(category => ({
+        id: category.id || (category as any)._id || '',
+        title: category.title,
+        icon: category.icon,
+        type: category.type,
+      }))
+      .filter(category => category.id) || [], [categoriesData]);
 
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <View style={styles.headerContent}>
           <View style={styles.headerTitleContainer}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <IoniconsIcon
-                name="arrow-back"
-                size={24}
-                color={theme.SECONDARY}
-              />
-            </TouchableOpacity>
             <MaterialIcons
               name="emoji-events"
               size={28}
@@ -237,7 +273,79 @@ const ChallengesScreen: React.FC = () => {
             style={[styles.createButton, { backgroundColor: theme.SECONDARY }]}
             onPress={() => setShowCreateModal(true)}
           >
-            <MaterialIcons name="add" size={24} color={theme.PURPLE} />
+            <MaterialIcons name="add" size={24} color={theme.NAVBAR_ACTIVE_TEXT} />
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.filterRow, { backgroundColor: theme.INPUT_BACKGROUND || theme.BACKGROUND }]}>
+          <TouchableOpacity
+            style={[
+              styles.filterTab,
+              challengeFilter === 'active' && styles.filterTabActive,
+              challengeFilter === 'active' && {
+                backgroundColor: theme.SECONDARY,
+                shadowColor: theme.SECONDARY,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.35,
+                shadowRadius: 6,
+                elevation: 4,
+              },
+            ]}
+            onPress={() => setChallengeFilter('active')}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons
+              name="bolt"
+              size={18}
+              color={challengeFilter === 'active' ? theme.NAVBAR_ACTIVE_TEXT : theme.LIGHT_TEXT}
+            />
+            <Text
+              style={[
+                styles.filterTabText,
+                {
+                  color: challengeFilter === 'active'
+                    ? theme.NAVBAR_ACTIVE_TEXT
+                    : theme.LIGHT_TEXT,
+                  fontWeight: challengeFilter === 'active' ? '700' : '600',
+                },
+              ]}
+            >
+              Active
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.filterTab,
+              challengeFilter === 'old' && styles.filterTabActive,
+              challengeFilter === 'old' && {
+                backgroundColor: theme.PURPLE,
+                shadowColor: theme.PURPLE,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.35,
+                shadowRadius: 6,
+                elevation: 4,
+              },
+            ]}
+            onPress={() => setChallengeFilter('old')}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons
+              name="history"
+              size={18}
+              color={challengeFilter === 'old' ? '#FFFFFF' : theme.LIGHT_TEXT}
+            />
+            <Text
+              style={[
+                styles.filterTabText,
+                {
+                  color: challengeFilter === 'old'
+                    ? '#FFFFFF'
+                    : theme.LIGHT_TEXT,
+                  fontWeight: challengeFilter === 'old' ? '700' : '600',
+                },
+              ]}
+            >
+              Old
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -253,8 +361,8 @@ const ChallengesScreen: React.FC = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              colors={[theme.PURPLE]}
-              tintColor={theme.PURPLE}
+              colors={[theme.SECONDARY]}
+              tintColor={theme.SECONDARY}
             />
           }
           ListEmptyComponent={
@@ -262,13 +370,17 @@ const ChallengesScreen: React.FC = () => {
               <MaterialIcons
                 name="emoji-events"
                 size={64}
-                color={theme.PURPLE}
+                color={theme.ICON_COLOR}
               />
               <Text style={[styles.emptyText, { color: theme.TEXT }]}>
-                No active challenges
+                {challengeFilter === 'active'
+                  ? 'No active challenges'
+                  : 'No old challenges'}
               </Text>
               <Text style={[styles.emptySubtext, { color: theme.LIGHT_TEXT }]}>
-                Create a challenge to track your financial goals!
+                {challengeFilter === 'active'
+                  ? 'Create a challenge to track your financial goals!'
+                  : 'Completed, failed, or cancelled challenges will appear here.'}
               </Text>
             </View>
           }
@@ -283,20 +395,27 @@ const ChallengesScreen: React.FC = () => {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalOverlay}
+          keyboardVerticalOffset={0}
         >
           <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
-            onPress={() => setShowCreateModal(false)}
+            onPress={() => {
+              setShowCreateModal(false);
+              resetChallengeForm();
+            }}
           >
             <Animated.View
               entering={SlideInDown.springify().damping(15)}
               style={[
                 styles.modalContent,
-                { backgroundColor: theme.BACKGROUND_LIGHT },
+                { 
+                  backgroundColor: theme.BACKGROUND_LIGHT,
+                },
               ]}
+              onStartShouldSetResponder={() => true}
             >
               <TouchableOpacity
                 activeOpacity={1}
@@ -306,6 +425,8 @@ const ChallengesScreen: React.FC = () => {
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={styles.scrollContent}
+                  bounces={false}
+                  nestedScrollEnabled={true}
                 >
                   {/* Header */}
                   <Animated.View
@@ -314,7 +435,7 @@ const ChallengesScreen: React.FC = () => {
                   >
                     <View>
                       <Text style={[styles.modalTitle, { color: theme.TEXT }]}>
-                        Create Challenge
+                        {editingChallenge ? 'Edit Challenge' : 'Create Challenge'}
                       </Text>
                       <Text
                         style={[
@@ -322,11 +443,14 @@ const ChallengesScreen: React.FC = () => {
                           { color: theme.LIGHT_TEXT },
                         ]}
                       >
-                        Set your financial goal
+                        {editingChallenge ? 'Update your challenge' : 'Set your financial goal'}
                       </Text>
                     </View>
                     <TouchableOpacity
-                      onPress={() => setShowCreateModal(false)}
+                      onPress={() => {
+                        setShowCreateModal(false);
+                        resetChallengeForm();
+                      }}
                       style={[
                         styles.closeButton,
                         { backgroundColor: theme.BACKGROUND },
@@ -543,7 +667,7 @@ const ChallengesScreen: React.FC = () => {
                         styles.submitButton,
                         {
                           backgroundColor: theme.PURPLE,
-                          opacity: isCreating ? 0.6 : 1,
+                          opacity: isCreating || isUpdating ? 0.6 : 1,
                           shadowColor: theme.PURPLE,
                           shadowOffset: { width: 0, height: 4 },
                           shadowOpacity: 0.3,
@@ -552,10 +676,10 @@ const ChallengesScreen: React.FC = () => {
                         },
                       ]}
                       onPress={handleCreateChallenge}
-                      disabled={isCreating}
+                      disabled={isCreating || isUpdating}
                       activeOpacity={0.8}
                     >
-                      {isCreating ? (
+                      {isCreating || isUpdating ? (
                         <View style={styles.loadingContainer}>
                           <Text
                             style={[
@@ -563,13 +687,13 @@ const ChallengesScreen: React.FC = () => {
                               { color: theme.SECONDARY },
                             ]}
                           >
-                            Creating...
+                            {editingChallenge ? 'Updating...' : 'Creating...'}
                           </Text>
                         </View>
                       ) : (
                         <View style={styles.buttonContent}>
                           <MaterialIcons
-                            name="add-circle-outline"
+                            name={editingChallenge ? 'save' : 'add-circle-outline'}
                             size={20}
                             color={theme.SECONDARY}
                           />
@@ -579,7 +703,7 @@ const ChallengesScreen: React.FC = () => {
                               { color: theme.SECONDARY },
                             ]}
                           >
-                            Create Challenge
+                            {editingChallenge ? 'Update Challenge' : 'Create Challenge'}
                           </Text>
                         </View>
                       )}
@@ -614,26 +738,49 @@ const ChallengesScreen: React.FC = () => {
                 {selectedChallenge?.title}
               </Text>
               <View style={styles.modalHeaderActions}>
-                {selectedChallenge && isUserCreator(selectedChallenge) && (
-                  <TouchableOpacity
-                    onPress={() => handleDeleteChallenge(selectedChallenge.id)}
-                    style={[
-                      styles.deleteButtonHeader,
-                      { backgroundColor: theme.ERROR + '15' },
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <MaterialIcons
-                      name="delete-outline"
-                      size={20}
-                      color={theme.ERROR}
-                    />
-                    <Text
-                      style={[styles.deleteButtonText, { color: theme.ERROR }]}
+                {selectedChallenge &&
+                  isUserCreator(selectedChallenge) &&
+                  selectedChallenge.status === 'active' && (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => openEditModal(selectedChallenge)}
+                      style={[
+                        styles.deleteButtonHeader,
+                        { backgroundColor: theme.PURPLE + '20' },
+                      ]}
+                      activeOpacity={0.7}
                     >
-                      Delete
-                    </Text>
-                  </TouchableOpacity>
+                      <MaterialIcons
+                        name="edit"
+                        size={20}
+                        color={theme.PURPLE}
+                      />
+                      <Text
+                        style={[styles.deleteButtonText, { color: theme.PURPLE }]}
+                      >
+                        Edit
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteChallenge(selectedChallenge.id)}
+                      style={[
+                        styles.deleteButtonHeader,
+                        { backgroundColor: theme.ERROR + '15' },
+                      ]}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialIcons
+                        name="delete-outline"
+                        size={20}
+                        color={theme.ERROR}
+                      />
+                      <Text
+                        style={[styles.deleteButtonText, { color: theme.ERROR }]}
+                      >
+                        Delete
+                      </Text>
+                    </TouchableOpacity>
+                  </>
                 )}
                 <TouchableOpacity
                   onPress={() => setSelectedChallenge(null)}
@@ -854,18 +1001,51 @@ const createStyles = (theme: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerContainer: {
       paddingTop: Platform.OS === 'ios' ? '15%' : '10%',
       paddingHorizontal: 20,
       paddingBottom: 20,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerContent: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+    },
+    filterRow: {
+      flexDirection: 'row',
+      marginTop: 18,
+      padding: 5,
+      borderRadius: 16,
+      gap: 6,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 2,
+        },
+      }),
+    },
+    filterTab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 18,
+      paddingVertical: 12,
+      borderRadius: 12,
+      gap: 8,
+    },
+    filterTabActive: {},
+    filterTabText: {
+      fontSize: 15,
+      letterSpacing: 0.3,
     },
     headerTitleContainer: {
       flexDirection: 'row',
@@ -944,8 +1124,11 @@ const createStyles = (theme: any) =>
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
       justifyContent: 'flex-end',
+      alignItems: 'stretch',
     },
     modalContent: {
+      width: Dimensions.get('window').width,
+      alignSelf: 'stretch',
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       padding: 0,
@@ -955,6 +1138,7 @@ const createStyles = (theme: any) =>
     scrollContent: {
       padding: 24,
       paddingBottom: 40,
+      flexGrow: 1,
     },
     modalHeader: {
       flexDirection: 'row',

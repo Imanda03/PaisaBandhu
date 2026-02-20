@@ -28,7 +28,10 @@ export type UserDataProps = {
 export type BookInterfaceProps = {
     id?: string;
     title: string;
-    type: 'single' | 'group'
+    type: 'single' | 'group';
+    isShared?: boolean;
+    ownerName?: string | null;
+    transactionCount?: number;
 }
 
 export interface CategoryFormData {

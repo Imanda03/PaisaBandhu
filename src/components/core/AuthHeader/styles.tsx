@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { useTheme } from '../../../utils/colors';
+import { fontSize } from '../../../utils/responsive';
 
 export const createStyles = () => {
   const { theme } = useTheme();
@@ -7,17 +8,17 @@ export const createStyles = () => {
   return StyleSheet.create({
     container: {
       // backgroundColor: theme.BACKGROUND,
-      // height: '8%',
       alignItems: 'center',
       justifyContent: 'space-between',
       flexDirection: 'row',
-      paddingHorizontal: '5%'
-      // flexGrow: 1,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      minHeight: 56,
     },
     title: {
       color: theme.SECONDARY,
       fontWeight: 'bold',
-      fontSize: 22,
+      fontSize: fontSize(20),
     },
   });
 };

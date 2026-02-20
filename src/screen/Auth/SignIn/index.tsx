@@ -156,10 +156,8 @@ const SignIn = React.memo(({ navigation }: any) => {
     });
 
     const onSubmit = useCallback(
-        (data: LoginData) => {
-            mutate(data)
-        },
-        []
+        (data: LoginData) => mutate(data),
+        [mutate],
     );
 
     return (

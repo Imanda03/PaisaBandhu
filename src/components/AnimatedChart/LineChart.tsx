@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect, Text } from 'react-native-svg';
 import Animated, {
     useSharedValue,
@@ -33,8 +33,8 @@ interface AnimatedLineChartProps {
 
 export const AnimatedLineChart: React.FC<AnimatedLineChartProps> = ({
     data,
-    width = 350,
-    height = 250,
+    width: widthProp,
+    height: heightProp,
     showDots = true,
     showGrid = true,
     animationDuration = 1500,
@@ -43,6 +43,14 @@ export const AnimatedLineChart: React.FC<AnimatedLineChartProps> = ({
     gradientFill = true,
 }) => {
     const { theme } = useTheme();
+    const { width: screenWidth } = useWindowDimensions();
+    const chartDimensions = useMemo(() => {
+        const w = widthProp ?? Math.max(screenWidth - 48, 280);
+        const h = heightProp ?? Math.min(280, w * 0.75);
+        return { width: w, height: h };
+    }, [screenWidth, widthProp, heightProp]);
+    const width = chartDimensions.width;
+    const height = chartDimensions.height;
     const progress = useSharedValue(0);
 
     const padding: any = 40;
@@ -114,7 +122,7 @@ export const AnimatedLineChart: React.FC<AnimatedLineChartProps> = ({
     });
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.BACKGROUND }]}>
+        <View style={[styles.container, { backgroundColor: theme.BACKGROUND_LIGHT }]}>
             {/* {title && (
                 <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
             )} */}
@@ -266,16 +274,15 @@ export const AnimatedLineChart: React.FC<AnimatedLineChartProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
-        borderRadius: 12,
+        padding: 20,
+        borderRadius: 20,
         margin: 8,
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.04)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 6,
     },
     title: {
         fontSize: 18,

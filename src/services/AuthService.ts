@@ -1,78 +1,54 @@
-import axios, { AxiosError } from "axios";
-import { useMutation } from "react-query";
-import { ApiError, currentUserPayload, LoginData, userDataProps } from "../utils/types";
+import axios from "axios";
+import { ApiError, currentUserPayload } from "../utils/types";
 import { API_URL } from "../utils/helper";
 import apiClient from "./apiCLient";
 
-export const registerUser = async (registerData: userDataProps) => {
-    try {
-        const response = await axios.post(
-            `${API_URL}/auth/register`,
-            registerData,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.log('Registration error:', error);
-        throw error;
-    }
+export const sendOtp = async (email: string) => {
+    const response = await axios.post(
+        `${API_URL}/auth/send-otp`,
+        { email: email.trim().toLowerCase() },
+        { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+    );
+    return response.data;
 };
 
-
-export const loginUser = async (loginData: LoginData) => {
+export const verifyOtp = async (email: string, code: string) => {
     const response = await axios.post(
-        `${API_URL}/auth/login`,
-        loginData,
-        {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }
+        `${API_URL}/auth/verify-otp`,
+        { email: email.trim().toLowerCase(), code: code.replace(/\s/g, '') },
+        { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
     );
+    return response.data;
+};
 
-    const cookies = response.headers['set-cookie'];
-    if (cookies) {
-        const sessionCookie = cookies.find(cookie =>
-            cookie.startsWith('session='),
-        );
-        if (sessionCookie) {
-            const cookieValue = decodeURIComponent(
-                sessionCookie.split(';')[0].split('=')[1],
-            );
-            return {
-                token: cookieValue,
-                data: response.data,
-            };
-        }
-    }
-
-    return {
-        token: null,
-        data: response.data,
-    };
+export const completeProfile = async (data: {
+    registrationToken: string;
+    fullName: string;
+    phoneNumber: string;
+}) => {
+    const response = await axios.post(
+        `${API_URL}/auth/complete-profile`,
+        data,
+        { headers: { 'Content-Type': 'application/json' }, withCredentials: true }
+    );
+    return response.data;
 };
 
 export const logoutUser = async () => {
     try {
-        const response = await apiClient.post(`${API_URL}/auth/signout`, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        return response.data
+        const response = await apiClient.post('/auth/signout', {}, {
+            headers: { 'Content-Type': 'application/json' },
+        });
+        return response.data;
     } catch (error) {
         console.log('signout error:', error);
         throw error;
     }
-}
+};
 
 export const currentUser = async () => {
     try {
-        const response = await apiClient.get(`${API_URL}/auth/currentUser`,);
+        const response = await apiClient.get('/auth/currentUser');
 
         return response.data;
     } catch (error) {

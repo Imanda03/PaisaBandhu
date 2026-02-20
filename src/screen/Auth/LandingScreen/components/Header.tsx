@@ -10,7 +10,7 @@ const Header = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.heading}>Expense Mate</Text>
+            <Text style={styles.heading}>Kharcha Mate</Text>
             <Text style={styles.body}>From Chiya to Checkout — Track It All</Text>
         </View>
     )

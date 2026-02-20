@@ -9,6 +9,7 @@ interface AuthHeaderProps {
   title: string;
   showRightIcon?: boolean;
   rightIconName?: string;
+  rightIconSize?: number;
   onRightIconPress?: () => void;
 }
 
@@ -16,6 +17,7 @@ const AuthHeader = ({
   title,
   showRightIcon = false,
   rightIconName = '',
+  rightIconSize = 26,
   onRightIconPress,
 }: AuthHeaderProps) => {
   const styles = createStyles();
@@ -32,7 +34,7 @@ const AuthHeader = ({
 
       {showRightIcon ? (
         <TouchableOpacity onPress={onRightIconPress}>
-          <MaterialCommunityIcons name={rightIconName} size={26} color={theme.SECONDARY} />
+          <MaterialCommunityIcons name={rightIconName} size={rightIconSize} color={theme.SECONDARY} />
         </TouchableOpacity>
       ) : (
         <View style={{ width: 30 }} />

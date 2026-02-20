@@ -2,30 +2,35 @@ import React from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  StyleSheet,
+  ScrollView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import { useTheme } from '../../utils/colors';
 import { createStyles } from './styles';
 import { ICONS } from '../../utils/helper';
-import { useToast } from '../../context/ToastContext';
-import ButtonIconComponent from '../core/ButtonIcon';
-import { useQueryClient } from 'react-query';
 import { useCreateCategory } from '../../ReactQueryHook/category.hook';
 import { categoryFormFields } from '../../utils/fields.helper';
+import ButtonIconComponent from '../core/ButtonIcon';
+
+const SECTION_LABEL_COLOR = 'LIGHT_TEXT';
+
+const formatIconLabel = (value: string) =>
+  value
+    .split('_')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(' ');
 
 export const AddCategoryForm = () => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const route: any = useRoute();
   const type = route.params?.type;
   const { mutate: createCategory, isLoading } = useCreateCategory();
   const navigation: any = useNavigation();
 
   const defaultValues: any = {
-    title: '',
+    title: ICONS[0].value,
     icon: ICONS[0].value,
     type: type || 'expense',
   };
@@ -33,8 +38,6 @@ export const AddCategoryForm = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors },
-    setError,
     reset,
     setValue,
     watch,
@@ -52,37 +55,38 @@ export const AddCategoryForm = () => {
   };
 
   const styles = createStyles();
+  const sectionLabelColor = theme[SECTION_LABEL_COLOR as keyof typeof theme] as string;
 
   return (
     <View style={styles.container}>
-      <View>
-        <Text style={[styles.label, { color: theme.TEXT }]}>Type</Text>
-        <Controller
-          control={control}
-          name="type"
-          rules={categoryFormFields.type.rules}
-          render={({ field: { onChange, value } }) => (
-            <>
-              <View style={styles.typeContainer}>
+      {/* Fixed top: type + choose icon header with selected chip */}
+      <View style={styles.fixedTop}>
+        <View style={styles.section}>
+          <Text style={[styles.sectionLabel, { color: sectionLabelColor }]}>
+            Category type
+          </Text>
+          <Controller
+            control={control}
+            name="type"
+            rules={categoryFormFields.type.rules}
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.typeWrapper}>
                 <TouchableOpacity
                   style={[
                     styles.typeButton,
-                    {
-                      backgroundColor:
-                        value === 'expense'
-                          ? theme.PURPLE
-                          : theme.INPUT_BACKGROUND,
-                    },
+                    value === 'expense' && styles.typeButtonActive,
+                    value === 'expense' && { backgroundColor: theme.PURPLE },
+                    value !== 'expense' && { backgroundColor: 'transparent' },
                   ]}
                   onPress={() => onChange('expense')}
+                  activeOpacity={0.8}
                 >
                   <Text
                     style={[
                       styles.typeText,
-                      {
-                        color:
-                          value === 'expense' ? theme.SECONDARY : theme.TEXT,
-                      },
+                      value === 'expense'
+                        ? [styles.typeTextActive, { color: theme.SECONDARY }]
+                        : [styles.typeTextInactive, { color: theme.LIGHT_TEXT }],
                     ]}
                   >
                     Expense
@@ -91,100 +95,123 @@ export const AddCategoryForm = () => {
                 <TouchableOpacity
                   style={[
                     styles.typeButton,
-                    {
-                      backgroundColor:
-                        value === 'income'
-                          ? theme.PURPLE
-                          : theme.INPUT_BACKGROUND,
-                    },
+                    value === 'income' && styles.typeButtonActive,
+                    value === 'income' && { backgroundColor: theme.PURPLE },
+                    value !== 'income' && { backgroundColor: 'transparent' },
                   ]}
                   onPress={() => onChange('income')}
+                  activeOpacity={0.8}
                 >
                   <Text
                     style={[
                       styles.typeText,
-                      {
-                        color:
-                          value === 'income' ? theme.SECONDARY : theme.TEXT,
-                      },
+                      value === 'income'
+                        ? [styles.typeTextActive, { color: theme.SECONDARY }]
+                        : [styles.typeTextInactive, { color: theme.LIGHT_TEXT }],
                     ]}
                   >
                     Income
                   </Text>
                 </TouchableOpacity>
               </View>
-              {/* {errors.type && (
-                                <Text style={styles.errorText}>{errors.type.message}</Text>
-                            )} */}
-            </>
-          )}
-        />
+            )}
+          />
+        </View>
 
-        <Text style={[styles.label, { color: theme.TEXT }]}>Icon</Text>
+        <View style={styles.chooseIconRow}>
+          <Text style={[styles.chooseIconLabel, { color: sectionLabelColor }]}>
+            Choose icon
+          </Text>
+          <Controller
+            control={control}
+            name="icon"
+            render={({ field: { value } }) => {
+              const selectedIcon = ICONS.find((icon) => icon.value === value);
+              if (!selectedIcon) return <View />;
+              return (
+                <View style={styles.selectedChip}>
+                  <Text style={styles.selectedChipEmoji}>
+                    {selectedIcon.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.selectedChipLabel,
+                      { color: theme.TEXT },
+                    ]}
+                  >
+                    {formatIconLabel(selectedIcon.value)}
+                  </Text>
+                </View>
+              );
+            }}
+          />
+        </View>
+      </View>
+
+      {/* Only the icon grid scrolls */}
+      <ScrollView
+        style={styles.iconScrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Controller
           control={control}
           name="icon"
           rules={categoryFormFields.icon.rules}
-          render={({ field: { onChange, value } }) => {
-            const selectedIcon = ICONS.find(icon => icon.value === value);
-
-            return (
-              <>
-                {selectedIcon && (
-                  <Text
+          render={({ field: { onChange, value } }) => (
+            <View style={styles.iconGrid}>
+              {ICONS.map((icon) => {
+                const isSelected = value === icon.value;
+                return (
+                  <TouchableOpacity
+                    key={icon.id}
                     style={[
-                      styles.selectedIconLabel,
-                      { color: isDark ? theme.TEXT : theme.PURPLE },
+                      styles.iconButton,
+                      isSelected
+                        ? styles.iconButtonSelected
+                        : styles.iconButtonUnselected,
+                      isSelected && { borderColor: theme.SECONDARY },
                     ]}
+                    onPress={() => {
+                      onChange(icon.value);
+                      setValue('title', formatIconLabel(icon.value));
+                      reset({
+                        title: icon.value,
+                        icon: icon.value,
+                        type: watch('type'),
+                      });
+                    }}
+                    activeOpacity={0.7}
                   >
-                    Selected: {selectedIcon.name} (
-                    {selectedIcon?.value?.charAt(0)?.toUpperCase() +
-                      selectedIcon.value.slice(1)}
-                    )
-                  </Text>
-                )}
-                <View style={styles.iconGrid}>
-                  {ICONS.map(icon => (
-                    <TouchableOpacity
-                      key={icon.id}
+                    <Text style={styles.iconEmoji}>{icon.name}</Text>
+                    <Text
                       style={[
-                        styles.iconButton,
+                        styles.iconLabel,
                         {
-                          backgroundColor: theme.INPUT_BACKGROUND,
-                          borderColor:
-                            value === icon.value ? theme.PURPLE : 'transparent',
+                          color: isSelected ? theme.TEXT : theme.LIGHT_TEXT,
                         },
                       ]}
-                      onPress={() => {
-                        onChange(icon.value);
-                        setValue(
-                          'title',
-                          icon.value.charAt(0)?.toUpperCase() +
-                            icon.value.slice(1),
-                        );
-                        // Automatically set the title to the icon value
-                        // Using reset to update the title
-                        reset({
-                          title: icon.value,
-                          icon: icon.value,
-                          type: watch('type'),
-                        });
-                      }}
+                      numberOfLines={1}
                     >
-                      <Text style={styles.iconText}>{icon.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            );
-          }}
+                      {formatIconLabel(icon.value)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        />
+      </ScrollView>
+
+      {/* Fixed bottom: submit */}
+      <View style={styles.fixedBottom}>
+        <ButtonIconComponent
+          title="Create Category"
+          onPress={handleSubmit(onSubmit)}
+          loading={isLoading}
         />
       </View>
-      <ButtonIconComponent
-        title="Create Category"
-        onPress={handleSubmit(onSubmit)}
-        loading={isLoading}
-      />
     </View>
   );
 };

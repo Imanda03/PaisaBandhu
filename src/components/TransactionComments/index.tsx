@@ -118,7 +118,7 @@ const TransactionComments: React.FC<TransactionCommentsProps> = ({
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <MaterialIcons name="chat-bubble-outline" size={48} color={theme.PURPLE} />
+            <MaterialIcons name="chat-bubble-outline" size={48} color={theme.ICON_COLOR} />
             <Text style={[styles.emptyText, { color: theme.TEXT }]}>No comments yet</Text>
             <Text style={[styles.emptySubtext, { color: theme.LIGHT_TEXT }]}>
               Be the first to comment!

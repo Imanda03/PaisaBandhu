@@ -49,5 +49,30 @@ export const createStyles = () => {
             color: theme.DARK_TEXT,
             fontSize: 16,
         },
+        confirmInputContainer: {
+            marginBottom: 20,
+        },
+        confirmInputLabel: {
+            fontSize: 14,
+            marginBottom: 8,
+            color: theme.TEXT,
+        },
+        confirmTextHighlight: {
+            fontWeight: '700',
+            color: theme.ERROR,
+        },
+        confirmInput: {
+            borderWidth: 1,
+            borderColor: theme.BORDER_COLOR,
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            fontSize: 16,
+            color: theme.TEXT,
+            backgroundColor: theme.INPUT_BACKGROUND,
+        },
+        confirmButtonDisabled: {
+            opacity: 0.5,
+        },
     })
 }

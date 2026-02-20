@@ -1,19 +1,33 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../utils/colors';
-export const createStyles = (focused?: boolean) => {
+import { scale, verticalScale, fontSize, spacing } from '../../utils/responsive';
+
+export const createStyles = () => {
   const { theme } = useTheme();
 
   return StyleSheet.create({
     tabBar: {
       position: 'absolute',
-      bottom: 8,
-      left: 10,
-      right: 10,
-      elevation: 5,
+      bottom: verticalScale(16),
+      left: spacing(16),
+      right: spacing(16),
+      elevation: 8,
       backgroundColor: theme.NAVBAR_BACKGROUND,
-      borderRadius: 30,
-      height: 70,
-      marginHorizontal: 20,
+      borderRadius: scale(28),
+      height: verticalScale(72),
+      marginHorizontal: spacing(16),
+      borderTopWidth: 0,
+      borderWidth: 1,
+      borderColor: theme.BORDER_COLOR,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 16,
+        },
+        android: { elevation: 8 },
+      }),
     },
     tabBarItem: {
       padding: 5,
@@ -22,10 +36,10 @@ export const createStyles = (focused?: boolean) => {
     //   marginTop: 10,
     // },
     tabLabel: {
-      fontSize: 12,
+      fontSize: fontSize(12),
       textAlign: 'center',
-      width: 60,
-      marginBottom: 10,
+      width: scale(60),
+      marginBottom: verticalScale(10),
       fontWeight: 'bold',
     },
     tabBarButtonContainer: {
@@ -41,10 +55,19 @@ export const createStyles = (focused?: boolean) => {
     },
     tabBarButtonActive: {
       backgroundColor: theme.NAVBAR_ACTIVE_BACKGROUND,
-      borderRadius: 30,
-      marginHorizontal: 10,
-      padding: 5,
-      opacity: 0.9,
+      borderRadius: scale(20),
+      marginHorizontal: spacing(6),
+      paddingVertical: spacing(10),
+      paddingHorizontal: spacing(16),
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.NAVBAR_ACTIVE_BACKGROUND,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        },
+        android: { elevation: 6 },
+      }),
     },
   });
 };

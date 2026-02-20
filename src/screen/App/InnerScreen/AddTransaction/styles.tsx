@@ -1,14 +1,14 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTheme } from '../../../../utils/colors';
+import { scale, verticalScale } from '../../../../utils/responsive';
 
 export const createStyles = () => {
     const { theme } = useTheme();
-    const windowHeight = Dimensions.get('window').height;
 
     return StyleSheet.create({
         root: {
             flex: 1,
-            backgroundColor: theme.PURPLE,
+            backgroundColor: theme.HEADER_BACKGROUND,
             paddingTop: '13%',
             paddingHorizontal: '5%',
         },
@@ -17,9 +17,9 @@ export const createStyles = () => {
             backgroundColor: theme.BACKGROUND,
             marginTop: '10%',
             marginHorizontal: '-5%',
-            borderTopLeftRadius: 40,
-            borderTopRightRadius: 40,
-            paddingTop: 30,
+            borderTopLeftRadius: scale(40),
+            borderTopRightRadius: scale(40),
+            paddingTop: verticalScale(30),
             paddingHorizontal: '5%',
         },
         innerContainer: {

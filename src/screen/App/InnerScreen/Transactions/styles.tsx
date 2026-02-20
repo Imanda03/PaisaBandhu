@@ -1,5 +1,6 @@
 import { StyleSheet, Platform, StatusBar } from 'react-native';
 import { useTheme } from '../../../../utils/colors';
+import { scale, verticalScale, fontSize, spacing } from '../../../../utils/responsive';
 
 const STATUS_BAR_HEIGHT =
   Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
@@ -9,17 +10,17 @@ export const createStyles = () => {
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerWrapper: {
-      paddingTop: Platform.OS === 'ios' ? '10%' : STATUS_BAR_HEIGHT + 12,
+      paddingTop: Platform.OS === 'ios' ? '10%' : STATUS_BAR_HEIGHT ,
       paddingBottom: 12,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: theme.HEADER_BACKGROUND,
     },
     container: {
       flex: 1,
-      paddingHorizontal: 20,
-      paddingTop: 5,
+      paddingHorizontal: spacing(20),
+      paddingTop: verticalScale(5),
     },
     topSection: {
       flexShrink: 0,
@@ -137,10 +138,10 @@ export const createStyles = () => {
       fontSize: 13,
       fontWeight: '700',
       lineHeight: 18,
-      color: theme.LIGHT_TEXT,
+      color: isDark ? theme.TEXT : theme.LIGHT_TEXT,
       textTransform: 'uppercase',
       letterSpacing: 1,
-      opacity: 0.8,
+      opacity: isDark ? 1 : 0.8,
     },
     typeInnerContainer: {
       flexDirection: 'row',
@@ -152,16 +153,17 @@ export const createStyles = () => {
       fontSize: 20,
       fontWeight: '800',
       letterSpacing: 0.3,
+      opacity: 1,
     },
     content: {
       flex: 2,
       backgroundColor: theme.BACKGROUND,
-      marginTop: 24,
-      marginHorizontal: -20,
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      paddingTop: 24,
-      paddingHorizontal: 20,
+      marginTop: verticalScale(24),
+      marginHorizontal: -spacing(20),
+      borderTopLeftRadius: scale(32),
+      borderTopRightRadius: scale(32),
+      paddingTop: verticalScale(24),
+      paddingHorizontal: spacing(20),
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -182,8 +184,8 @@ export const createStyles = () => {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingVertical: 80,
-      paddingHorizontal: 40,
+      paddingVertical: verticalScale(80),
+      paddingHorizontal: spacing(40),
     },
     emptyIconContainer: {
       width: 140,
@@ -233,7 +235,7 @@ export const createStyles = () => {
       height: 56,
       width: 56,
       borderRadius: 100,
-      backgroundColor: theme.PURPLE,
+      backgroundColor: isDark ? theme.SECONDARY : theme.PURPLE,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -246,7 +248,7 @@ export const createStyles = () => {
     },
     mainButtonContent: {
       fontSize: 24,
-      color: theme.SECONDARY,
+      color: isDark ? '#1A1A1E' : theme.SECONDARY,
     },
     button: {
       width: '150%',

@@ -32,10 +32,24 @@ export const updateFinancialBook = async (id: string, data: Partial<BookInterfac
     }
 }
 
-export const deleteFinancialBook = async (id: string) => {
+export const shareBook = async (bookId: string, email: string) => {
+    try {
+        const response = await apiClient.post(`${API_URL}/book/${bookId}/share`, {
+            email: email.trim(),
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const deleteFinancialBook = async (id: string, force: boolean = false) => {
     try {
         const response = await apiClient.delete(
-            `${API_URL}/book/${id}`
+            `${API_URL}/book/${id}`,
+            {
+                data: { force }
+            }
         );
         return response.data;
     } catch (error) {

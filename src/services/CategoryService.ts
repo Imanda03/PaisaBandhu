@@ -23,3 +23,12 @@ export const getCategory = async () => {
         throw error;
     }
 };
+
+export const deleteCategory = async (id: string) => {
+    try {
+        const response = await apiClient.delete(`${API_URL}/category/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};

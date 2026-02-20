@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Text as SvgText, Defs, LinearGradient, Stop, G } from 'react-native-svg';
 import Animated, {
     useSharedValue,
@@ -33,7 +33,7 @@ interface AnimatedRadialChartProps {
 
 export const AnimatedRadialChart: React.FC<AnimatedRadialChartProps> = ({
     data,
-    size = 300,
+    size: sizeProp,
     strokeWidth = 20,
     animationDuration = 1200,
     title,
@@ -41,6 +41,11 @@ export const AnimatedRadialChart: React.FC<AnimatedRadialChartProps> = ({
     centerRadius = 40,
 }) => {
     const { theme } = useTheme();
+    const { width: screenWidth } = useWindowDimensions();
+    const size = useMemo(
+        () => sizeProp ?? Math.min(screenWidth - 80, 300),
+        [screenWidth, sizeProp],
+    );
     const center = size / 2;
     const animatedValues = data.map(() => useSharedValue(0));
 
@@ -80,7 +85,7 @@ export const AnimatedRadialChart: React.FC<AnimatedRadialChartProps> = ({
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.BACKGROUND }]}>
+        <View style={[styles.container, { backgroundColor: theme.BACKGROUND_LIGHT }]}>
             {title && (
                 <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
             )}
@@ -256,16 +261,15 @@ export const AnimatedRadialChart: React.FC<AnimatedRadialChartProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
-        borderRadius: 12,
+        padding: 20,
+        borderRadius: 20,
         margin: 8,
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.04)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 6,
     },
     title: {
         fontSize: 18,

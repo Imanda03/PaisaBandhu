@@ -5,7 +5,7 @@ import { ApiError } from "../utils/types";
 import { challengeService, Challenge } from "../services/ChallengeService";
 
 export const useFetchChallenges = (params?: {
-  status?: string;
+  status?: string | string[];
   type?: string;
   limit?: number;
   skip?: number;
@@ -14,8 +14,16 @@ export const useFetchChallenges = (params?: {
     ['Challenges', params],
     () => challengeService.getChallenges(params),
     {
-      onError: (error) => {
-        console.error('Failed to fetch challenges:', error);
+      staleTime: 60 * 1000,
+      onError: (error: any) => {
+        const status = error?.response?.status;
+        if (status >= 500) {
+          console.warn(
+            'Challenges temporarily unavailable. Pull to refresh when server is back.',
+          );
+        } else {
+          console.error('Failed to fetch challenges:', error);
+        }
       },
     }
   );
@@ -100,6 +108,46 @@ export const useFetchMyChallengeProgress = (challengeId: string) => {
       enabled: !!challengeId,
       onError: (error) => {
         console.error('Failed to fetch challenge progress:', error);
+      },
+    }
+  );
+};
+
+export const useUpdateChallenge = () => {
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+
+  return useMutation<
+    Challenge | null,
+    AxiosError<ApiError>,
+    {
+      challengeId: string;
+      data: {
+        title?: string;
+        description?: string;
+        type?: Challenge['type'];
+        targetAmount?: number;
+        targetCategory?: string;
+        endDate?: Date;
+      };
+    }
+  >(
+    async ({ challengeId, data }) =>
+      challengeService.updateChallenge(challengeId, data),
+    {
+      onSuccess: async (response) => {
+        if (response) {
+          showToast('Challenge updated successfully', 'success');
+          await queryClient.invalidateQueries({ queryKey: ['Challenges'] });
+        } else {
+          showToast('Failed to update challenge', 'error');
+        }
+      },
+      onError: (error: any) => {
+        showToast(
+          error.response?.data?.message || 'Failed to update challenge',
+          'error',
+        );
       },
     }
   );
