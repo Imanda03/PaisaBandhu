@@ -1,6 +1,11 @@
 import { StyleSheet, Platform } from 'react-native';
 import { ThemeColors } from '../../../utils/colors';
-import { scale, verticalScale, fontSize, spacing } from '../../../utils/responsive';
+import {
+  scale,
+  verticalScale,
+  fontSize,
+  spacing,
+} from '../../../utils/responsive';
 
 export const createStyles = (theme: ThemeColors) => {
   const isDark = theme.HEADER_BACKGROUND === '#0F1012';
@@ -29,7 +34,6 @@ export const createStyles = (theme: ThemeColors) => {
     scrollContent: {
       paddingTop: verticalScale(20),
       paddingHorizontal: spacing(20),
-      paddingBottom: verticalScale(130),
       flexGrow: 1,
     },
 
@@ -41,7 +45,9 @@ export const createStyles = (theme: ThemeColors) => {
       backgroundColor: theme.BACKGROUND_LIGHT,
       overflow: 'hidden',
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(198, 165, 107, 0.15)' : 'rgba(198, 165, 107, 0.2)',
+      borderColor: isDark
+        ? 'rgba(198, 165, 107, 0.15)'
+        : 'rgba(198, 165, 107, 0.2)',
       ...Platform.select({
         ios: {
           shadowColor: isDark ? '#000' : theme.PURPLE,
@@ -77,39 +83,38 @@ export const createStyles = (theme: ThemeColors) => {
       borderRadius: 23,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: isDark ? 'rgba(198, 165, 107, 0.12)' : 'rgba(198, 165, 107, 0.1)',
+      backgroundColor: isDark
+        ? 'rgba(198, 165, 107, 0.12)'
+        : 'rgba(198, 165, 107, 0.1)',
       borderWidth: 1,
       borderColor: 'rgba(198, 165, 107, 0.25)',
     },
 
-    // Income & Expense - premium bars
-    incomeExpenseRow: {
+    incomeExpenseShell: {
       flexDirection: 'row',
-      gap: spacing(14),
+      alignItems: 'stretch',
+      borderRadius: scale(18),
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
     },
     incomeExpenseItem: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      padding: spacing(16),
-      borderRadius: scale(16),
-      gap: spacing(12),
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDark ? 0.2 : 0.04,
-          shadowRadius: 8,
-        },
-        android: { elevation: 3 },
-      }),
+      paddingVertical: spacing(14),
+      paddingHorizontal: spacing(14),
+      gap: spacing(10),
+    },
+    incomeExpenseDivider: {
+      width: StyleSheet.hairlineWidth * 2,
+      alignSelf: 'stretch',
+      marginVertical: spacing(12),
     },
     incomeExpenseIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 12,
+      width: 36,
+      height: 36,
+      borderRadius: 11,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -127,7 +132,7 @@ export const createStyles = (theme: ThemeColors) => {
     incomeExpenseValue: {
       fontSize: fontSize(16),
       fontWeight: '800',
-      letterSpacing: 0.2,
+      letterSpacing: 0.15,
     },
 
     // Quick actions - compact row
@@ -174,69 +179,5 @@ export const createStyles = (theme: ThemeColors) => {
       marginBottom: verticalScale(28),
     },
 
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: verticalScale(18),
-      paddingHorizontal: spacing(4),
-    },
-    sectionTitle: {
-      fontSize: fontSize(19),
-      fontWeight: '800',
-      letterSpacing: 0.3,
-    },
-
-    transactionsCard: {
-      borderRadius: scale(24),
-      padding: spacing(22),
-      backgroundColor: theme.BACKGROUND_LIGHT,
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.25 : 0.06,
-          shadowRadius: 20,
-        },
-        android: { elevation: 6 },
-      }),
-    },
-    transactionItem: {
-      marginBottom: spacing(14),
-    },
-    transactionItemLast: {
-      marginBottom: 0,
-    },
-
-    emptyState: {
-      paddingVertical: verticalScale(56),
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    emptyIcon: {
-      width: 88,
-      height: 88,
-      borderRadius: 44,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: spacing(24),
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-    },
-    emptyTitle: {
-      fontSize: fontSize(19),
-      fontWeight: '700',
-      marginBottom: verticalScale(10),
-      textAlign: 'center',
-    },
-    emptySubtitle: {
-      fontSize: fontSize(15),
-      opacity: 0.75,
-      textAlign: 'center',
-      lineHeight: fontSize(22),
-      paddingHorizontal: spacing(28),
-    },
   });
 };

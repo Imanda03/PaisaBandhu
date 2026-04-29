@@ -20,12 +20,16 @@ import { useSendOtp, useVerifyOtp, useCompleteProfile } from '../../../ReactQuer
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Step = 'email' | 'code' | 'profile';
 
+const AUTH_HEADER_VERTICAL = 56;
+
 const STEP_ORDER: Step[] = ['email', 'code', 'profile'];
 
-const OtpFlow = ({ navigation }: any) => {
+const OtpFlow = ({ navigation: _navigation }: any) => {
+  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { showToast } = useToast();
@@ -144,7 +148,9 @@ const OtpFlow = ({ navigation }: any) => {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={0}
+          keyboardVerticalOffset={
+            Platform.OS === 'ios' ? insets.top + AUTH_HEADER_VERTICAL : 0
+          }
         >
           <AuthHeader
             title={
@@ -160,6 +166,7 @@ const OtpFlow = ({ navigation }: any) => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             <View style={styles.stepDots}>
               {STEP_ORDER.map((s, i) => (

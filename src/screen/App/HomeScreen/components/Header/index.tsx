@@ -6,12 +6,16 @@ import Animated, {
   withSpring
 } from 'react-native-reanimated'
 import { createStyles } from './styles'
-import { EntypoIcon } from '../../../../../utils/Icons'
+import { EntypoIcon, MaterialIcons } from '../../../../../utils/Icons'
 import { useTheme } from '../../../../../utils/colors'
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-const Header = () => {
+type HeaderProps = {
+  onHelpPress?: () => void;
+};
+
+const Header = ({ onHelpPress }: HeaderProps) => {
     const styles = createStyles();
     const { theme, isDark, setTheme } = useTheme()
     
@@ -32,6 +36,15 @@ const Header = () => {
         <View style={styles.container}>
             <Text style={styles.header}>Kharcha Mate</Text>
             <View style={styles.rightActions}>
+                {onHelpPress != null && (
+                    <AnimatedTouchable
+                        onPress={onHelpPress}
+                        style={[styles.themeButton, animatedStyle]}
+                        activeOpacity={0.8}
+                    >
+                        <MaterialIcons name="help-outline" size={24} color={theme.SECONDARY} />
+                    </AnimatedTouchable>
+                )}
                 <AnimatedTouchable 
                     onPress={handlePress}
                     style={[styles.themeButton, animatedStyle]}

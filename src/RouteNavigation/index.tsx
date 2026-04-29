@@ -1,4 +1,4 @@
-import { View, Text } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +17,8 @@ import SavingsGoalsScreen from '../screen/App/SavingsGoalsScreen';
 import PermissionsScreen from '../screen/App/PermissionsScreen';
 import PrivacyPolicyScreen from '../screen/App/PrivacyPolicyScreen';
 import AuthHeader from '../components/core/AuthHeader';
+import { GuideTourProvider } from '../context/GuideTourContext';
+import CoachMarkOverlay from '../components/CoachMarkOverlay';
 
 function PermissionsScreenWrapper() {
   const navigation = useNavigation();
@@ -39,7 +41,9 @@ const RootStack = () => {
   const { authToken } = useAuth();
 
   return (
-    <Stack.Navigator>
+    <GuideTourProvider>
+      <View style={{ flex: 1 }}>
+        <Stack.Navigator>
       {authToken ? (
         <>
           <Stack.Screen
@@ -93,6 +97,9 @@ const RootStack = () => {
         />
       )}
     </Stack.Navigator>
+    <CoachMarkOverlay />
+      </View>
+    </GuideTourProvider>
   );
 };
 

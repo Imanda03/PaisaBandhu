@@ -12,28 +12,34 @@ export const createStyles = (theme: ThemeColors) => {
     },
     scrollContent: {
       flexGrow: 1,
-      paddingTop: verticalScale(24),
+      paddingTop: verticalScale(12),
       paddingHorizontal: spacing(20),
       paddingBottom: verticalScale(120),
     },
+    heroGradient: {
+      paddingBottom: verticalScale(28),
+      marginBottom: verticalScale(6),
+      borderBottomLeftRadius: scale(28),
+      borderBottomRightRadius: scale(28),
+    },
     avatarSection: {
       alignItems: 'center',
-      paddingVertical: verticalScale(20),
-      marginBottom: verticalScale(8),
+      paddingVertical: verticalScale(12),
+      marginBottom: verticalScale(4),
     },
     avatarWrapper: {
       position: 'relative',
       marginBottom: spacing(16),
     },
     avatar: {
-      width: scale(96),
-      height: scale(96),
-      borderRadius: scale(48),
+      width: scale(100),
+      height: scale(100),
+      borderRadius: scale(50),
       backgroundColor: theme.SECONDARY,
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 3,
-      borderColor: isDark ? 'rgba(198, 165, 107, 0.4)' : 'rgba(198, 165, 107, 0.3)',
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(198, 165, 107, 0.45)',
       ...Platform.select({
         ios: {
           shadowColor: isDark ? '#000' : theme.PURPLE,
@@ -77,10 +83,10 @@ export const createStyles = (theme: ThemeColors) => {
       gap: spacing(8),
     },
     userName: {
-      fontSize: fontSize(22),
-      fontWeight: '700',
+      fontSize: fontSize(24),
+      fontWeight: '800',
       color: theme.TEXT,
-      letterSpacing: 0.3,
+      letterSpacing: 0.2,
       textAlign: 'center',
     },
     editButton: {
@@ -103,11 +109,11 @@ export const createStyles = (theme: ThemeColors) => {
     },
     card: {
       backgroundColor: theme.BACKGROUND_LIGHT,
-      borderRadius: scale(24),
-      marginBottom: verticalScale(18),
-      padding: spacing(22),
+      borderRadius: scale(22),
+      marginBottom: verticalScale(16),
+      padding: spacing(20),
       borderWidth: 1,
-      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      borderColor: isDark ? 'rgba(198, 165, 107, 0.12)' : 'rgba(0,0,0,0.05)',
       ...Platform.select({
         ios: {
           shadowColor: '#000',
@@ -128,10 +134,11 @@ export const createStyles = (theme: ThemeColors) => {
       borderBottomColor: theme.BORDER_COLOR + '40',
     },
     cardTitle: {
-      fontSize: fontSize(18),
+      fontSize: fontSize(15),
       fontWeight: '800',
       color: theme.TEXT,
-      letterSpacing: 0.3,
+      letterSpacing: 0.4,
+      textTransform: 'uppercase',
     },
     infoSection: {
       gap: 0,

@@ -1,5 +1,6 @@
 // API base URL - update with your backend. Ngrok URLs change on restart; use a stable URL for production.
-export const API_URL = 'https://aristolochiaceous-unhelping-johana.ngrok-free.app/api';
+export const API_URL = 'https://kharchasplit.anish-sharma.com.np/api';
+// export const API_URL = 'https://aristolochiaceous-unhelping-johana.ngrok-free.app/api';
 
 export const getGreeting = (name: string) => {
   const hour = new Date().getHours();

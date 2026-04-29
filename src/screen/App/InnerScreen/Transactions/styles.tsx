@@ -1,9 +1,11 @@
-import { StyleSheet, Platform, StatusBar } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../../../utils/colors';
-import { scale, verticalScale, fontSize, spacing } from '../../../../utils/responsive';
-
-const STATUS_BAR_HEIGHT =
-  Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0;
+import {
+  scale,
+  verticalScale,
+  fontSize,
+  spacing,
+} from '../../../../utils/responsive';
 
 export const createStyles = () => {
   const { theme, isDark } = useTheme();
@@ -13,9 +15,8 @@ export const createStyles = () => {
       backgroundColor: theme.HEADER_BACKGROUND,
     },
     headerWrapper: {
-      paddingTop: Platform.OS === 'ios' ? '10%' : STATUS_BAR_HEIGHT ,
-      paddingBottom: 12,
-      backgroundColor: theme.HEADER_BACKGROUND,
+      paddingBottom: verticalScale(14),
+      backgroundColor: 'transparent',
     },
     container: {
       flex: 1,
@@ -28,47 +29,170 @@ export const createStyles = () => {
     innerTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'flex-start',
       gap: 12,
-      // marginBottom: 10,
+    },
+    groupOverviewWrap: {
+      flex: 1,
+      width: '100%',
+      marginBottom: verticalScale(8),
     },
 
-    card: {
-      flex: 1,
-      borderRadius: 24,
-      paddingVertical: 24,
-      paddingHorizontal: 24,
-      marginBottom: 16,
-      backgroundColor: 'rgba(255, 255, 255, 0.12)',
-      borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.2)',
-      shadowColor: theme.SHADOW,
-      shadowOffset: {
-        width: 0,
-        height: 8,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 20,
-      elevation: 8,
+    overviewColumn: {
+      gap: verticalScale(10),
+      marginTop: verticalScale(4),
+      marginBottom: verticalScale(4),
     },
-    totalInner: {
+    overviewBalanceCard: {
+      borderRadius: scale(20),
+      paddingVertical: verticalScale(16),
+      paddingHorizontal: spacing(18),
+      borderWidth: 1,
+      backgroundColor: isDark
+        ? 'rgba(32, 33, 37, 0.97)'
+        : 'rgba(255, 255, 255, 0.99)',
+      borderColor: isDark
+        ? 'rgba(198, 165, 107, 0.28)'
+        : 'rgba(198, 165, 107, 0.22)',
+      overflow: 'hidden',
+      ...Platform.select({
+        ios: {
+          shadowColor: isDark ? '#000' : theme.SECONDARY,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.35 : 0.11,
+          shadowRadius: 18,
+        },
+        android: { elevation: 6 },
+      }),
+    },
+    overviewBalanceGradient: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    overviewBalanceInner: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
-      marginBottom: 12,
+      gap: spacing(14),
     },
-    totalText: {
-      fontSize: 16,
-      color: theme.SECONDARY,
-      fontWeight: '600',
-      letterSpacing: 0.5,
-      opacity: 0.95,
+    overviewBalanceIconRing: {
+      width: scale(54),
+      height: scale(54),
+      borderRadius: scale(18),
+      borderWidth: 1.5,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.35 : 0.06,
+          shadowRadius: 6,
+        },
+        android: { elevation: 2 },
+      }),
     },
-    price: {
-      fontSize: 36,
+    overviewBalanceCopy: {
+      flex: 1,
+      minWidth: 0,
+    },
+    overviewBalanceEyebrow: {
+      fontSize: fontSize(10),
+      fontWeight: '800',
+      color: theme.LIGHT_TEXT,
+      letterSpacing: 1.25,
+      textTransform: 'uppercase',
+      opacity: 0.72,
+      marginBottom: verticalScale(6),
+    },
+    overviewBalanceText: {
+      fontSize: fontSize(26),
       fontWeight: '800',
       color: theme.SECONDARY,
-      letterSpacing: 0.5,
+      letterSpacing: 0.15,
+      marginBottom: verticalScale(7),
     },
+    overviewBalanceUnderline: {
+      width: scale(40),
+      height: scale(3),
+      borderRadius: scale(2),
+      opacity: 0.55,
+    },
+    overviewStatRow: {
+      flexDirection: 'row',
+      gap: spacing(10),
+      alignItems: 'stretch',
+    },
+    overviewStatCard: {
+      flex: 1,
+      borderRadius: scale(16),
+      paddingVertical: verticalScale(12),
+      paddingHorizontal: spacing(12),
+      borderWidth: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing(10),
+      minWidth: 0,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowRadius: 8,
+        },
+        android: { elevation: 2 },
+      }),
+    },
+    overviewStatCardIncome: {
+      backgroundColor: isDark
+        ? 'rgba(91, 165, 107, 0.18)'
+        : 'rgba(240, 249, 241, 0.98)',
+      borderColor: isDark
+        ? 'rgba(91, 165, 107, 0.38)'
+        : 'rgba(91, 165, 107, 0.22)',
+    },
+    overviewStatCardExpense: {
+      backgroundColor: isDark
+        ? 'rgba(212, 93, 93, 0.16)'
+        : 'rgba(253, 242, 242, 0.98)',
+      borderColor: isDark
+        ? 'rgba(212, 93, 93, 0.38)'
+        : 'rgba(212, 93, 93, 0.2)',
+    },
+    overviewStatIcon: {
+      width: scale(34),
+      height: scale(34),
+      borderRadius: scale(11),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    overviewStatLabel: {
+      fontSize: fontSize(10),
+      fontWeight: '800',
+      color: theme.LIGHT_TEXT,
+      letterSpacing: 0.65,
+      textTransform: 'uppercase',
+      marginBottom: verticalScale(2),
+      opacity: 0.84,
+    },
+    overviewStatValue: {
+      fontSize: fontSize(14),
+      fontWeight: '800',
+      letterSpacing: 0.06,
+    },
+    overviewStatTextBlock: {
+      flex: 1,
+      minWidth: 0,
+    },
+    overviewFlowTrack: {
+      flexDirection: 'row',
+      height: scale(3),
+      borderRadius: scale(2),
+      overflow: 'hidden',
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+    },
+    overviewFlowSegment: {
+      height: '100%',
+    },
+
     friendsStatsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -176,6 +300,18 @@ export const createStyles = () => {
         },
       }),
     },
+    helperRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing(6),
+      marginBottom: spacing(4),
+      marginTop: -spacing(4),
+      paddingHorizontal: spacing(2),
+    },
+    helperText: {
+      fontSize: fontSize(11),
+      color: theme.LIGHT_TEXT,
+    },
     flatList: {
       flex: 1,
       backgroundColor: theme.BACKGROUND,
@@ -223,17 +359,49 @@ export const createStyles = () => {
       lineHeight: 22,
       opacity: 0.7,
     },
+    fabExpandedShadow: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.22,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    fabExpandedButton: {
+      position: 'absolute',
+      right: 0,
+      minWidth: scale(96),
+      maxWidth: scale(132),
+      paddingVertical: verticalScale(9),
+      paddingHorizontal: spacing(12),
+      borderRadius: scale(20),
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 0,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.35)',
+    },
+    fabExpandedInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing(6),
+    },
+    fabExpandedLabel: {
+      color: '#FFFFFF',
+      fontWeight: '800',
+      fontSize: fontSize(11),
+      letterSpacing: 0.35,
+    },
     fabWrapper: {
       position: 'absolute',
-      bottom: 30,
-      right: 16,
+      right: spacing(18),
       zIndex: 9999,
-      elevation: 10,
+      elevation: 12,
+      overflow: 'visible',
     },
     mainButton: {
-      zIndex: 1,
-      height: 56,
-      width: 56,
+      zIndex: 3,
+      height: scale(58),
+      width: scale(58),
       borderRadius: 100,
       backgroundColor: isDark ? theme.SECONDARY : theme.PURPLE,
       display: 'flex',

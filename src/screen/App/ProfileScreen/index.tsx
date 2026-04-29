@@ -8,6 +8,7 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -20,6 +21,7 @@ import Animated, {
 import { FeatherIcon, IoniconsIcon, MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
 import { createStyles } from './styles';
+import { spacing } from '../../../utils/responsive';
 import {
   useFetchUserDetails,
   useUserLogout,
@@ -155,7 +157,7 @@ const ProfileScreen: React.FC = () => {
         barStyle={isDark ? 'light-content' : 'dark-content'}
       />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: 0 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -166,42 +168,60 @@ const ProfileScreen: React.FC = () => {
           />
         }
       >
-        {/* Avatar Section */}
-        <AnimatedView
-          entering={FadeInDown.delay(150).springify()}
-          style={styles.avatarSection}
+        <LinearGradient
+          colors={
+            isDark
+              ? [theme.HEADER_GRADIENT[1], theme.HEADER_GRADIENT[2], theme.BACKGROUND]
+              : [theme.HEADER_GRADIENT[2], theme.HEADER_GRADIENT[3], theme.BACKGROUND]
+          }
+          locations={[0, 0.45, 1]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={[
+            styles.heroGradient,
+            {
+              paddingTop: insets.top + spacing(8),
+              marginHorizontal: -spacing(20),
+              paddingHorizontal: spacing(20),
+            },
+          ]}
         >
-          <AnimatedView style={[styles.avatarWrapper, avatarAnimatedStyle]}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {UserDetails?.fullName?.[0]?.toUpperCase() || 'U'}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.editAvatarButton}
-              onPress={() => setIsVisible(true)}
-              activeOpacity={0.8}
-            >
-              <FeatherIcon name="edit-2" size={16} color={theme.SECONDARY} />
-            </TouchableOpacity>
-          </AnimatedView>
           <AnimatedView
-            entering={FadeInDown.delay(200).springify()}
-            style={styles.nameSection}
+            entering={FadeInDown.delay(150).springify()}
+            style={styles.avatarSection}
           >
-            <Text style={styles.userName}>
-              {UserDetails?.fullName || 'User'}
-            </Text>
-            <TouchableOpacity
-              onPress={() => setIsVisible(true)}
-              style={styles.editButton}
-              activeOpacity={0.7}
+            <AnimatedView style={[styles.avatarWrapper, avatarAnimatedStyle]}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {UserDetails?.fullName?.[0]?.toUpperCase() || 'U'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.editAvatarButton}
+                onPress={() => setIsVisible(true)}
+                activeOpacity={0.8}
+              >
+                <FeatherIcon name="edit-2" size={16} color={theme.SECONDARY} />
+              </TouchableOpacity>
+            </AnimatedView>
+            <AnimatedView
+              entering={FadeInDown.delay(200).springify()}
+              style={styles.nameSection}
             >
-              <FeatherIcon name="edit-3" size={18} color={theme.ICON_COLOR} />
-              <Text style={styles.editButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
+              <Text style={styles.userName}>
+                {UserDetails?.fullName || 'User'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsVisible(true)}
+                style={styles.editButton}
+                activeOpacity={0.7}
+              >
+                <FeatherIcon name="edit-3" size={18} color={theme.ICON_COLOR} />
+                <Text style={styles.editButtonText}>Edit Profile</Text>
+              </TouchableOpacity>
+            </AnimatedView>
           </AnimatedView>
-        </AnimatedView>
+        </LinearGradient>
 
         {/* Information Card */}
         <AnimatedView

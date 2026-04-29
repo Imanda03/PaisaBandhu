@@ -1,30 +1,44 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../utils/colors';
+import { scale, spacing } from '../../utils/responsive';
 
 export const createStyles = () => {
+    // Called only from React components (e.g. FilterBar), not at module scope
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const { theme } = useTheme();
 
     return StyleSheet.create({
         container: {
-            marginBottom: 15
+            marginBottom: spacing(14),
         },
         filterSection: {
-            gap: 10,
+            gap: spacing(10),
         },
         typeFilters: {
             flexDirection: 'row',
             justifyContent: 'space-between',
-            marginBottom: 10,
-            gap: '1%'
+            marginBottom: spacing(10),
+            gap: spacing(8),
         },
         filterButton: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: 10,
-            paddingHorizontal: 16,
-            borderRadius: 25,
-            flex: 0.3,
+            paddingVertical: spacing(10),
+            paddingHorizontal: spacing(14),
+            borderRadius: scale(22),
+            flex: 0.32,
             justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: theme.BORDER_COLOR + '35',
+            ...Platform.select({
+                ios: {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.08,
+                    shadowRadius: 6,
+                },
+                android: { elevation: 2 },
+            }),
         },
         dateFilterContainer: {
             flexDirection: 'row',

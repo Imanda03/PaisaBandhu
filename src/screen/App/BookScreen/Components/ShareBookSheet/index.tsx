@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import BottomSheet from '../../../../../components/BottomSheet';
 import InputComponent from '../../../../../components/core/Input';
 import ButtonIconComponent from '../../../../../components/core/ButtonIcon';
 import { useTheme } from '../../../../../utils/colors';
 import { useShareBook } from '../../../../../ReactQueryHook/book.hook';
+import { scale, spacing, fontSize } from '../../../../../utils/responsive';
 
 type Props = {
   isVisible: boolean;
@@ -31,8 +31,36 @@ const ShareBookSheet: React.FC<Props> = ({
   const { theme } = useTheme();
   const { mutate: shareBook, isLoading } = useShareBook();
 
+  const sheetStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          backgroundColor: theme.BACKGROUND_LIGHT,
+          borderRadius: scale(18),
+          padding: spacing(16),
+          borderWidth: StyleSheet.hairlineWidth * 2,
+          borderColor: theme.BORDER_COLOR,
+          marginBottom: spacing(8),
+        },
+        title: {
+          color: theme.TEXT,
+          fontSize: fontSize(17),
+          fontWeight: '700',
+          marginBottom: spacing(6),
+          letterSpacing: 0.2,
+        },
+        subtitle: {
+          color: theme.LIGHT_TEXT,
+          fontSize: fontSize(14),
+          lineHeight: fontSize(20),
+          marginBottom: spacing(14),
+        },
+      }),
+    [theme],
+  );
+
   const handleShare = () => {
-    if (!email.trim()) return;
+    if (!email.trim() || isLoading) return;
     shareBook(
       { bookId, email: email.trim() },
       {
@@ -59,26 +87,23 @@ const ShareBookSheet: React.FC<Props> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <Text style={{ color: theme.TEXT, fontSize: 16, marginBottom: 8, fontWeight: '600' }}>
-          Share "{bookTitle}" with a friend
-        </Text>
-        <Text style={{ color: theme.LIGHT_TEXT, fontSize: 14, marginBottom: 12 }}>
-          Enter their email. They must have an account.
-        </Text>
-        <InputComponent
-          placeholder="Friend's email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <View style={{ marginTop: 20 }}>
+        <View style={sheetStyles.card}>
+          <Text style={sheetStyles.title}>Share "{bookTitle}"</Text>
+          <Text style={sheetStyles.subtitle}>
+            Invite a friend by email. They need an existing account to accept.
+          </Text>
+          <InputComponent
+            placeholder="Friend's email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+        </View>
+        <View style={{ marginTop: spacing(8) }}>
           <ButtonIconComponent
             title={isLoading ? 'Sharing...' : 'Share Book'}
             onPress={handleShare}
             loading={isLoading}
-            disabled={!email.trim()}
           />
         </View>
       </KeyboardAvoidingView>

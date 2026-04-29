@@ -1,50 +1,15 @@
 import { useTheme } from '../../../../utils/colors';
 import { useMemo } from 'react';
-import {
-  AnimatedBarChart,
-  BarChartData,
-} from '../../../../components/AnimatedChart/BarChart';
-import {
-  AnimatedLineChart,
-  LineChartData,
-} from '../../../../components/AnimatedChart/LineChart';
-import {
-  AnimatedDonutChart,
-  DonutChartData,
-} from '../../../../components/AnimatedChart/DonutChart';
-import {
-  AnimatedAreaChart,
-  AreaChartData,
-} from '../../../../components/AnimatedChart/AreaChart';
-import {
-  AnimatedRadialChart,
-  RadialChartData,
-} from '../../../../components/AnimatedChart/RadialProgrssChart';
+import type { MonthlyIncomeExpensePoint } from '../../../../components/AnimatedChart/GroupedMonthlyBarChart.types';
+import type { DonutChartData } from '../../../../components/AnimatedChart/DonutChart';
 import { ScrollView, View, Text, ActivityIndicator, StatusBar, Platform, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons, IoniconsIcon } from '../../../../utils/Icons';
 import { createStyles } from './styles';
-import {
-  AnimatedSpendingTracker,
-  SpendingData,
-} from '../../../../components/AnimatedChart/SpendingTrackerChart';
-import {
-  AnimatedHabitTracker,
-  HabitTrackerData,
-} from '../../../../components/AnimatedChart/HabitTrackingChart';
-import {
-  AnimatedMoodTracker,
-  MoodData,
-} from '../../../../components/AnimatedChart/MoodTrackingChart';
-import {
-  AnimatedCalendarHeatmap,
-  CalendarData,
-} from '../../../../components/AnimatedChart/CalendarProgressChart';
-import {
-  AnimatedFitnessChart,
-  FitnessMetric,
-} from '../../../../components/AnimatedChart/FitnessProgressChart';
+import { spacing } from '../../../../utils/responsive';
+import BookMonthlyFlowChart from './BookMonthlyFlowChart';
+import BookCategoryComposition from './BookCategoryComposition';
 import { useFetchTransaction } from '../../../../ReactQueryHook/transaction.hook';
 import { useFetchFinancialBook } from '../../../../ReactQueryHook/book.hook';
 import { FriendExpenses } from './RenderExpenseItem';
@@ -76,7 +41,7 @@ export const WeeklyChart = ({ route }: any) => {
 
   // Process transactions data
   const {
-    monthlyRevenue,
+    monthlyIncomeExpense,
     donutData,
     spendingData,
     friendExpenses,
@@ -87,7 +52,7 @@ export const WeeklyChart = ({ route }: any) => {
   } = useMemo(() => {
     if (!transactionsData?.transactions) {
       return {
-        monthlyRevenue: [],
+        monthlyIncomeExpense: [] as MonthlyIncomeExpensePoint[],
         donutData: [],
         spendingData: [],
         friendExpenses: [],
@@ -147,7 +112,9 @@ export const WeeklyChart = ({ route }: any) => {
 
     transactions.forEach((txn: any) => {
       const date = new Date(txn.date);
-      const monthKey = date.toLocaleString('default', { month: 'short' });
+      const y = date.getFullYear();
+      const mo = date.getMonth();
+      const monthKey = `${y}-${String(mo + 1).padStart(2, '0')}`;
       const amount = Number(txn.price) || 0;
 
       // Monthly revenue data
@@ -229,33 +196,39 @@ export const WeeklyChart = ({ route }: any) => {
       ? totalGroupExpense / participantCount
       : 0;
 
-    // Convert to chart data formats - separate bars for income and expense
-    const monthlyRevenue: BarChartData[] = [];
-    Object.entries(monthlyData).forEach(([month, data]) => {
-      monthlyRevenue.push(
-        {
-          label: `${month} Inc`,
-          value: data.income,
-        },
-        {
-          label: `${month} Exp`,
-          value: data.expense,
-        },
-      );
-    });
+    const currentYear = new Date().getFullYear();
+    const sortedMonthKeys = Object.keys(monthlyData).sort();
+    const monthlyIncomeExpense: MonthlyIncomeExpensePoint[] = sortedMonthKeys.map(
+      (key) => {
+        const data = monthlyData[key];
+        const [yStr, mStr] = key.split('-');
+        const y = Number(yStr);
+        const m = Number(mStr) - 1;
+        const d = new Date(y, m, 1);
+        let label = d.toLocaleString('default', { month: 'short' });
+        if (y !== currentYear) {
+          label = `${label} '${String(y).slice(-2)}`;
+        }
+        return {
+          label,
+          income: data.income,
+          expense: data.expense,
+        };
+      },
+    );
 
     const donutChartData: DonutChartData[] = [
       { value: transactionsData.totals?.income || 0, label: 'Income' },
       { value: transactionsData.totals?.expense || 0, label: 'Expense' },
     ];
 
-    // Sort categories by spending (highest first) and format
-    const spendingTrackerData: SpendingData[] = Object.entries(categoryData)
+    const spendingTrackerData: { category: string; spent: number }[] = Object.entries(
+      categoryData,
+    )
       .filter(([_, data]) => data.spent > 0)
       .map(([category, data]) => ({
-        category: `${category} (₹${data.spent.toFixed(0)})`,
+        category,
         spent: data.spent,
-        budget: data.spent * 1.2, // Estimate budget as 120% of spent
       }))
       .sort((a, b) => b.spent - a.spent);
 
@@ -308,7 +281,7 @@ export const WeeklyChart = ({ route }: any) => {
     }
 
     return {
-      monthlyRevenue,
+      monthlyIncomeExpense,
       donutData: donutChartData,
       spendingData: spendingTrackerData,
       friendExpenses: friendExpensesList,
@@ -359,39 +332,66 @@ export const WeeklyChart = ({ route }: any) => {
             {!isGroupBook ? (
               // Single Book Charts
               <>
-                {monthlyRevenue.length > 0 && (
+                {monthlyIncomeExpense.some(
+                  (m) => (m.income || 0) > 0 || (m.expense || 0) > 0,
+                ) ? (
                   <View style={styles.chartWrapper}>
-                    <AnimatedBarChart
-                      data={monthlyRevenue}
-                      title="Monthly Income & Expense"
-                      showValues={true}
-                      animationDuration={2000}
-                    />
+                    <BookMonthlyFlowChart data={monthlyIncomeExpense} />
+                  </View>
+                ) : (
+                  <View style={styles.emptyChartContainer}>
+                    <MaterialIcons name="bar-chart" size={48} color={theme.SECONDARY} style={{ opacity: 0.3 }} />
+                    <Text style={[styles.emptyChartText, { color: theme.TEXT }]}>
+                      No Income & Expense Data
+                    </Text>
+                    <Text style={[styles.emptyChartSubtext, { color: theme.LIGHT_TEXT }]}>
+                      Add income or expense transactions to see monthly trends
+                    </Text>
                   </View>
                 )}
 
-                {spendingData.length > 0 && (
+                {spendingData.length > 0 ? (
                   <View style={styles.chartWrapper}>
-                    <AnimatedSpendingTracker
+                    <BookCategoryComposition
                       data={spendingData}
-                      title="Category-wise Spending"
+                      variant="single"
                     />
+                  </View>
+                ) : (
+                  <View style={styles.emptyChartContainer}>
+                    <MaterialIcons name="pie-chart" size={48} color={theme.SECONDARY} style={{ opacity: 0.3 }} />
+                    <Text style={[styles.emptyChartText, { color: theme.TEXT }]}>
+                      No Spending Data
+                    </Text>
+                    <Text style={[styles.emptyChartSubtext, { color: theme.LIGHT_TEXT }]}>
+                      Track your expenses by category to see spending patterns
+                    </Text>
                   </View>
                 )}
               </>
             ) : (
               // Group Book Charts - NEW CLEAN DESIGN
               <>
-                {spendingData.length > 0 && (
+                {spendingData.length > 0 ? (
                   <View style={styles.chartWrapper}>
-                    <AnimatedSpendingTracker
+                    <BookCategoryComposition
                       data={spendingData}
-                      title="Monthly Budget Tracker"
+                      variant="group"
                     />
+                  </View>
+                ) : (
+                  <View style={styles.emptyChartContainer}>
+                    <MaterialIcons name="pie-chart" size={48} color={theme.SECONDARY} style={{ opacity: 0.3 }} />
+                    <Text style={[styles.emptyChartText, { color: theme.TEXT }]}>
+                      No Budget Data Available
+                    </Text>
+                    <Text style={[styles.emptyChartSubtext, { color: theme.LIGHT_TEXT }]}>
+                      Add group expenses to track spending across categories
+                    </Text>
                   </View>
                 )}
 
-                {(friendExpenses.length > 0 || participantCount > 0) && (
+                {(friendExpenses.length > 0 || participantCount > 0) ? (
                   <View style={styles.chartWrapper}>
                     <FriendExpenses
                       data={friendExpenses as any}
@@ -401,22 +401,36 @@ export const WeeklyChart = ({ route }: any) => {
                       settlements={settlements}
                     />
                   </View>
+                ) : (
+                  <View style={styles.emptyChartContainer}>
+                    <MaterialIcons name="people" size={48} color={theme.SECONDARY} style={{ opacity: 0.3 }} />
+                    <Text style={[styles.emptyChartText, { color: theme.TEXT }]}>
+                      No Group Expense Data
+                    </Text>
+                    <Text style={[styles.emptyChartSubtext, { color: theme.LIGHT_TEXT }]}>
+                      Start adding expenses with friends to see who owes what
+                    </Text>
+                  </View>
                 )}
               </>
             )}
 
             {!isLoading &&
-              monthlyRevenue.length === 0 &&
+              !monthlyIncomeExpense.some(
+                (m) => (m.income || 0) > 0 || (m.expense || 0) > 0,
+              ) &&
               donutData.length === 0 &&
-              spendingData.length === 0 && (
+              spendingData.length === 0 &&
+              friendExpenses.length === 0 && (
                 <View style={styles.emptyContainer}>
-                  <Text style={[styles.emptyText, { color: theme.SECONDARY }]}>
-                    No transaction data available
+                  <MaterialIcons name="analytics" size={64} color={theme.SECONDARY} style={{ opacity: 0.2, marginBottom: spacing(16) }} />
+                  <Text style={[styles.emptyText, { color: theme.TEXT }]}>
+                    No Transaction Data Available
                   </Text>
                   <Text
-                    style={[styles.emptySubtext, { color: theme.SECONDARY }]}
+                    style={[styles.emptySubtext, { color: theme.LIGHT_TEXT }]}
                   >
-                    Add some transactions to see charts
+                    Add some transactions to see your financial insights and charts
                   </Text>
                 </View>
               )}

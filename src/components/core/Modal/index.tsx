@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { scale } from '../../../utils/responsive';
 
 export interface ModalButton {
   text: string;
@@ -44,12 +46,12 @@ const CustomModal: React.FC<CustomModalProps> = ({
       case 'error':
         return theme.ERROR;
       case 'warning':
-        return '#FF9500';
+        return theme.WARNING || '#E5A854';
       case 'success':
         return theme.SUCCESS;
       case 'info':
       default:
-        return theme.PURPLE;
+        return theme.SECONDARY || theme.PURPLE;
     }
   };
 
@@ -67,7 +69,6 @@ const CustomModal: React.FC<CustomModalProps> = ({
     }
   };
 
-  // Default buttons if none provided
   const defaultButtons: ModalButton[] = buttons.length
     ? buttons
     : [
@@ -78,6 +79,9 @@ const CustomModal: React.FC<CustomModalProps> = ({
         },
       ];
 
+  const isDestructiveModal = defaultButtons.some((b) => b.style === 'destructive');
+  const accentColor = type === 'warning' || type === 'error' ? theme.ERROR : getTypeColor();
+
   return (
     <Modal
       visible={visible}
@@ -87,22 +91,28 @@ const CustomModal: React.FC<CustomModalProps> = ({
     >
       <View style={styles.overlay}>
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(200)}
-          style={[styles.modalContainer, { backgroundColor: theme.BACKGROUND_LIGHT }]}
+          entering={FadeIn.duration(220)}
+          exiting={FadeOut.duration(180)}
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: theme.BACKGROUND_LIGHT || theme.BACKGROUND,
+              borderLeftColor: accentColor,
+              borderLeftWidth: isDestructiveModal || type === 'warning' || type === 'error' ? 4 : 0,
+            },
+          ]}
         >
-          {/* Header */}
-          <View style={[styles.header, { borderBottomColor: theme.BACKGROUND }]}>
+          <View style={[styles.header, { borderBottomColor: theme.BORDER_COLOR + '60' }]}>
             <View style={styles.headerLeft}>
               <View
                 style={[
                   styles.iconContainer,
-                  { backgroundColor: getTypeColor() + '20' },
+                  { backgroundColor: getTypeColor() + '22' },
                 ]}
               >
                 <MaterialIcons
                   name={getTypeIcon()}
-                  size={24}
+                  size={scale(26)}
                   color={getTypeColor()}
                 />
               </View>
@@ -113,15 +123,14 @@ const CustomModal: React.FC<CustomModalProps> = ({
             {showCloseButton && (
               <TouchableOpacity
                 onPress={onDismiss}
-                style={[styles.closeButton, { backgroundColor: theme.BACKGROUND }]}
+                style={[styles.closeButton, { backgroundColor: theme.BORDER_COLOR + '40' }]}
                 activeOpacity={0.7}
               >
-                <MaterialIcons name="close" size={20} color={theme.TEXT} />
+                <MaterialIcons name="close" size={scale(20)} color={theme.TEXT} />
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Content */}
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
@@ -130,44 +139,62 @@ const CustomModal: React.FC<CustomModalProps> = ({
             <Text style={[styles.message, { color: theme.TEXT }]}>{message}</Text>
           </ScrollView>
 
-          {/* Buttons */}
-          <View style={[styles.footer, { borderTopColor: theme.BACKGROUND }]}>
-            {defaultButtons.map((button, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={button.onPress}
-                style={[
-                  styles.button,
-                  button.style === 'destructive' && {
-                    backgroundColor: theme.ERROR + '15',
-                  },
-                  button.style === 'cancel' && {
-                    backgroundColor: theme.BACKGROUND,
-                  },
-                  !button.style || button.style === 'default'
-                    ? { backgroundColor: getTypeColor() + '20' }
-                    : {},
-                  defaultButtons.length === 1 && styles.buttonFullWidth,
-                ]}
-                activeOpacity={0.7}
-              >
-                <Text
+          <View style={[styles.footer, { borderTopColor: theme.BORDER_COLOR + '60' }]}>
+            {defaultButtons.map((button, index) => {
+              const isCancel = button.style === 'cancel';
+              const isDestructive = button.style === 'destructive';
+              const isConfirm = !isCancel && !isDestructive && defaultButtons.length > 1;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={button.onPress}
                   style={[
-                    styles.buttonText,
-                    {
-                      color:
-                        button.style === 'destructive'
-                          ? theme.ERROR
-                          : button.style === 'cancel'
-                          ? theme.TEXT
-                          : getTypeColor(),
+                    styles.button,
+                    isCancel && {
+                      backgroundColor: 'transparent',
+                      borderWidth: 2,
+                      borderColor: theme.BORDER_COLOR,
                     },
+                    isDestructive && {
+                      backgroundColor: theme.ERROR,
+                      ...Platform.select({
+                        ios: {
+                          shadowColor: theme.ERROR,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.35,
+                          shadowRadius: 8,
+                        },
+                        android: { elevation: 6 },
+                      }),
+                    },
+                    isConfirm && {
+                      backgroundColor: theme.SECONDARY + '28',
+                      borderWidth: 0,
+                    },
+                    defaultButtons.length === 1 && styles.buttonFullWidth,
                   ]}
+                  activeOpacity={0.8}
                 >
-                  {button.text}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.buttonText,
+                      {
+                        color: isDestructive
+                          ? '#FFFFFF'
+                          : isCancel
+                          ? theme.TEXT
+                          : isConfirm
+                          ? theme.SECONDARY
+                          : getTypeColor(),
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {button.text}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </Animated.View>
       </View>
@@ -179,47 +206,58 @@ const createStyles = (theme: any) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backgroundColor: 'rgba(0, 0, 0, 0.52)',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: 20,
+      padding: scale(24),
     },
     modalContainer: {
       width: '100%',
       maxWidth: 400,
-      borderRadius: 20,
+      borderRadius: scale(24),
       overflow: 'hidden',
-      maxHeight: '80%',
+      maxHeight: '82%',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.16,
+          shadowRadius: 24,
+        },
+        android: { elevation: 16 },
+      }),
     },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: 20,
+      paddingVertical: scale(18),
+      paddingHorizontal: scale(22),
       borderBottomWidth: 1,
     },
     headerLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
-      gap: 12,
+      gap: scale(14),
     },
     iconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: scale(48),
+      height: scale(48),
+      borderRadius: scale(24),
       justifyContent: 'center',
       alignItems: 'center',
     },
     title: {
-      fontSize: 18,
-      fontWeight: '700',
+      fontSize: scale(18),
+      fontWeight: '800',
       flex: 1,
+      letterSpacing: 0.2,
     },
     closeButton: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
+      width: scale(36),
+      height: scale(36),
+      borderRadius: scale(18),
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -227,23 +265,24 @@ const createStyles = (theme: any) =>
       maxHeight: 300,
     },
     contentContainer: {
-      padding: 20,
+      padding: scale(22),
     },
     message: {
-      fontSize: 15,
-      lineHeight: 22,
+      fontSize: scale(15),
+      lineHeight: scale(23),
+      letterSpacing: 0.15,
     },
     footer: {
       flexDirection: 'row',
-      padding: 16,
-      gap: 12,
+      padding: scale(18),
+      gap: scale(12),
       borderTopWidth: 1,
     },
     button: {
       flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      borderRadius: 10,
+      paddingVertical: scale(14),
+      paddingHorizontal: scale(20),
+      borderRadius: scale(14),
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -251,8 +290,9 @@ const createStyles = (theme: any) =>
       flex: 1,
     },
     buttonText: {
-      fontSize: 15,
+      fontSize: scale(15),
       fontWeight: '600',
+      letterSpacing: 0.3,
     },
   });
 

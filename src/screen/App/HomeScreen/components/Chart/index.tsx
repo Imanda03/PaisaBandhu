@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Modal, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import React, { useState, useMemo } from 'react';
 import Animated, {
   FadeInDown,
@@ -6,16 +6,15 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { createStyles } from './styles';
 import { useTheme } from '../../../../../utils/colors';
-import { useFetchChartTransaction } from '../../../../../ReactQueryHook/transaction.hook';
-import { MaterialIcons } from '../../../../../utils/Icons';
 import {
-  AnimatedDonutChart,
-  DonutChartData,
-} from '../../../../../components/AnimatedChart/DonutChart';
+  useFetchChartTransaction,
+  useFetchLatestTransaction,
+} from '../../../../../ReactQueryHook/transaction.hook';
+import { MaterialIcons } from '../../../../../utils/Icons';
+import SpendingFlowBoard from './SpendingFlowBoard';
 
 type TimePeriod = 'today' | 'week' | 'month' | 'year' | 'all';
 
@@ -33,8 +32,20 @@ const timePeriods: TimePeriodOption[] = [
   { label: 'All Time', value: 'all', icon: 'all-inclusive' },
 ];
 
+function transactionInPeriod(
+  dateStr: string,
+  startISO?: string,
+  endISO?: string,
+) {
+  if (!startISO || !endISO) return true;
+  const t = new Date(dateStr).getTime();
+  return (
+    t >= new Date(startISO).getTime() && t <= new Date(endISO).getTime()
+  );
+}
+
 const Chart = () => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('month');
   const [showPeriodModal, setShowPeriodModal] = useState(false);
@@ -75,21 +86,34 @@ const Chart = () => {
 
   const {
     data: chartData,
-    isLoading: refreshing,
     refetch,
   } = useFetchChartTransaction(
     startDate && endDate ? { startDate, endDate } : undefined,
   );
+
+  const { data: latestRaw } = useFetchLatestTransaction();
 
   const income = chartData?.income || 0;
   const expense = chartData?.expense || 0;
   const total = income + expense;
   const hasNoData = total === 0;
 
-  const donutData: DonutChartData[] = [
-    { value: income, label: 'Income' },
-    { value: expense, label: 'Expense' },
-  ];
+  const categorySpending = useMemo(() => {
+    const list = Array.isArray(latestRaw) ? latestRaw : [];
+    const map = new Map<string, number>();
+    for (const t of list) {
+      if (t?.type !== 'expense') continue;
+      if (!transactionInPeriod(t.date, startDate, endDate)) continue;
+      const name = t.categoryId?.title?.trim() || 'Other';
+      const amt = Number(t.price) || 0;
+      if (amt <= 0) continue;
+      map.set(name, (map.get(name) || 0) + amt);
+    }
+    return Array.from(map.entries()).map(([category, spent]) => ({
+      category,
+      spent,
+    }));
+  }, [latestRaw, startDate, endDate]);
 
   const formatAmount = (value: number) => {
     if (!value) return '0';
@@ -116,34 +140,28 @@ const Chart = () => {
     }, 100);
   };
 
-  const renderCenterLabelText = () => {
+  const { insightPercent, insightTier } = useMemo(() => {
     if (hasNoData) {
-      return 'No Data - Add transactions';
+      return { insightPercent: null as number | null, insightTier: 'No activity' };
     }
-
     let savingsPercentage = 0;
     if (income > 0) {
       savingsPercentage = ((income - expense) / income) * 100;
     } else if (expense > 0) {
       savingsPercentage = -100;
     }
-
     savingsPercentage = Math.max(
       Math.min(Math.round(savingsPercentage), 100),
       -100,
     );
-
-    let savingsMessage = 'Needs Improvement';
-    if (savingsPercentage >= 20) {
-      savingsMessage = 'Excellent';
-    } else if (savingsPercentage >= 10) {
-      savingsMessage = 'Good';
-    } else if (savingsPercentage > 0) {
-      savingsMessage = 'Fair';
-    }
-
-    return `${savingsPercentage}% - ${savingsMessage}`;
-  };
+    let tier = 'Needs attention';
+    if (savingsPercentage >= 20) tier = 'Excellent';
+    else if (savingsPercentage >= 10) tier = 'Strong';
+    else if (savingsPercentage > 0) tier = 'Fair';
+    else if (savingsPercentage === 0) tier = 'Break-even';
+    else tier = 'Deficit';
+    return { insightPercent: savingsPercentage, insightTier: tier };
+  }, [hasNoData, income, expense]);
 
   return (
     <View
@@ -156,16 +174,38 @@ const Chart = () => {
     >
       {/* Header with Time Period Filter */}
       <View style={styles.headerContainer}>
-        <View style={styles.titleContainer}>
-          <MaterialIcons name="analytics" size={20} color={theme.ICON_COLOR} />
-          <Text style={[styles.title, { color: theme.TEXT, fontSize: 14 }]}>
-            Financial Overview
-          </Text>
+        <View style={styles.titleBlock}>
+          <View style={styles.titleRow}>
+            <View
+              style={[
+                styles.titleIconWrap,
+                { backgroundColor: theme.SECONDARY + (isDark ? '22' : '18') },
+              ]}
+            >
+              <MaterialIcons name="analytics" size={18} color={theme.SECONDARY} />
+            </View>
+            <View style={styles.titleTextCol}>
+              <Text style={[styles.titleMain, { color: theme.TEXT }]}>
+                Overview
+              </Text>
+              <Text style={[styles.titleSub, { color: theme.LIGHT_TEXT }]}>
+                Inflow, outflow & where it goes
+              </Text>
+            </View>
+          </View>
         </View>
 
         <Animated.View style={buttonAnimatedStyle}>
           <TouchableOpacity
-            style={[styles.periodButton, { backgroundColor: theme.BACKGROUND_LIGHT }]}
+            style={[
+              styles.periodButton,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(255,255,255,0.04)'
+                  : 'rgba(255,255,255,0.9)',
+                borderColor: theme.SECONDARY + (isDark ? '35' : '40'),
+              },
+            ]}
             onPress={() => setShowPeriodModal(true)}
             activeOpacity={0.7}
           >
@@ -186,34 +226,19 @@ const Chart = () => {
         </Animated.View>
       </View>
 
-      {/* Chart Content */}
+      {/* Flow chambers + category torches (replaces donut) */}
       <View style={styles.chartContainer}>
-        <AnimatedDonutChart
-          data={donutData}
-          title=""
-          showLabels={true}
-          showPercentages={true}
-          centerText={renderCenterLabelText()}
-          animationDuration={1200}
+        <SpendingFlowBoard
+          theme={theme}
+          isDark={isDark}
+          income={income}
+          expense={expense}
+          categories={categorySpending}
+          formatAmount={formatAmount}
+          insightPercent={insightPercent}
+          insightTier={insightTier}
+          hasFlowData={!hasNoData}
         />
-        <View style={styles.detailsContainer}>
-          <View style={styles.detailItem}>
-            <View
-              style={[styles.colorDot, { backgroundColor: theme.INCOME_PIE }]}
-            />
-            <Text style={[styles.detailText, { color: theme.TEXT }]}>
-              Income: ₹{formatAmount(income)}
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <View
-              style={[styles.colorDot, { backgroundColor: theme.EXPENSE_PIE }]}
-            />
-            <Text style={[styles.detailText, { color: theme.TEXT }]}>
-              Expense: ₹{formatAmount(expense)}
-            </Text>
-          </View>
-        </View>
       </View>
 
       {/* Time Period Modal */}

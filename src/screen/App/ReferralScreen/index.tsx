@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Share,
   TextInput,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
@@ -16,9 +17,17 @@ import {
   useFetchReferralStats,
   useFetchReferralFriends,
   useReferralCode,
-  useFetchReferralLeaderboard,
 } from '../../../ReactQueryHook/referral.hook';
-import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
+import Animated, { 
+  FadeInDown, 
+  ZoomIn,
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  withSequence,
+  Easing,
+} from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import { useModal } from '../../../context/ModalContext';
 import { useNavigation } from '@react-navigation/native';
@@ -46,13 +55,11 @@ const ReferralScreen: React.FC = () => {
     isLoading: loadingFriends,
     refetch: refetchFriends,
   } = useFetchReferralFriends();
-  const { data: leaderboard, isLoading: loadingLeaderboard } =
-    useFetchReferralLeaderboard(20);
   const { mutate: useReferralCodeMutation, isLoading: usingCode } =
     useReferralCode();
 
   const loading =
-    loadingReferral || loadingStats || loadingFriends || loadingLeaderboard;
+    loadingReferral || loadingStats || loadingFriends;
 
   const handleShareReferral = useCallback(async () => {
     if (!referral || !referral.code) return;
@@ -83,12 +90,112 @@ const ReferralScreen: React.FC = () => {
 
   const styles = useMemo(() => createStyles(theme), [theme]);
 
+  // Loading animation values
+  const pulseScale = useSharedValue(1);
+  const rotation = useSharedValue(0);
+  const opacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    if (loading) {
+      // Pulse animation
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+
+      // Rotation animation
+      rotation.value = withRepeat(
+        withTiming(360, { duration: 2000, easing: Easing.linear }),
+        -1,
+        false
+      );
+
+      // Opacity animation
+      opacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.5, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    }
+  }, [loading]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
+
+  const rotationStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  const opacityStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={[styles.loadingText, { color: theme.TEXT }]}>
-          Loading...
-        </Text>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <View style={styles.headerTitleContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.backButton}
+              >
+                <IoniconsIcon
+                  name="arrow-back"
+                  color={theme.SECONDARY}
+                  size={24}
+                />
+              </TouchableOpacity>
+              <MaterialIcons name="people" size={28} color={theme.ICON_COLOR} />
+              <Text style={styles.headerText}>Referrals</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Loading Content */}
+        <View style={styles.content}>
+          <View style={styles.loadingContainer}>
+            {/* Animated Icon */}
+            <Animated.View style={[styles.loadingIconContainer, pulseStyle]}>
+              <Animated.View style={rotationStyle}>
+                <LinearGradient
+                  colors={[theme.PURPLE, theme.LIGHT_PURPLE]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.loadingIconGradient}
+                >
+                  <MaterialIcons name="people" size={48} color="#FFFFFF" />
+                </LinearGradient>
+              </Animated.View>
+            </Animated.View>
+
+            {/* Loading Text */}
+            <Animated.View style={opacityStyle}>
+              <Text style={[styles.loadingTitle, { color: theme.TEXT }]}>
+                Loading Referrals
+              </Text>
+              <Text style={[styles.loadingSubtitle, { color: theme.LIGHT_TEXT }]}>
+                Fetching your referral data...
+              </Text>
+            </Animated.View>
+
+            {/* Activity Indicator */}
+            <ActivityIndicator
+              size="large"
+              color={theme.SECONDARY}
+              style={styles.activityIndicator}
+            />
+          </View>
+        </View>
       </View>
     );
   }
@@ -378,54 +485,6 @@ const ReferralScreen: React.FC = () => {
                 ))}
               </View>
             )}
-
-          {/* Leaderboard */}
-          {leaderboard && leaderboard.length > 0 && (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.TEXT }]}>
-                Top Referrers
-              </Text>
-              {leaderboard.slice(0, 10).map((item, index) => (
-                <Animated.View
-                  key={item?.userId || index}
-                  entering={FadeInDown.delay(index * 30)}
-                  style={[
-                    styles.leaderboardItem,
-                    { backgroundColor: theme.BACKGROUND_LIGHT },
-                  ]}
-                >
-                  <View style={styles.rankContainer}>
-                    {index < 3 ? (
-                      <Text style={styles.rankEmoji}>
-                        {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                      </Text>
-                    ) : (
-                      <Text
-                        style={[styles.rankNumber, { color: theme.LIGHT_TEXT }]}
-                      >
-                        #{item?.rank || index + 1}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.leaderboardContent}>
-                    <Text
-                      style={[styles.leaderboardName, { color: theme.TEXT }]}
-                    >
-                      {item?.userName || 'Unknown'}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.leaderboardCount,
-                        { color: theme.LIGHT_TEXT },
-                      ]}
-                    >
-                      {item?.totalReferrals || 0} referrals
-                    </Text>
-                  </View>
-                </Animated.View>
-              ))}
-            </View>
-          )}
         </ScrollView>
       </View>
     </View>
@@ -488,9 +547,42 @@ const createStyles = (theme: any) => {
     scrollContent: {
       paddingBottom: 20,
     },
-    loadingText: {
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 60,
+    },
+    loadingIconContainer: {
+      marginBottom: 32,
+    },
+    loadingIconGradient: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: theme.PURPLE,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    loadingTitle: {
+      fontSize: 24,
+      fontWeight: '700',
       textAlign: 'center',
-      marginTop: 40,
+      marginBottom: 8,
+      letterSpacing: 0.5,
+    },
+    loadingSubtitle: {
+      fontSize: 16,
+      textAlign: 'center',
+      opacity: 0.7,
+      marginBottom: 32,
+    },
+    activityIndicator: {
+      marginTop: 16,
     },
     referralCard: {
       margin: 20,
@@ -606,36 +698,6 @@ const createStyles = (theme: any) => {
     },
     rewardDesc: {
       fontSize: 14,
-    },
-    leaderboardItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      borderRadius: 12,
-      marginBottom: 8,
-    },
-    rankContainer: {
-      width: 40,
-      alignItems: 'center',
-    },
-    rankEmoji: {
-      fontSize: 24,
-    },
-    rankNumber: {
-      fontSize: 16,
-      fontWeight: '700',
-    },
-    leaderboardContent: {
-      flex: 1,
-      marginLeft: 12,
-    },
-    leaderboardName: {
-      fontSize: 16,
-      fontWeight: '600',
-      marginBottom: 2,
-    },
-    leaderboardCount: {
-      fontSize: 12,
     },
     friendCard: {
       padding: 16,

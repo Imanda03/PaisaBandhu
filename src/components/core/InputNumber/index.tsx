@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, TextInput, Text } from 'react-native';
+import {
+  View,
+  TextInput,
+  Text,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import { useTheme } from '../../../utils/colors';
 import { createStyles } from '../sharedStyles';
 
@@ -8,6 +15,8 @@ interface InputNumberProps {
   onChangeText: (text: string) => void;
   error?: string;
   placeholder?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
 }
 
 const InputNumberComponent = ({
@@ -15,6 +24,8 @@ const InputNumberComponent = ({
   onChangeText,
   error,
   placeholder = 'Enter number',
+  containerStyle,
+  inputStyle,
 }: InputNumberProps) => {
   const styles = createStyles();
   const { theme } = useTheme();
@@ -29,9 +40,15 @@ const InputNumberComponent = ({
 
   return (
     <View>
-      <View style={[styles.inputContainer, error && styles.inputError]}>
+      <View
+        style={[
+          styles.inputContainer,
+          containerStyle,
+          error && styles.inputError,
+        ]}
+      >
         <TextInput
-          style={styles.input}
+          style={[styles.input, inputStyle]}
           value={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}

@@ -135,7 +135,14 @@ const Reports = () => {
           <Text style={[styles.statLabel, { color: theme.LIGHT_TEXT }]}>
             {label}
           </Text>
-          <Text style={[styles.statValue, { color: theme.TEXT }]}>{value}</Text>
+          <Text
+            style={[styles.statValue, { color: theme.TEXT }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {value}
+          </Text>
         </View>
       </AnimatedView>
     );

@@ -9,21 +9,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { createStyles } from './styles';
 import AuthHeader from '../../../../components/core/AuthHeader';
 import { useTheme } from '../../../../utils/colors';
-import {
-  FeatherIcon,
-  FontAwesome5Icon,
-  MaterialCommunityIcon,
-  MaterialIcons,
-} from '../../../../utils/Icons';
+import { MaterialIcons } from '../../../../utils/Icons';
 import { FilterBar } from '../../../../components/FilterBar';
-import TransactionList from '../../../../components/transaction';
 import BookTransactionItem from '../../../../components/transaction/BookTransactionItem';
 import Animated, {
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSpring,
   withTiming,
   FadeInDown,
   FadeIn,
@@ -35,20 +27,24 @@ import { useFetchTransaction } from '../../../../ReactQueryHook/transaction.hook
 import { useFetchFriend } from '../../../../ReactQueryHook/friend.hook';
 import { getPositiveNumber } from '../../../../utils/helper';
 import ShareBookSheet from '../../BookScreen/Components/ShareBookSheet';
+import { SkeletonTransactionRow } from '../../../../components/skeleton';
+import { scale } from '../../../../utils/responsive';
+import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const AnimatedPressable = Animated.createAnimatedComponent(TouchableOpacity);
 
-const SPRING_CONFIG = {
-  duration: 1200,
-  overshootClamping: true,
-  dampingRatio: 0.8,
-};
-
-const OFFSET = 60;
+/** Vertical stack above main + FAB (bottom offset per satellite). */
+const FAB_MAIN_SIZE = scale(58);
+const FAB_STACK_GAP = scale(8);
+const FAB_STEP = scale(44) + scale(7);
+const fabStackBottom = (index: number) =>
+  FAB_MAIN_SIZE + FAB_STACK_GAP + (index - 1) * FAB_STEP;
 
 const Transactions = () => {
   const styles = createStyles();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState('all');
   const route: any = useRoute();
   const navigation: any = useNavigation();
@@ -69,23 +65,22 @@ const Transactions = () => {
     isLoading: fetching,
   } = useFetchFriend(bookId);
 
-  const IncomeExpense = useMemo(() => [
-    {
-      type: 'income',
-      total: transactionData?.totals?.income,
-    },
-    {
-      type: 'Expenses',
-      total: transactionData?.totals?.expense,
-    },
-  ], [transactionData?.totals?.income, transactionData?.totals?.expense]);
-
   const filteredTransactions = useMemo(() =>
     filter === 'all'
       ? transactionData?.transactions
       : transactionData?.transactions?.filter(
           (transaction: any) => transaction.type === filter,
         ), [filter, transactionData?.transactions]);
+
+  const overviewTotals = useMemo(() => {
+    const income = Number(transactionData?.totals?.income ?? 0);
+    const expense = Number(transactionData?.totals?.expense ?? 0);
+    const totalFlow = income + expense;
+    const incomePct = totalFlow > 0 ? (income / totalFlow) * 100 : 0;
+    const expensePct = totalFlow > 0 ? (expense / totalFlow) * 100 : 0;
+    const showFlowBar = totalFlow > 0;
+    return { income, expense, incomePct, expensePct, showFlowBar };
+  }, [transactionData?.totals?.income, transactionData?.totals?.expense]);
 
   const renderRecentTransaction = useCallback(({ item, index }: any) => {
     return (
@@ -110,31 +105,49 @@ const Transactions = () => {
         />
       </AnimatedView>
     );
-  }, [navigation, bookId, bookType, isSharedBook]);
+  }, [navigation, bookId, bookType]);
 
-  const EmptyListComponent = useCallback(() => (
-    <AnimatedView
-      entering={FadeIn.delay(300).springify()}
-      style={styles.emptyState}
-    >
+  const EmptyListComponent = useCallback(() => {
+    if (refreshing || fetching) {
+      return (
+        <AnimatedView
+          entering={FadeIn.delay(200).springify()}
+          style={styles.emptyState}
+        >
+          {[0, 1, 2].map(index => (
+            <AnimatedView
+              key={index}
+              entering={FadeInDown.delay(250 + index * 80).springify()}
+            >
+              <SkeletonTransactionRow theme={theme} />
+            </AnimatedView>
+          ))}
+        </AnimatedView>
+      );
+    }
+
+    return (
       <AnimatedView
-        entering={FadeInDown.delay(400).springify()}
-        style={styles.emptyIconContainer}
+        entering={FadeIn.delay(300).springify()}
+        style={styles.emptyState}
       >
-        <MaterialIcons name="receipt-long" size={72} color={theme.ICON_COLOR} />
+        <AnimatedView
+          entering={FadeInDown.delay(400).springify()}
+          style={styles.emptyIconContainer}
+        >
+          <MaterialIcons name="receipt-long" size={72} color={theme.ICON_COLOR} />
+        </AnimatedView>
+        <Text style={[styles.emptyText, { color: theme.TEXT }]}>
+          No recent transactions found
+        </Text>
+        <Text style={[styles.emptySubText, { color: theme.TEXT }]}>
+          Add your first transaction to get started
+        </Text>
       </AnimatedView>
-      <Text style={[styles.emptyText, { color: theme.TEXT }]}>
-        {refreshing
-          ? 'Loading transactions...'
-          : 'No recent transactions found'}
-      </Text>
-      <Text style={[styles.emptySubText, { color: theme.TEXT }]}>
-        {refreshing
-          ? 'Please wait while we fetch your data'
-          : 'Add your first transaction to get started'}
-      </Text>
-    </AnimatedView>
-  ), [refreshing, theme]);
+    );
+  // styles.* are stable enough for empty state; theme drives colors
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshing, fetching, theme]);
 
   const isExpanded = useSharedValue(false);
 
@@ -147,6 +160,8 @@ const Transactions = () => {
       });
     }
     isExpanded.value = !isExpanded.value;
+  // isExpanded is a Reanimated shared ref
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookType, bookId, navigation]);
 
   const viewFriend = useCallback(() => {
@@ -156,18 +171,11 @@ const Transactions = () => {
   const keyExtractor = useCallback((item: any, index: number) =>
     item?._id || item?.id || `transaction-${index}`, []);
 
-  const plusIconStyle = useAnimatedStyle(() => {
-    const moveValue = interpolate(Number(isExpanded.value), [0, 1], [0, 2]);
-    const translateValue = withTiming(moveValue);
-    const rotateValue = isExpanded.value ? '45deg' : '0deg';
-
-    return {
-      transform: [
-        { translateX: translateValue },
-        { rotate: withTiming(rotateValue) },
-      ],
-    };
-  });
+  const plusIconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: withTiming(isExpanded.value ? '45deg' : '0deg') },
+    ],
+  }));
 
   const FloatingActionButton = ({
     isExpanded,
@@ -176,15 +184,11 @@ const Transactions = () => {
     type,
   }: any) => {
     const animatedStyles = useAnimatedStyle(() => {
-      const moveValue = isExpanded.value ? OFFSET * index : 0;
-      const translateValue = withSpring(-moveValue, SPRING_CONFIG);
       const delay = index * 100;
-
       const scaleValue = isExpanded.value ? 1 : 0;
 
       return {
         transform: [
-          { translateY: translateValue },
           {
             scale: withDelay(delay, withTiming(scaleValue)),
           },
@@ -202,16 +206,12 @@ const Transactions = () => {
 
     const getButtonColor = () => {
       switch (type) {
-        // case 'income':
-        //     return theme.SUCCESS;
-        // case 'expense':
-        //     return theme.ERROR;
-        // case 'category':
-        //     return theme.PURPLE;
-        // case 'friend':
-        //     return theme.NAVBAR_BACKGROUND
+        case 'income':
+          return theme.SUCCESS;
+        case 'expense':
+          return theme.ERROR;
         default:
-          return theme.DARK_BG;
+          return theme.PURPLE;
       }
     };
 
@@ -220,12 +220,24 @@ const Transactions = () => {
         onPress={handleNavigation}
         style={[
           animatedStyles,
-          styles.shadow,
-          styles.button,
-          { backgroundColor: getButtonColor() },
+          styles.fabExpandedShadow,
+          styles.fabExpandedButton,
+          {
+            backgroundColor: getButtonColor(),
+            bottom: fabStackBottom(index),
+          },
         ]}
       >
-        <Animated.Text style={styles.btnContent}>{buttonLetter}</Animated.Text>
+        <View style={styles.fabExpandedInner}>
+          <MaterialIcons
+            name={type === 'income' ? 'trending-up' : 'trending-down'}
+            size={16}
+            color="#FFFFFF"
+          />
+          <Animated.Text style={styles.fabExpandedLabel} numberOfLines={1}>
+            {buttonLetter}
+          </Animated.Text>
+        </View>
       </AnimatedPressable>
     );
   };
@@ -234,8 +246,23 @@ const Transactions = () => {
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerWrapper}>
+      <LinearGradient
+        colors={
+          isDark
+            ? [theme.HEADER_BACKGROUND, theme.HEADER_BACKGROUND, theme.SECONDARY + '10']
+            : [theme.HEADER_BACKGROUND, theme.HEADER_BACKGROUND, theme.SECONDARY + '08']
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+          style={[
+          styles.headerWrapper,
+          {
+            paddingTop: insets.top,
+          },
+        ]}
+      >
         <AuthHeader
+          compact
           title={`${bookTitle}'s Transactions`}
           showRightIcon={true}
           rightIconName={'chart-bar'}
@@ -248,7 +275,7 @@ const Transactions = () => {
                   })
           }
         />
-      </View>
+      </LinearGradient>
       <View style={styles.container}>
         <View style={styles.topSection}>
           <AnimatedView
@@ -256,75 +283,230 @@ const Transactions = () => {
             style={styles.innerTop}
           >
             {bookType === 'group' && (
-              <View style={styles.card}>
-                <View style={styles.totalInner}>
-                  <MaterialIcons
-                    name="account-balance-wallet"
-                    size={24}
-                    color={theme.SECONDARY}
+              <View style={styles.groupOverviewWrap}>
+                <View style={styles.overviewBalanceCard}>
+                  <LinearGradient
+                    colors={
+                      isDark
+                        ? [
+                            'rgba(198,165,107,0.14)',
+                            'rgba(255,255,255,0.03)',
+                            'transparent',
+                          ]
+                        : [
+                            'rgba(198,165,107,0.12)',
+                            'rgba(255,255,255,0.65)',
+                            'rgba(255,255,255,0.2)',
+                          ]
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.overviewBalanceGradient}
                   />
-                  <Text style={styles.totalText}>Total Balance</Text>
+                  <View style={styles.overviewBalanceInner}>
+                    <View
+                      style={[
+                        styles.overviewBalanceIconRing,
+                        {
+                          borderColor: isDark
+                            ? 'rgba(198, 165, 107, 0.45)'
+                            : theme.SECONDARY + '40',
+                          backgroundColor: isDark
+                            ? 'rgba(198, 165, 107, 0.12)'
+                            : theme.SECONDARY + '14',
+                        },
+                      ]}
+                    >
+                      <MaterialIcons
+                        name="groups"
+                        size={22}
+                        color={theme.SECONDARY}
+                      />
+                    </View>
+                    <View style={styles.overviewBalanceCopy}>
+                      <Text style={styles.overviewBalanceEyebrow}>
+                        Group balance
+                      </Text>
+                      <Text
+                        style={styles.overviewBalanceText}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.75}
+                      >
+                        Rs. {getPositiveNumber(transactionData?.totals?.balance)}
+                      </Text>
+                      <View
+                        style={[
+                          styles.overviewBalanceUnderline,
+                          { backgroundColor: theme.SECONDARY },
+                        ]}
+                      />
+                    </View>
+                  </View>
                 </View>
-                <Text
-                  style={[
-                    styles.price,
-                    { fontSize: bookType === 'group' ? 28 : 32 },
-                  ]}
-                >
-                  Rs.{' '}
-                  {bookType === 'group'
-                    ? getPositiveNumber(transactionData?.totals?.balance)
-                    : transactionData?.totals?.balance}
-                </Text>
               </View>
             )}
           </AnimatedView>
           {bookType === 'single' && (
             <AnimatedView
               entering={FadeInDown.delay(150).springify()}
-              style={styles.row}
+              style={styles.overviewColumn}
             >
-              {IncomeExpense.map(
-                (finance: { type: string; total: string }, index: number) => (
-                  <AnimatedView
-                    entering={FadeInDown.delay(200 + index * 50).springify()}
-                    style={styles.typeContainer}
-                    key={finance.type}
+              <View style={styles.overviewBalanceCard}>
+                <LinearGradient
+                  colors={
+                    isDark
+                      ? [
+                          'rgba(198,165,107,0.14)',
+                          'rgba(255,255,255,0.03)',
+                          'transparent',
+                        ]
+                      : [
+                          'rgba(198,165,107,0.12)',
+                          'rgba(255,255,255,0.65)',
+                          'rgba(255,255,255,0.2)',
+                        ]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.overviewBalanceGradient}
+                />
+                <View style={styles.overviewBalanceInner}>
+                  <View
+                    style={[
+                      styles.overviewBalanceIconRing,
+                      {
+                        borderColor: isDark
+                          ? 'rgba(198, 165, 107, 0.45)'
+                          : theme.SECONDARY + '40',
+                        backgroundColor: isDark
+                          ? 'rgba(198, 165, 107, 0.12)'
+                          : theme.SECONDARY + '14',
+                      },
+                    ]}
                   >
-                    <Text style={styles.typeText}>
-                      {finance.type.charAt(0).toUpperCase() +
-                        finance.type.slice(1)}
+                    <MaterialIcons
+                      name="account-balance-wallet"
+                      size={22}
+                      color={theme.SECONDARY}
+                    />
+                  </View>
+                  <View style={styles.overviewBalanceCopy}>
+                    <Text style={styles.overviewBalanceEyebrow}>
+                      Book balance
                     </Text>
-                    <View style={styles.typeInnerContainer}>
-                      <FeatherIcon
-                        size={22}
-                        color={
-                          finance.type.toLowerCase() === 'income'
-                            ? theme.SUCCESS
-                            : theme.ERROR
-                        }
-                        name={
-                          finance.type.toLowerCase() === 'income'
-                            ? 'arrow-up'
-                            : 'arrow-down'
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.typePrice,
-                          {
-                            color:
-                              finance.type.toLowerCase() === 'income'
-                                ? theme.SUCCESS
-                                : theme.ERROR,
-                          },
-                        ]}
-                      >
-                        Rs. {finance.total}
-                      </Text>
-                    </View>
-                  </AnimatedView>
-                ),
+                    <Text
+                      style={styles.overviewBalanceText}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.72}
+                    >
+                      Rs. {transactionData?.totals?.balance ?? '0'}
+                    </Text>
+                    <View
+                      style={[
+                        styles.overviewBalanceUnderline,
+                        { backgroundColor: theme.SECONDARY },
+                      ]}
+                    />
+                  </View>
+                </View>
+              </View>
+              <View style={styles.overviewStatRow}>
+                <View
+                  style={[
+                    styles.overviewStatCard,
+                    styles.overviewStatCardIncome,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.overviewStatIcon,
+                      { backgroundColor: theme.SUCCESS + '26' },
+                    ]}
+                  >
+                    <MaterialIcons
+                      name="trending-up"
+                      size={17}
+                      color={theme.SUCCESS}
+                    />
+                  </View>
+                  <View style={styles.overviewStatTextBlock}>
+                    <Text style={styles.overviewStatLabel}>Income</Text>
+                    <Text
+                      style={[
+                        styles.overviewStatValue,
+                        { color: theme.SUCCESS },
+                      ]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.78}
+                    >
+                      Rs. {transactionData?.totals?.income ?? '0'}
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.overviewStatCard,
+                    styles.overviewStatCardExpense,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.overviewStatIcon,
+                      { backgroundColor: theme.ERROR + '26' },
+                    ]}
+                  >
+                    <MaterialIcons
+                      name="trending-down"
+                      size={17}
+                      color={theme.ERROR}
+                    />
+                  </View>
+                  <View style={styles.overviewStatTextBlock}>
+                    <Text style={styles.overviewStatLabel}>Expenses</Text>
+                    <Text
+                      style={[
+                        styles.overviewStatValue,
+                        { color: theme.ERROR },
+                      ]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.78}
+                    >
+                      Rs. {transactionData?.totals?.expense ?? '0'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              {overviewTotals.showFlowBar && (
+                <View style={styles.overviewFlowTrack}>
+                  <View
+                    style={[
+                      styles.overviewFlowSegment,
+                      {
+                        width: `${Math.max(
+                          0,
+                          Math.round(overviewTotals.incomePct),
+                        )}%`,
+                        backgroundColor: theme.SUCCESS,
+                      },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.overviewFlowSegment,
+                      {
+                        width: `${Math.max(
+                          0,
+                          Math.round(overviewTotals.expensePct),
+                        )}%`,
+                        backgroundColor: theme.ERROR,
+                      },
+                    ]}
+                  />
+                </View>
               )}
             </AnimatedView>
           )}
@@ -332,10 +514,10 @@ const Transactions = () => {
         <View style={styles.content}>
           {bookType === 'single' ? (
             <FilterBar
-            filter={filter}
-            setFilter={setFilter}
-            key="filter-bar"
-          />
+              filter={filter}
+              setFilter={setFilter}
+              key="filter-bar"
+            />
           ) : (
             <View style={styles.friendsStatsRow}>
               <View style={styles.friendsStats}>
@@ -347,6 +529,19 @@ const Transactions = () => {
               </TouchableOpacity>
             </View>
           )}
+          <AnimatedView
+            entering={FadeInDown.delay(180).springify()}
+            style={styles.helperRow}
+          >
+            <MaterialIcons
+              name="swipe"
+              size={18}
+              color={theme.LIGHT_TEXT}
+            />
+            <Text style={styles.helperText}>
+              Slide a transaction left to edit or delete
+            </Text>
+          </AnimatedView>
           <FlatList
             data={filteredTransactions}
             renderItem={renderRecentTransaction}
@@ -372,7 +567,10 @@ const Transactions = () => {
           />
         </View>
       </View>
-      <View style={styles.fabWrapper} pointerEvents="box-none">
+      <View
+        style={[styles.fabWrapper, { bottom: Math.max(insets.bottom, 12) + 8 }]}
+        pointerEvents="box-none"
+      >
         <AnimatedPressable
           onPress={handlePress}
           style={[styles.shadow, styles.mainButton]}
@@ -384,13 +582,13 @@ const Transactions = () => {
         <FloatingActionButton
           isExpanded={isExpanded}
           index={2}
-          buttonLetter="+ Income"
+          buttonLetter="Income"
           type="income"
         />
         <FloatingActionButton
           isExpanded={isExpanded}
           index={1}
-          buttonLetter="- Expense"
+          buttonLetter="Expense"
           type="expense"
         />
       </View>

@@ -25,29 +25,50 @@ export const createStyles = (theme: ThemeColors) => {
     headerContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: spacing(20),
+      alignItems: 'flex-start',
+      marginBottom: spacing(18),
     },
-    titleContainer: {
+    titleBlock: {
+      flex: 1,
+      marginRight: spacing(10),
+      minWidth: 0,
+    },
+    titleRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8,
-      flex: 1,
+      gap: spacing(12),
     },
-    title: {
+    titleIconWrap: {
+      width: scale(44),
+      height: scale(44),
+      borderRadius: scale(14),
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    titleTextCol: {
+      flex: 1,
+      minWidth: 0,
+    },
+    titleMain: {
       fontSize: fontSize(18),
-      fontWeight: '700',
-      letterSpacing: 0.3,
+      fontWeight: '800',
+      letterSpacing: -0.35,
+    },
+    titleSub: {
+      fontSize: fontSize(11),
+      fontWeight: '600',
+      letterSpacing: 0.2,
+      marginTop: 3,
+      opacity: 0.88,
     },
     periodButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: spacing(14),
-      paddingVertical: spacing(8),
-      borderRadius: scale(16),
-      gap: 6,
-      borderWidth: 1.5,
-      borderColor: theme.BORDER_COLOR + '40',
+      paddingHorizontal: spacing(12),
+      paddingVertical: spacing(9),
+      borderRadius: scale(14),
+      gap: 5,
+      borderWidth: 1,
       ...Platform.select({
         ios: {
           shadowColor: theme.SHADOW,
@@ -66,48 +87,8 @@ export const createStyles = (theme: ThemeColors) => {
       letterSpacing: 0.2,
     },
     chartContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    centerLabelContainer: {
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    percentageText: {
-      fontSize: 24,
-      fontWeight: 'bold',
-    },
-    statusText: {
-      fontSize: 16,
-      opacity: 0.7,
-    },
-    noDataText: {
-      fontSize: 12,
-      opacity: 0.5,
-    },
-    detailsContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      width: '100%',
-      marginTop: spacing(16),
-      paddingTop: spacing(16),
-      borderTopWidth: 1,
-      borderTopColor: theme.BORDER_COLOR + '30',
-    },
-    detailItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    colorDot: {
-      width: scale(10),
-      height: scale(10),
-      borderRadius: scale(5),
-      marginRight: spacing(8),
-    },
-    detailText: {
-      fontSize: fontSize(14),
-      fontWeight: '600',
-      letterSpacing: 0.2,
+      alignItems: 'stretch',
+      justifyContent: 'flex-start',
     },
     modalOverlay: {
       flex: 1,

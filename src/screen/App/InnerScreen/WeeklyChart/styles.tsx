@@ -36,9 +36,10 @@ export const createStyles = (theme: ThemeColors) => {
     },
     headerText: {
       color: theme.SECONDARY,
-      fontSize: fontSize(26),
+      fontSize: fontSize(18),
       fontWeight: '800',
-      letterSpacing: 0.5,
+      letterSpacing: 0.35,
+      flex: 1,
     },
     content: {
       flex: 1,
@@ -68,20 +69,6 @@ export const createStyles = (theme: ThemeColors) => {
     },
     chartWrapper: {
       marginBottom: verticalScale(20),
-      borderRadius: scale(24),
-      overflow: 'hidden',
-      backgroundColor: theme.BACKGROUND_LIGHT,
-      borderWidth: 1,
-      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-      ...Platform.select({
-        ios: {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.25 : 0.06,
-          shadowRadius: 20,
-        },
-        android: { elevation: 6 },
-      }),
     },
     loadingContainer: {
       flex: 1,
@@ -113,6 +100,41 @@ export const createStyles = (theme: ThemeColors) => {
       color: theme.LIGHT_TEXT,
       opacity: 0.7,
       textAlign: 'center',
+    },
+    emptyChartContainer: {
+      marginBottom: verticalScale(20),
+      borderRadius: scale(24),
+      padding: spacing(32),
+      backgroundColor: theme.BACKGROUND_LIGHT,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: verticalScale(200),
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.25 : 0.06,
+          shadowRadius: 20,
+        },
+        android: { elevation: 6 },
+      }),
+    },
+    emptyChartText: {
+      fontSize: fontSize(18),
+      fontWeight: '700',
+      color: theme.TEXT,
+      marginTop: spacing(16),
+      marginBottom: spacing(8),
+      textAlign: 'center',
+    },
+    emptyChartSubtext: {
+      fontSize: fontSize(14),
+      color: theme.LIGHT_TEXT,
+      opacity: 0.7,
+      textAlign: 'center',
+      lineHeight: fontSize(20),
     },
     friendExpensesContainer: {
       backgroundColor: theme.BACKGROUND_LIGHT,

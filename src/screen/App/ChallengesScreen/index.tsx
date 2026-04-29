@@ -41,6 +41,8 @@ import { CategoryFormData } from '../../../utils/types';
 import InputComponent from '../../../components/core/Input';
 import TextAreaComponent from '../../../components/core/TextArea';
 import InputNumberComponent from '../../../components/core/InputNumber';
+import BannerAdView from '../../../components/ads/BannerAdView';
+import { SkeletonChallengeCard } from '../../../components/skeleton';
 
 const ChallengesScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -221,7 +223,7 @@ const ChallengesScreen: React.FC = () => {
     );
   }, [handleChallengePress, handleDeleteChallenge, isUserCreator]);
 
-  const challengeTypes = useMemo(() => [
+  const challengeTypes = useMemo((): Array<{ id: Challenge['type']; title: string; description: string }> => [
     {
       id: 'save_amount',
       title: 'Save Amount',
@@ -351,40 +353,54 @@ const ChallengesScreen: React.FC = () => {
       </View>
 
       <View style={styles.content}>
-        <FlatList
-          data={challenges}
-          renderItem={renderChallenge}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={[theme.SECONDARY]}
-              tintColor={theme.SECONDARY}
-            />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialIcons
-                name="emoji-events"
-                size={64}
-                color={theme.ICON_COLOR}
+        {loading && challenges.length === 0 ? (
+          <View style={styles.listContent}>
+            {[0, 1, 2].map(index => (
+              <Animated.View
+                key={index}
+                entering={FadeInDown.delay(150 + index * 80).springify()}
+              >
+                <SkeletonChallengeCard theme={theme} />
+              </Animated.View>
+            ))}
+          </View>
+        ) : (
+          <FlatList
+            data={challenges}
+            renderItem={renderChallenge}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={[theme.SECONDARY]}
+                tintColor={theme.SECONDARY}
               />
-              <Text style={[styles.emptyText, { color: theme.TEXT }]}>
-                {challengeFilter === 'active'
-                  ? 'No active challenges'
-                  : 'No old challenges'}
-              </Text>
-              <Text style={[styles.emptySubtext, { color: theme.LIGHT_TEXT }]}>
-                {challengeFilter === 'active'
-                  ? 'Create a challenge to track your financial goals!'
-                  : 'Completed, failed, or cancelled challenges will appear here.'}
-              </Text>
-            </View>
-          }
-        />
+            }
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <MaterialIcons
+                  name="emoji-events"
+                  size={64}
+                  color={theme.ICON_COLOR}
+                />
+                <Text style={[styles.emptyText, { color: theme.TEXT }]}>
+                  {challengeFilter === 'active'
+                    ? 'No active challenges'
+                    : 'No old challenges'}
+                </Text>
+                <Text style={[styles.emptySubtext, { color: theme.LIGHT_TEXT }]}>
+                  {challengeFilter === 'active'
+                    ? 'Create a challenge to track your financial goals!'
+                    : 'Completed, failed, or cancelled challenges will appear here.'}
+                </Text>
+              </View>
+            }
+          />
+        )}
+        <BannerAdView placement="challenges" />
       </View>
 
       {/* Create Challenge Modal */}
@@ -393,46 +409,41 @@ const ChallengesScreen: React.FC = () => {
         transparent
         animationType="fade"
         onRequestClose={() => setShowCreateModal(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.modalOverlay}
-          keyboardVerticalOffset={0}
-        >
+        <View style={styles.modalOverlay} pointerEvents="box-none">
           <TouchableOpacity
-            style={styles.modalOverlay}
+            style={styles.modalBackdrop}
             activeOpacity={1}
             onPress={() => {
               setShowCreateModal(false);
               resetChallengeForm();
             }}
+          />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalKeyboardWrap}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
           >
-            <Animated.View
-              entering={SlideInDown.springify().damping(15)}
-              style={[
-                styles.modalContent,
-                { 
-                  backgroundColor: theme.BACKGROUND_LIGHT,
-                },
-              ]}
-              onStartShouldSetResponder={() => true}
-            >
-              <TouchableOpacity
-                activeOpacity={1}
-                onPress={e => e.stopPropagation()}
+            <View style={styles.modalContentTouchable} collapsable={false}>
+              <View
+                style={[
+                  styles.modalContent,
+                  { backgroundColor: theme.BACKGROUND_LIGHT },
+                ]}
               >
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  keyboardShouldPersistTaps="handled"
-                  contentContainerStyle={styles.scrollContent}
-                  bounces={false}
-                  nestedScrollEnabled={true}
-                >
-                  {/* Header */}
-                  <Animated.View
-                    entering={FadeIn.delay(100)}
-                    style={styles.modalHeader}
+                <View style={styles.modalScrollWrapper}>
+                  <ScrollView
+                    style={styles.modalScrollView}
+                    showsVerticalScrollIndicator={true}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.scrollContent}
+                    bounces={true}
+                    nestedScrollEnabled={true}
+                    keyboardDismissMode="on-drag"
                   >
+                  {/* Header */}
+                  <View style={styles.modalHeader}>
                     <View>
                       <Text style={[styles.modalTitle, { color: theme.TEXT }]}>
                         {editingChallenge ? 'Edit Challenge' : 'Create Challenge'}
@@ -462,10 +473,10 @@ const ChallengesScreen: React.FC = () => {
                         color={theme.TEXT}
                       />
                     </TouchableOpacity>
-                  </Animated.View>
+                  </View>
 
                   {/* Title Input */}
-                  <Animated.View entering={FadeIn.delay(150)}>
+                  <View>
                     <Text style={[styles.label, { color: theme.TEXT }]}>
                       Challenge Title{' '}
                       <Text style={{ color: theme.ERROR }}>*</Text>
@@ -477,10 +488,10 @@ const ChallengesScreen: React.FC = () => {
                         setNewChallenge({ ...newChallenge, title: text })
                       }
                     />
-                  </Animated.View>
+                  </View>
 
                   {/* Description Input */}
-                  <Animated.View entering={FadeIn.delay(200)}>
+                  <View>
                     <Text style={[styles.label, { color: theme.TEXT }]}>
                       Description <Text style={{ color: theme.ERROR }}>*</Text>
                     </Text>
@@ -492,10 +503,10 @@ const ChallengesScreen: React.FC = () => {
                       }
                       numberOfLines={4}
                     />
-                  </Animated.View>
+                  </View>
 
                   {/* Challenge Type Selector */}
-                  <Animated.View entering={FadeIn.delay(250)}>
+                  <View>
                     <Text style={[styles.label, { color: theme.TEXT }]}>
                       Challenge Type{' '}
                       <Text style={{ color: theme.ERROR }}>*</Text>
@@ -510,10 +521,7 @@ const ChallengesScreen: React.FC = () => {
                           category_limit: '🎯',
                         };
                         return (
-                          <Animated.View
-                            key={type.id}
-                            entering={FadeInDown.delay(300 + index * 50)}
-                          >
+                          <View key={type.id}>
                             <TouchableOpacity
                               style={[
                                 styles.typeOption,
@@ -537,7 +545,7 @@ const ChallengesScreen: React.FC = () => {
                               onPress={() =>
                                 setNewChallenge({
                                   ...newChallenge,
-                                  type: type.id as Challenge['type'],
+                                  type: type.id,
                                   targetCategory: '',
                                 })
                               }
@@ -574,8 +582,7 @@ const ChallengesScreen: React.FC = () => {
                                   </Text>
                                 </View>
                                 {isSelected && (
-                                  <Animated.View
-                                    entering={FadeIn}
+                                  <View
                                     style={[
                                       styles.checkIcon,
                                       { backgroundColor: theme.SECONDARY },
@@ -586,20 +593,20 @@ const ChallengesScreen: React.FC = () => {
                                       size={16}
                                       color={theme.PURPLE}
                                     />
-                                  </Animated.View>
+                                  </View>
                                 )}
                               </View>
                             </TouchableOpacity>
-                          </Animated.View>
+                          </View>
                         );
                       })}
                     </View>
-                  </Animated.View>
+                  </View>
 
                   {/* Conditional Fields */}
                   {(newChallenge.type === 'save_amount' ||
                     newChallenge.type === 'category_limit') && (
-                    <Animated.View entering={FadeIn.delay(400)}>
+                    <View>
                       <Text style={[styles.label, { color: theme.TEXT }]}>
                         Target Amount{' '}
                         {newChallenge.type === 'save_amount' && (
@@ -623,11 +630,11 @@ const ChallengesScreen: React.FC = () => {
                           })
                         }
                       />
-                    </Animated.View>
+                    </View>
                   )}
 
                   {newChallenge.type === 'category_limit' && (
-                    <Animated.View entering={FadeIn.delay(450)}>
+                    <View>
                       <Text style={[styles.label, { color: theme.TEXT }]}>
                         Category <Text style={{ color: theme.ERROR }}>*</Text>
                       </Text>
@@ -643,11 +650,11 @@ const ChallengesScreen: React.FC = () => {
                         options={filteredCategories}
                         bookId=""
                       />
-                    </Animated.View>
+                    </View>
                   )}
 
                   {/* End Date */}
-                  <Animated.View entering={FadeIn.delay(500)}>
+                  <View>
                     <Text style={[styles.label, { color: theme.TEXT }]}>
                       End Date <Text style={{ color: theme.ERROR }}>*</Text>
                     </Text>
@@ -658,10 +665,10 @@ const ChallengesScreen: React.FC = () => {
                       }
                       placeholder="Select end date"
                     />
-                  </Animated.View>
+                  </View>
 
                   {/* Submit Button */}
-                  <Animated.View entering={FadeIn.delay(550)}>
+                  <View>
                     <TouchableOpacity
                       style={[
                         styles.submitButton,
@@ -708,12 +715,13 @@ const ChallengesScreen: React.FC = () => {
                         </View>
                       )}
                     </TouchableOpacity>
-                  </Animated.View>
+                  </View>
                 </ScrollView>
-              </TouchableOpacity>
-            </Animated.View>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+              </View>
+            </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Challenge Detail Modal */}
@@ -1122,9 +1130,25 @@ const createStyles = (theme: any) =>
     },
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      backgroundColor: 'transparent',
       justifyContent: 'flex-end',
       alignItems: 'stretch',
+    },
+    modalBackdrop: {
+      flex: 1,
+      minHeight: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    modalKeyboardWrap: {
+      width: '100%',
+      maxHeight: '92%',
+      height: Dimensions.get('window').height * 0.88,
+      minHeight: Dimensions.get('window').height * 0.88,
+    },
+    modalContentTouchable: {
+      width: '100%',
+      flex: 1,
+      minHeight: 280,
     },
     modalContent: {
       width: Dimensions.get('window').width,
@@ -1132,13 +1156,24 @@ const createStyles = (theme: any) =>
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       padding: 0,
-      maxHeight: '92%',
+      flex: 1,
+      minHeight: 0,
       overflow: 'hidden',
+      ...Platform.select({
+        android: { elevation: 10 },
+      }),
+    },
+    modalScrollWrapper: {
+      flex: 1,
+      minHeight: 0,
+    },
+    modalScrollView: {
+      flex: 1,
+      minHeight: 0,
     },
     scrollContent: {
       padding: 24,
       paddingBottom: 40,
-      flexGrow: 1,
     },
     modalHeader: {
       flexDirection: 'row',

@@ -88,12 +88,12 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
             style: 'cancel',
           },
           {
-            text: 'Confirm',
+            text: 'Delete',
             onPress: () => {
               hideModal();
               onConfirm();
             },
-            style: 'default',
+            style: 'destructive',
           },
         ],
       });

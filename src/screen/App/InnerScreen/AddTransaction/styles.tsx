@@ -1,33 +1,260 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../../../utils/colors';
-import { scale, verticalScale } from '../../../../utils/responsive';
+import { scale, verticalScale, spacing, fontSize } from '../../../../utils/responsive';
 
 export const createStyles = () => {
-    const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
-    return StyleSheet.create({
-        root: {
-            flex: 1,
-            backgroundColor: theme.HEADER_BACKGROUND,
-            paddingTop: '13%',
-            paddingHorizontal: '5%',
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: theme.HEADER_BACKGROUND,
+    },
+    topSafe: {
+      backgroundColor: theme.HEADER_BACKGROUND,
+      paddingHorizontal: spacing(20),
+      paddingBottom: verticalScale(4),
+    },
+    flex: {
+      flex: 1,
+    },
+    sheet: {
+      flex: 1,
+      backgroundColor: theme.BACKGROUND,
+      borderTopLeftRadius: scale(32),
+      borderTopRightRadius: scale(32),
+      paddingTop: verticalScale(12),
+      paddingHorizontal: spacing(20),
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: isDark ? 0.4 : 0.1,
+          shadowRadius: 24,
         },
-        container: {
-            flex: 2,
-            backgroundColor: theme.BACKGROUND,
-            marginTop: '10%',
-            marginHorizontal: '-5%',
-            borderTopLeftRadius: scale(40),
-            borderTopRightRadius: scale(40),
-            paddingTop: verticalScale(30),
-            paddingHorizontal: '5%',
+        android: {
+          elevation: 14,
         },
-        innerContainer: {
-            flex: 1,
-            justifyContent: 'space-between',
+      }),
+    },
+    sheetHandleWrap: {
+      alignItems: 'center',
+      paddingBottom: verticalScale(10),
+    },
+    sheetHandle: {
+      width: scale(40),
+      height: scale(4),
+      borderRadius: scale(2),
+      backgroundColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(30,30,36,0.12)',
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingBottom: verticalScale(40),
+    },
+    innerContainer: {
+      flex: 1,
+    },
+    heroCard: {
+      borderRadius: scale(24),
+      padding: scale(2),
+      marginBottom: verticalScale(18),
+      overflow: 'hidden',
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: isDark ? 0.35 : 0.08,
+          shadowRadius: 20,
         },
-        buttonWrapper: {
-            paddingBottom: 20,
+        android: { elevation: 6 },
+      }),
+    },
+    heroInner: {
+      borderRadius: scale(22),
+      paddingTop: 0,
+      paddingHorizontal: 0,
+      paddingBottom: verticalScale(20),
+      overflow: 'hidden',
+    },
+    heroAccentBar: {
+      width: '100%',
+      height: verticalScale(5),
+      marginBottom: verticalScale(16),
+    },
+    heroBody: {
+      paddingHorizontal: spacing(20),
+    },
+    heroTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: verticalScale(8),
+    },
+    typeChip: {
+      paddingHorizontal: spacing(14),
+      paddingVertical: verticalScale(6),
+      borderRadius: scale(20),
+      overflow: 'hidden',
+    },
+    typeChipText: {
+      fontSize: fontSize(11),
+      fontWeight: '800',
+      letterSpacing: 1.4,
+    },
+    heroTitle: {
+      fontSize: fontSize(22),
+      fontWeight: '800',
+      color: theme.TEXT,
+      letterSpacing: -0.3,
+      marginBottom: verticalScale(4),
+    },
+    heroSubtitle: {
+      fontSize: fontSize(13),
+      fontWeight: '500',
+      color: theme.LIGHT_TEXT,
+      lineHeight: fontSize(19),
+      opacity: 0.92,
+      marginBottom: verticalScale(20),
+    },
+    amountLabel: {
+      fontSize: fontSize(10),
+      fontWeight: '800',
+      letterSpacing: 1.6,
+      color: theme.LIGHT_TEXT,
+      marginBottom: verticalScale(8),
+      textTransform: 'uppercase',
+    },
+    amountFieldRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: verticalScale(52),
+      paddingHorizontal: spacing(16),
+      paddingVertical: verticalScale(12),
+      borderRadius: scale(14),
+      backgroundColor: theme.INPUT_BACKGROUND,
+      borderWidth: StyleSheet.hairlineWidth * 2,
+      borderColor: theme.BORDER_COLOR,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: isDark ? 0.2 : 0.05,
+          shadowRadius: 4,
         },
-    });
+        android: { elevation: 1 },
+      }),
+    },
+    amountRupeePrefix: {
+      fontSize: fontSize(20),
+      fontWeight: '700',
+      color: theme.TEXT,
+      marginRight: spacing(8),
+    },
+    amountTextInput: {
+      flex: 1,
+      minWidth: 0,
+      fontSize: fontSize(20),
+      fontWeight: '600',
+      color: theme.TEXT,
+      padding: 0,
+      margin: 0,
+    },
+    amountErrorText: {
+      color: theme.ERROR,
+      fontSize: fontSize(12),
+      marginTop: verticalScale(6),
+      fontWeight: '600',
+    },
+    section: {
+      borderRadius: scale(24),
+      padding: scale(2),
+      marginBottom: verticalScale(16),
+      overflow: 'hidden',
+      ...Platform.select({
+        ios: {
+          shadowColor: isDark ? '#000' : theme.PRIMARY,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.24 : 0.06,
+          shadowRadius: 14,
+        },
+        android: { elevation: 4 },
+      }),
+    },
+    sectionInner: {
+      backgroundColor: theme.BACKGROUND_LIGHT,
+      borderRadius: scale(22),
+      padding: scale(20),
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: isDark ? 'rgba(198, 165, 107, 0.16)' : theme.BORDER_COLOR,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: verticalScale(16),
+      paddingBottom: verticalScale(14),
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(30,30,36,0.07)',
+    },
+    sectionIconWrap: {
+      width: scale(40),
+      height: scale(40),
+      borderRadius: scale(14),
+      backgroundColor: isDark ? 'rgba(198, 165, 107, 0.14)' : 'rgba(198, 165, 107, 0.16)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: isDark ? 'rgba(198, 165, 107, 0.22)' : 'rgba(198, 165, 107, 0.28)',
+    },
+    sectionLabel: {
+      marginLeft: scale(12),
+      fontSize: fontSize(11),
+      fontWeight: '800',
+      color: theme.TEXT,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      flex: 1,
+    },
+    sectionHint: {
+      fontSize: fontSize(11),
+      fontWeight: '600',
+      color: theme.SECONDARY,
+      letterSpacing: 0.2,
+    },
+    fieldGap: {
+      marginBottom: verticalScale(12),
+    },
+    buttonWrapper: {
+      marginTop: verticalScale(8),
+      paddingTop: verticalScale(16),
+      paddingBottom: verticalScale(12),
+    },
+    primaryCta: {
+      borderRadius: scale(20),
+      overflow: 'hidden',
+      ...Platform.select({
+        ios: {
+          shadowColor: theme.SECONDARY,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.38,
+          shadowRadius: 14,
+        },
+        android: { elevation: 7 },
+      }),
+    },
+    primaryCtaDisabled: {
+      opacity: 0.55,
+    },
+    primaryCtaInner: {
+      paddingVertical: verticalScale(17),
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: verticalScale(54),
+    },
+    primaryCtaText: {
+      color: theme.NAVBAR_ACTIVE_TEXT,
+      fontSize: fontSize(16),
+      fontWeight: '800',
+      letterSpacing: 0.35,
+    },
+  });
 };

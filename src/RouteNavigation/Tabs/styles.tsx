@@ -1,46 +1,109 @@
 import { StyleSheet, Platform } from 'react-native';
 import { useTheme } from '../../utils/colors';
-import { scale, verticalScale, fontSize, spacing } from '../../utils/responsive';
+import type { NavBarLayout } from '../../utils/responsive';
 
-export const createStyles = () => {
+export const createTabBarStyles = (nav: NavBarLayout) => {
   const { theme } = useTheme();
 
   return StyleSheet.create({
-    tabBar: {
+    /**
+     * Outer chrome: position + shadow only. Fill comes from LinearGradient in FlowingTabBar.
+     */
+    tabBarDock: {
       position: 'absolute',
-      bottom: verticalScale(16),
-      left: spacing(16),
-      right: spacing(16),
-      elevation: 8,
-      backgroundColor: theme.NAVBAR_BACKGROUND,
-      borderRadius: scale(28),
-      height: verticalScale(72),
-      marginHorizontal: spacing(16),
-      borderTopWidth: 0,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
+      bottom: nav.bottomOffset,
+      left: nav.horizontalInset,
+      right: nav.horizontalInset,
+      height: nav.dockHeight,
+      borderRadius: nav.rimBorderRadius,
       ...Platform.select({
         ios: {
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.18,
+          shadowRadius: 24,
         },
-        android: { elevation: 8 },
+        android: {
+          elevation: 14,
+        },
       }),
     },
-    tabBarItem: {
-      padding: 5,
+    tabBarRim: {
+      flex: 1,
+      borderRadius: nav.rimBorderRadius,
+      padding: nav.rimPadding,
+      overflow: 'hidden',
     },
-    // tabBarIcon: {
-    //   marginTop: 10,
-    // },
+    tabBarInner: {
+      flex: 1,
+      borderRadius: nav.innerBorderRadius,
+      overflow: 'hidden',
+    },
+    /** Merged onto nested BottomTabBar only */
+    tabBarNavigatorInner: {
+      position: 'relative',
+      flex: 1,
+      width: '100%',
+      height: '100%',
+      marginHorizontal: 0,
+      marginBottom: 0,
+      marginLeft: 0,
+      marginRight: 0,
+      marginTop: 0,
+      paddingBottom: 0,
+      paddingTop: 0,
+      paddingHorizontal: 0,
+      backgroundColor: 'transparent',
+      borderWidth: 0,
+      borderTopWidth: 0,
+      borderBottomWidth: 0,
+      elevation: 0,
+      shadowOpacity: 0,
+      shadowRadius: 0,
+    },
+    dockTrack: {
+      flex: 1,
+      flexDirection: 'row',
+      position: 'relative',
+      alignItems: 'center',
+      paddingHorizontal: nav.dockTrackPaddingH,
+      paddingTop: nav.dockTrackPaddingTop,
+      paddingBottom: nav.dockTrackPaddingBottom,
+    },
+    /** Sliding gold accent — sits above bottom inset */
+    accentRailWrap: {
+      position: 'absolute',
+      bottom: nav.accentBottom,
+      left: 0,
+      height: nav.accentHeight,
+      borderRadius: Math.max(2, Math.round(nav.accentHeight / 2)),
+      overflow: 'hidden',
+      zIndex: 0,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#C6A56B',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.55,
+          shadowRadius: 8,
+        },
+        android: { elevation: 0 },
+      }),
+    },
+    dockItemsLayer: {
+      flex: 1,
+      zIndex: 2,
+      elevation: 2,
+    },
+    tabBarItem: {
+      paddingVertical: nav.tabBarItemPaddingV,
+      paddingHorizontal: 2,
+    },
     tabLabel: {
-      fontSize: fontSize(12),
       textAlign: 'center',
-      width: scale(60),
-      marginBottom: verticalScale(10),
-      fontWeight: 'bold',
+      maxWidth: nav.tabLabelWidth,
+      width: nav.tabLabelWidth,
+      marginTop: Math.round(nav.dockTrackPaddingTop * 0.5),
+      fontWeight: '600',
     },
     tabBarButtonContainer: {
       flex: 1,
@@ -50,15 +113,13 @@ export const createStyles = () => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      // paddingVertical: 8,
-      // paddingHorizontal: 12,
     },
     tabBarButtonActive: {
       backgroundColor: theme.NAVBAR_ACTIVE_BACKGROUND,
-      borderRadius: scale(20),
-      marginHorizontal: spacing(6),
-      paddingVertical: spacing(10),
-      paddingHorizontal: spacing(16),
+      borderRadius: nav.activeButtonRadius,
+      marginHorizontal: nav.activeButtonMarginH,
+      paddingVertical: nav.activeButtonPaddingV,
+      paddingHorizontal: nav.activeButtonPaddingH,
       ...Platform.select({
         ios: {
           shadowColor: theme.NAVBAR_ACTIVE_BACKGROUND,

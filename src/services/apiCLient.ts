@@ -19,6 +19,8 @@ apiClient.interceptors.request.use(
       const sessionJwt = await AsyncStorage.getItem('sessionJwt');
       if (sessionJwt) {
         config.headers.Cookie = `session=${sessionJwt}`;
+        // Authorization header works reliably on Vercel/serverless (Cookie can be lost)
+        config.headers.Authorization = `Bearer ${sessionJwt}`;
       }
       return config;
     } catch (error) {

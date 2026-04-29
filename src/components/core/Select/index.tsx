@@ -24,12 +24,15 @@ import FriendModal from '../../FriendModal';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface Category {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   icon: string;
   type: 'income' | 'expense';
   name?: string;
 }
+
+const getOptionId = (item: Category) => String(item.id ?? item._id ?? '');
 
 interface SelectProps {
   value: string;
@@ -96,12 +99,14 @@ const SelectComponent = ({
         name: 'MySelf',
         title: 'MySelf',
         icon: '',
-        type: 'expense',
+        type: 'expense' as const,
       },
       ...options,
     ];
   }, [options, isFriend]);
-  const selectedCategory = finalOptions?.find(cat => cat?.id === value);
+  const selectedCategory = finalOptions?.find(
+    cat => getOptionId(cat) === String(value),
+  );
 
   const navigateToCategory = () => {
     if (isFriend) {
@@ -121,10 +126,13 @@ const SelectComponent = ({
 
       <TouchableOpacity
         onPress={openModal}
+        activeOpacity={0.85}
         style={[
           styles.inputContainer,
           error && { borderColor: theme.ERROR },
-          !error && { borderColor: value ? theme.PRIMARY : theme.BORDER_COLOR },
+          !error && {
+            borderColor: value ? theme.SECONDARY + '55' : theme.BORDER_COLOR + 'AA',
+          },
         ]}
       >
         <Text style={value ? styles.input : styles.placeholderText}>
@@ -172,22 +180,22 @@ const SelectComponent = ({
 
             <FlatList
               data={finalOptions}
-              keyExtractor={item => item.id}
+              keyExtractor={item => getOptionId(item) || item.title}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
                     styles.optionItem,
-                    value === item.id && styles.selectedOption,
+                    value === getOptionId(item) && styles.selectedOption,
                   ]}
                   onPress={() => {
-                    onPress(item.id);
+                    onPress(getOptionId(item));
                     closeModal();
                   }}
                 >
                   <Text
                     style={[
                       styles.optionText,
-                      value === item.id && styles.selectedOptionText,
+                      value === getOptionId(item) && styles.selectedOptionText,
                     ]}
                   >
                     {isFriend ? item.name : capitalizeFirstLetter(item.title)}

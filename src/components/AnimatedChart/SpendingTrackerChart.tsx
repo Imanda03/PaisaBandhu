@@ -127,7 +127,7 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
             color={theme.SECONDARY}
           />
         </View>
-        <Text style={[styles.title, { color: theme.TEXT }]}>{title}</Text>
+        <Text style={[styles.title, { color: theme.LIGHT_TEXT }]}>{title}</Text>
       </View>
 
       <Svg width={width} height={calculatedHeight}>
@@ -251,7 +251,7 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   container: {
-    margin: spacing(8),
+    marginBottom: spacing(4),
   },
   header: {
     flexDirection: 'row',
@@ -267,8 +267,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: fontSize(20),
+    fontSize: fontSize(13),
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
 });

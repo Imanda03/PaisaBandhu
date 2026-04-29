@@ -47,7 +47,6 @@ const TransactionListItem = ({
     const { theme } = useTheme();
     const { mutate: deleteFinancialBook, isLoading: isDeleting } = useDeleteTransactionBook(title,)
     const [isModalVisible, setModalVisible] = useState(false);
-    console.log("id", _id)
     const confirmDelete = () => {
         deleteFinancialBook(_id, {
             onSuccess: () => {

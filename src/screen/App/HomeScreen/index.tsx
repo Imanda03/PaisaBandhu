@@ -14,9 +14,9 @@ import Animated, {
   withTiming,
   withSpring,
   FadeInDown,
-  FadeIn,
   SlideInDown,
 } from 'react-native-reanimated';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createStyles } from './styles';
@@ -25,22 +25,44 @@ import SecondHeader from './components/SecondHeader';
 import Chart from './components/Chart';
 import { MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
-import { spacing } from '../../../utils/responsive';
-import TransactionList from '../../../components/transaction';
+import RecentActivity from './components/RecentActivity';
 import {
   useFetchLatestTransaction,
   useFetchChartTransaction,
 } from '../../../ReactQueryHook/transaction.hook';
+import { getItem } from '../../../assets/storage';
+import { useGuideTour } from '../../../context/GuideTourContext';
+import HelpModal from '../../../components/HelpModal';
+import BannerAdView from '../../../components/ads/BannerAdView';
+import { useNavBarLayout, verticalScale } from '../../../utils/responsive';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 const HomeScreen = React.memo(() => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const tabBarHeight = useBottomTabBarHeight();
+  const navLayout = useNavBarLayout();
+  const scrollBottomInset = useMemo(
+    () =>
+      Math.max(
+        navLayout.dockHeight + navLayout.bottomOffset + verticalScale(28),
+        tabBarHeight + navLayout.bottomOffset + verticalScale(28),
+      ),
+    [navLayout.bottomOffset, navLayout.dockHeight, tabBarHeight],
+  );
+
+  const incomeOnCard = isDark ? '#A8E8BC' : theme.SUCCESS;
+  const expenseOnCard = isDark ? '#FFB4B4' : theme.ERROR;
+  const incomeExpenseLabelColor = isDark
+    ? 'rgba(247, 247, 248, 0.9)'
+    : theme.LIGHT_TEXT;
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
+  const { startTour } = useGuideTour();
 
   const {
     data: transactionData,
@@ -57,7 +79,26 @@ const HomeScreen = React.memo(() => {
   useEffect(() => {
     fadeAnim.value = withTiming(1, { duration: 500 });
     slideAnim.value = withSpring(0, { damping: 22 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only intro animation
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const checkGuide = async () => {
+      try {
+        const seen = await getItem('GUIDE_TOUR_SEEN');
+        if (mounted && seen !== 'true') {
+          setTimeout(() => startTour(), 800);
+        }
+      } catch {
+        if (mounted) startTour();
+      }
+    };
+    checkGuide();
+    return () => {
+      mounted = false;
+    };
+  }, [startTour]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value,
@@ -131,14 +172,17 @@ const HomeScreen = React.memo(() => {
         end={{ x: 0.5, y: 1 }}
       >
         <AnimatedView style={[styles.headerSection, headerStyle]}>
-          <Header />
+          <Header onHelpPress={() => setHelpModalVisible(true)} />
           <SecondHeader />
         </AnimatedView>
       </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: scrollBottomInset },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -173,57 +217,104 @@ const HomeScreen = React.memo(() => {
             </TouchableOpacity>
           </View>
 
-          {/* Income & Expense */}
-          <View style={styles.incomeExpenseRow}>
+          {/* Income & expense — single segmented strip */}
+          <View style={styles.incomeExpenseShell}>
             <AnimatedView
               entering={FadeInDown.delay(120).springify()}
               style={[
                 styles.incomeExpenseItem,
-                { backgroundColor: theme.SUCCESS_LIGHT },
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(91, 165, 107, 0.22)'
+                    : theme.SUCCESS_LIGHT + 'AA',
+                },
               ]}
             >
               <View
                 style={[
                   styles.incomeExpenseIcon,
-                  { backgroundColor: theme.SUCCESS + '22' },
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(91, 165, 107, 0.35)'
+                      : theme.SUCCESS + '26',
+                  },
                 ]}
               >
-                <MaterialIcons name="trending-up" size={22} color={theme.SUCCESS} />
+                <MaterialIcons
+                  name="trending-up"
+                  size={20}
+                  color={incomeOnCard}
+                />
               </View>
               <View style={styles.incomeExpenseContent}>
-                <Text style={[styles.incomeExpenseLabel, { color: theme.LIGHT_TEXT }]}>
+                <Text
+                  style={[
+                    styles.incomeExpenseLabel,
+                    {
+                      color: incomeExpenseLabelColor,
+                      ...(isDark ? { opacity: 1 } : null),
+                    },
+                  ]}
+                >
                   Income
                 </Text>
                 <Text
-                  style={[styles.incomeExpenseValue, { color: theme.SUCCESS }]}
+                  style={[styles.incomeExpenseValue, { color: incomeOnCard }]}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
                 >
                   {formatCurrency(income)}
                 </Text>
               </View>
             </AnimatedView>
+            <View
+              style={[styles.incomeExpenseDivider, { backgroundColor: theme.BORDER_COLOR + '45' }]}
+            />
             <AnimatedView
               entering={FadeInDown.delay(160).springify()}
               style={[
                 styles.incomeExpenseItem,
-                { backgroundColor: theme.ERROR_LIGHT },
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(212, 93, 93, 0.22)'
+                    : theme.ERROR_LIGHT + 'AA',
+                },
               ]}
             >
               <View
                 style={[
                   styles.incomeExpenseIcon,
-                  { backgroundColor: theme.ERROR + '22' },
+                  {
+                    backgroundColor: isDark
+                      ? 'rgba(212, 93, 93, 0.35)'
+                      : theme.ERROR + '26',
+                  },
                 ]}
               >
-                <MaterialIcons name="trending-down" size={22} color={theme.ERROR} />
+                <MaterialIcons
+                  name="trending-down"
+                  size={20}
+                  color={expenseOnCard}
+                />
               </View>
               <View style={styles.incomeExpenseContent}>
-                <Text style={[styles.incomeExpenseLabel, { color: theme.LIGHT_TEXT }]}>
+                <Text
+                  style={[
+                    styles.incomeExpenseLabel,
+                    {
+                      color: incomeExpenseLabelColor,
+                      ...(isDark ? { opacity: 1 } : null),
+                    },
+                  ]}
+                >
                   Expense
                 </Text>
                 <Text
-                  style={[styles.incomeExpenseValue, { color: theme.ERROR }]}
+                  style={[styles.incomeExpenseValue, { color: expenseOnCard }]}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
                 >
                   {formatCurrency(expense)}
                 </Text>
@@ -265,50 +356,17 @@ const HomeScreen = React.memo(() => {
           <Chart />
         </AnimatedView>
 
-        {/* Recent transactions */}
+        {/* Recent activity — premium ledger (see RecentActivity.tsx) */}
         <AnimatedView entering={FadeInDown.delay(480).springify()}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.TEXT }]}>
-              Recent Transactions
-            </Text>
-          </View>
-
-          {transactionData && transactionData.length > 0 ? (
-            <View style={styles.transactionsCard}>
-              {transactionData.slice(0, 5).map((item: any, index: number) => (
-                <View
-                  key={item?._id || item?.id || `tx-${index}`}
-                  style={[
-                    styles.transactionItem,
-                    index === 4 && styles.transactionItemLast,
-                  ]}
-                >
-                  <TransactionList {...item} />
-                </View>
-              ))}
-            </View>
-          ) : (
-            <AnimatedView
-              entering={FadeIn.delay(520).springify()}
-              style={[styles.transactionsCard, styles.emptyState]}
-            >
-              <View style={styles.emptyIcon}>
-                <MaterialIcons
-                  name="receipt-long"
-                  size={44}
-                  color={theme.ICON_MUTED}
-                />
-              </View>
-              <Text style={[styles.emptyTitle, { color: theme.TEXT }]}>
-                No transactions yet
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: theme.LIGHT_TEXT }]}>
-                Add your first transaction to start tracking your finances
-              </Text>
-            </AnimatedView>
-          )}
+          <RecentActivity transactions={transactionData} />
         </AnimatedView>
       </ScrollView>
+
+      <HelpModal
+        visible={helpModalVisible}
+        onClose={() => setHelpModalVisible(false)}
+      />
+      <BannerAdView placement="home" />
     </View>
   );
 });

@@ -5,7 +5,7 @@ import { focusManager } from 'react-query';
 import LoadingScreen from './src/components/LoadingScreen';
 import ThemeProvider from './src/context/ThemeProvider';
 import { NavigationContainer } from '@react-navigation/native';
-import { ThemedRoot } from './ThemedRoot';
+import ThemedRoot from './ThemedRoot';
 import { getItem } from './src/assets/storage';
 
 const onAppStateChange = (status: AppStateStatus) => {

@@ -14,7 +14,7 @@ export const createStyles = (theme: ThemeColors) => {
       flexGrow: 1,
       paddingHorizontal: spacing(16),
       paddingTop: verticalScale(20),
-      paddingBottom: verticalScale(48),
+      paddingBottom: verticalScale(120),
     },
     stepDots: {
       flexDirection: 'row',
