@@ -4,8 +4,6 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  findNodeHandle,
-  UIManager,
   Dimensions,
 } from 'react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -30,7 +28,6 @@ import { useNavigation } from '@react-navigation/native';
 import BookFormSheet from './Components/BookFormSheet';
 import { useFetchFinancialBook } from '../../../ReactQueryHook/book.hook';
 import { BookInterfaceProps } from '../../../utils/types';
-import { useGuideTour } from '../../../context/GuideTourContext';
 import BannerAdView from '../../../components/ads/BannerAdView';
 import { SkeletonBookCardRow } from '../../../components/skeleton';
 
@@ -45,7 +42,6 @@ const emptyBook: BookInterfaceProps = { id: '', title: '', type: 'single' };
 const BookScreen = () => {
   const styles = createStyles();
   const { theme, isDark } = useTheme();
-  const { tourStep, setTargetLayout, goNextStep, finishTour } = useGuideTour();
   const fabRef = useRef<View>(null);
   const [isBottomSheetVisible, setBottomSheetVisible] = useState(false);
   const [isAddMode, setIsAddMode] = useState(false);
@@ -64,7 +60,6 @@ const BookScreen = () => {
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(-30);
   const fabScale = useSharedValue(0);
-  const fabRotation = useSharedValue(0);
 
   useEffect(() => {
     // Header animation
@@ -74,36 +69,32 @@ const BookScreen = () => {
       stiffness: 100,
     });
 
-    // FAB animation with pulse
-    fabScale.value = withSpring(1, {
-      damping: 12,
-      stiffness: 150,
-    });
-
-    // Continuous rotation pulse for FAB
-    fabRotation.value = withRepeat(
-      withSequence(
-        withTiming(5, { duration: 2000 }),
-        withTiming(-5, { duration: 2000 }),
-      ),
-      -1,
-      true,
-    );
-  }, []);
+    const isEmpty = !financialBook || financialBook.length === 0;
+    if (isEmpty) {
+      fabScale.value = withRepeat(
+        withSequence(
+          withTiming(1.08, { duration: 700 }),
+          withTiming(1.0, { duration: 700 }),
+        ),
+        -1,
+        true,
+      );
+    } else {
+      fabScale.value = withSpring(1, { damping: 12, stiffness: 150 });
+    }
+  }, [financialBook]);
 
   const handleBookPress = useCallback((book: BookInterfaceProps) => {
-    if (tourStep === 3) finishTour();
     navigation.navigate('InnerScreen', {
       screen: 'Transactions',
       params: { bookId: book.id, type: book.type, title: book.title, isShared: book.isShared },
     });
-  }, [navigation, tourStep, finishTour]);
+  }, [navigation]);
 
   const openAddBookModal = useCallback(() => {
-    if (tourStep === 2) goNextStep();
     setIsAddMode(true);
     setBottomSheetVisible(true);
-  }, [tourStep, goNextStep]);
+  }, []);
 
   const openEditBookModal = useCallback((bookItem: BookInterfaceProps) => {
     setIsAddMode(false);
@@ -155,18 +146,6 @@ const BookScreen = () => {
     setSelectedBook({ id: '', title: '', type: 'single' });
   }, []);
 
-  useEffect(() => {
-    if (tourStep === 2 && fabRef.current) {
-      const tag = findNodeHandle(fabRef.current);
-      if (tag != null) {
-        UIManager.measureInWindow(tag, (x, y, width, height) => {
-          setTargetLayout({ x, y, width, height }, 'Tap + to create your first book');
-        });
-      }
-      return () => setTargetLayout(null, '');
-    }
-  }, [tourStep, setTargetLayout]);
-
   // Animated styles
   const headerAnimatedStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -174,10 +153,7 @@ const BookScreen = () => {
   }));
 
   const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: fabScale.value },
-      { rotate: `${fabRotation.value}deg` },
-    ],
+    transform: [{ scale: fabScale.value }],
   }));
 
   const EmptyListComponent = () => {

@@ -4,11 +4,14 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Animated,
   findNodeHandle,
   UIManager,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { fontSize, useNavBarLayout } from '../../utils/responsive';
 import { createTabBarStyles } from './styles';
 import { useTheme } from '../../utils/colors';
@@ -17,10 +20,14 @@ import HomeScreen from '../../screen/App/HomeScreen';
 import BookScreen from '../../screen/App/BookScreen';
 import ProfileScreen from '../../screen/App/ProfileScreen';
 import ChallengesScreen from '../../screen/App/ChallengesScreen';
-import { useGuideTour } from '../../context/GuideTourContext';
+import LendingRoute from '../../RouteNavigation/StackRoute/LendingRoute';
 import { renderFlowingTabBar } from './FlowingTabBar';
+import PressableScale from '../../components/PressableScale';
+import { microSpring } from '../../utils/animations';
 
 const Tab = createBottomTabNavigator();
+
+type TabRouteName = 'Home' | 'Book' | 'Lending' | 'Challenges' | 'Profile';
 
 const Tabs = () => {
   const nav = useNavBarLayout();
@@ -30,16 +37,16 @@ const Tabs = () => {
     <Tab.Navigator
       tabBar={renderFlowingTabBar}
       screenOptions={({ route }) => ({
-        // FlowingTabBar hides on keyboard; keep false so nested BottomTabBar does not animate too.
         tabBarHideOnKeyboard: false,
         tabBarActiveBackgroundColor: 'transparent',
         tabBarInactiveBackgroundColor: 'transparent',
-        tabBarIcon: ({ focused, color: _color }) => {
+        tabBarIcon: ({ focused }) => {
           let iconName: string;
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Lending') {
+            iconName = focused ? 'cash' : 'cash-outline';
           } else if (route.name === 'Challenges') {
-            // Use medal icon - more reliable in Ionicons
             iconName = focused ? 'medal' : 'medal-outline';
           } else if (route.name === 'Book') {
             iconName = focused ? 'book' : 'book-outline';
@@ -64,7 +71,7 @@ const Tabs = () => {
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.82}
+              minimumFontScale={0.75}
               style={[
                 styles.tabLabel,
                 {
@@ -85,37 +92,51 @@ const Tabs = () => {
         },
         tabBarStyle: styles.tabBarNavigatorInner,
         tabBarItemStyle: styles.tabBarItem,
-        // tabBarIconStyle: styles.tabBarIcon,
       })}
     >
       <Tab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarButton: props => <TabBarButton {...props} routeName="Home" />,
+          tabBarButton: (props: Record<string, unknown>) => (
+            <TabBarButton {...props} routeName="Home" />
+          ),
         }}
       />
       <Tab.Screen
         name="Book"
         component={BookScreen}
         options={{
-          tabBarButton: props => <TabBarButton {...props} routeName="Book" />,
+          tabBarButton: (props: Record<string, unknown>) => (
+            <TabBarButton {...props} routeName="Book" />
+          ),
         }}
       />
-
+      <Tab.Screen
+        name="Lending"
+        component={LendingRoute}
+        options={{
+          tabBarButton: (props: Record<string, unknown>) => (
+            <TabBarButton {...props} routeName="Lending" />
+          ),
+        }}
+      />
       <Tab.Screen
         name="Challenges"
         component={ChallengesScreen}
         options={{
-          tabBarButton: props => <TabBarButton {...props} routeName="Challenges" />,
+          tabBarButton: (props: Record<string, unknown>) => (
+            <TabBarButton {...props} routeName="Challenges" />
+          ),
         }}
       />
-
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarButton: props => <TabBarButton {...props} routeName="Profile" />,
+          tabBarButton: (props: Record<string, unknown>) => (
+            <TabBarButton {...props} routeName="Profile" />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -126,81 +147,45 @@ const TabBarButton = ({
   accessibilityState,
   children,
   onPress,
-  routeName,
+  routeName: _routeName,
   ...props
-}: any) => {
+}: {
+  accessibilityState?: { selected?: boolean };
+  children?: React.ReactNode;
+  onPress?: () => void;
+  routeName: TabRouteName;
+  [key: string]: unknown;
+}) => {
   const nav = useNavBarLayout();
   const styles = createTabBarStyles(nav);
   const focused = accessibilityState?.selected;
   const ref = useRef<View>(null);
-  const { tourStep, setTargetLayout, goNextStep } = useGuideTour();
-  const isBookTab = routeName === 'Book';
-  const showTour = isBookTab && tourStep === 1;
+  const translateY = useSharedValue(0);
+  const activeScale = useSharedValue(1);
 
   useEffect(() => {
-    if (!showTour || !ref.current) return;
-    const measure = () => {
-      const tag = findNodeHandle(ref.current);
-      if (tag != null) {
-        UIManager.measureInWindow(tag, (x, y, width, height) => {
-          setTargetLayout({ x, y, width, height }, 'Tap here to open Books');
-        });
-      }
-    };
-    const t = requestAnimationFrame(() => requestAnimationFrame(measure));
-    return () => {
-      cancelAnimationFrame(t);
-      if (isBookTab) setTargetLayout(null, '');
-    };
-  }, [showTour, isBookTab, setTargetLayout]);
+    translateY.value = withSpring(focused ? -nav.tabLiftPx : 0, microSpring);
+    activeScale.value = withSpring(focused ? 1.03 : 1, microSpring);
+  }, [focused, translateY, activeScale, nav.tabLiftPx]);
 
-  const handlePress = () => {
-    if (showTour) goNextStep();
-    onPress?.();
-  };
-
-  const translateYValue = useRef(new Animated.Value(0)).current;
-  const activeScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(translateYValue, {
-        toValue: focused ? -nav.tabLiftPx : 0,
-        useNativeDriver: true,
-        friction: 8,
-        tension: 100,
-      }),
-      Animated.spring(activeScale, {
-        toValue: focused ? 1.04 : 1,
-        useNativeDriver: true,
-        friction: 7,
-        tension: 140,
-      }),
-    ]).start();
-  }, [focused, translateYValue, activeScale, nav.tabLiftPx]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { scale: activeScale.value },
+    ],
+  }));
 
   return (
     <View ref={ref} collapsable={false} style={styles.tabBarButtonContainer}>
-    <TouchableOpacity
-      {...props}
-      onPress={handlePress}
-      activeOpacity={0.8}
-      style={StyleSheet.absoluteFill}
-    >
-      <Animated.View
-        style={[
-          styles.tabBarButton,
-          {
-            transform: [
-              { translateY: translateYValue },
-              { scale: activeScale },
-            ],
-          },
-        ]}
+      <PressableScale
+        {...props}
+        onPress={onPress}
+        style={StyleSheet.absoluteFill}
       >
-        {children}
-      </Animated.View>
-    </TouchableOpacity>
+        <Animated.View style={[styles.tabBarButton, animatedStyle]}>
+          {children}
+        </Animated.View>
+      </PressableScale>
     </View>
   );
 };

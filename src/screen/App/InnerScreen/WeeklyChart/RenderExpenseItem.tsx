@@ -10,6 +10,7 @@ import {
 import { useTheme } from '../../../../utils/colors';
 import { scale, fontSize, spacing } from '../../../../utils/responsive';
 import { MaterialIcons } from '../../../../utils/Icons';
+import { formatCurrency, formatSignedCurrency } from '../../../../utils/currency';
 
 interface Expense {
   title: string;
@@ -41,13 +42,6 @@ interface FriendExpensesProps {
   settlements: Settlement[];
 }
 
-const formatAmount = (value: number) =>
-  value.toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-
-// Compact expense item component
 const ExpenseItem: React.FC<{
   item: Expense;
   index: number;
@@ -116,7 +110,7 @@ const ExpenseItem: React.FC<{
             },
           ]}
         >
-          {item.type === 'income' ? '+' : '-'}₹{formatAmount(item.amount)}
+          {formatSignedCurrency(item.type === 'income' ? item.amount : -item.amount)}
         </Text>
       </View>
     </Animated.View>
@@ -199,10 +193,10 @@ const FriendCard: React.FC<{
                 },
               ]}
             >
-              ₹{formatAmount(item.total)}
+              {formatCurrency(item.total)}
             </Text>
             <Text style={[styles.shareText, { color: theme.LIGHT_TEXT }]}>
-              Share ₹{formatAmount(item.share)}
+              Share {formatCurrency(item.share)}
             </Text>
             <View
               style={[
@@ -226,8 +220,8 @@ const FriendCard: React.FC<{
                   },
                 ]}
               >
-                {item.netContribution >= 0 ? 'Gets back' : 'Owes'} ₹
-                {formatAmount(Math.abs(item.netContribution))}
+                {item.netContribution >= 0 ? 'Gets back' : 'Owes'}{' '}
+                {formatCurrency(Math.abs(item.netContribution))}
               </Text>
             </View>
           </View>
@@ -326,7 +320,7 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
               Group total
             </Text>
             <Text style={[styles.statValue, { color: theme.TEXT }]}>
-              ₹{formatAmount(totalExpense)}
+              {formatCurrency(totalExpense)}
             </Text>
           </View>
 
@@ -345,7 +339,7 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
               Per person
             </Text>
             <Text style={[styles.statValue, { color: theme.TEXT }]}>
-              ₹{formatAmount(perPersonShare || 0)}
+              {formatCurrency(perPersonShare || 0)}
             </Text>
           </View>
 
@@ -455,7 +449,7 @@ export const FriendExpenses: React.FC<FriendExpensesProps> = ({
                         { color: theme.ERROR },
                       ]}
                     >
-                      ₹{formatAmount(settlement.amount)}
+                      {formatCurrency(settlement.amount)}
                     </Text>
                   </View>
                 </View>

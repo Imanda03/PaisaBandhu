@@ -22,6 +22,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useTheme } from '../../utils/colors';
+import { formatCurrency } from '../../utils/currency';
 import { scale, fontSize, spacing } from '../../utils/responsive';
 import { MaterialIcons } from '../../utils/Icons';
 
@@ -41,12 +42,6 @@ interface Props {
   minHeight?: number;
   maxHeight?: number;
 }
-
-const formatAmount = (value: number) =>
-  value.toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
 
 export const AnimatedSpendingTracker: React.FC<Props> = ({
   data,
@@ -238,7 +233,7 @@ export const AnimatedSpendingTracker: React.FC<Props> = ({
                 textAnchor="end"
                 fontWeight="800"
               >
-                ₹{formatAmount(item.spent)}
+                {formatCurrency(item.spent)}
                 {isHighest ? ' • Highest' : ''}
               </SvgText>
             </React.Fragment>

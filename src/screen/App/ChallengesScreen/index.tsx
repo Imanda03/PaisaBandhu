@@ -16,6 +16,7 @@ import {
 import { MaterialIcons, IoniconsIcon } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
 import { useNavigation } from '@react-navigation/native';
+import { formatCurrency } from '../../../utils/currency';
 import { Challenge } from '../../../services/ChallengeService';
 import ChallengeCard from '../../../components/ChallengeCard';
 import Animated, {
@@ -423,7 +424,7 @@ const ChallengesScreen: React.FC = () => {
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.modalKeyboardWrap}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
           >
             <View style={styles.modalContentTouchable} collapsable={false}>
               <View
@@ -482,7 +483,7 @@ const ChallengesScreen: React.FC = () => {
                       <Text style={{ color: theme.ERROR }}>*</Text>
                     </Text>
                     <InputComponent
-                      placeholder="e.g., Save ₹5000 this month"
+                      placeholder="e.g., Save Rs. 5000 this month"
                       value={newChallenge.title}
                       onChangeText={text =>
                         setNewChallenge({ ...newChallenge, title: text })
@@ -842,7 +843,7 @@ const ChallengesScreen: React.FC = () => {
                       { color: theme.PURPLE, fontSize: 20, fontWeight: '700' },
                     ]}
                   >
-                    ₹{selectedChallenge.targetAmount.toLocaleString('en-IN')}
+                    {formatCurrency(selectedChallenge.targetAmount)}
                   </Text>
                 </View>
               )}
@@ -990,7 +991,7 @@ const ChallengesScreen: React.FC = () => {
                             },
                           ]}
                         >
-                          Current: ₹{currentAmount.toLocaleString('en-IN')}
+                          Current: {formatCurrency(currentAmount)}
                         </Text>
                       )}
                     </View>

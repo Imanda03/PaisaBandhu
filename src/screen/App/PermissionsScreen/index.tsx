@@ -57,6 +57,7 @@ export default function PermissionsScreen({ onComplete }: { onComplete: () => vo
   const insets = useSafeAreaInsets();
   const androidVersion = getAndroidVersion();
   const PERMISSIONS_LIST = useMemo(() => getPermissionsList(androidVersion), [androidVersion]);
+  const [requesting, setRequesting] = useState<Record<string, boolean>>({});
 
   // Function to check current permission status
   const checkPermissions = useCallback(async () => {
@@ -199,6 +200,7 @@ export default function PermissionsScreen({ onComplete }: { onComplete: () => vo
       }
 
       try {
+        setRequesting(prev => ({ ...prev, [perm.id]: true }));
         let result: string;
         
         // Handle notifications permission
@@ -254,13 +256,15 @@ export default function PermissionsScreen({ onComplete }: { onComplete: () => vo
           // Only request for Android 12 and below (API 32)
           if (androidVersion < 33 && perm.android) {
             // Request both read and write permissions for older Android
-            const readResult = await PermissionsAndroid.request(
-              PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE
-            );
-            const writeResult = await PermissionsAndroid.request(
-              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-            );
-            const isGranted = readResult === 'granted' && writeResult === 'granted';
+            const results = await PermissionsAndroid.requestMultiple([
+              PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+              PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            ]);
+            const isGranted =
+              results[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] ===
+                PermissionsAndroid.RESULTS.GRANTED &&
+              results[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] ===
+                PermissionsAndroid.RESULTS.GRANTED;
             setGranted((g) => ({ ...g, [perm.id]: isGranted }));
           } else {
             // Android 13+ uses scoped storage - permission granted automatically
@@ -277,6 +281,8 @@ export default function PermissionsScreen({ onComplete }: { onComplete: () => vo
       } catch (error) {
         console.error(`Error requesting ${perm.id} permission:`, error);
         setGranted((g) => ({ ...g, [perm.id]: false }));
+      } finally {
+        setRequesting(prev => ({ ...prev, [perm.id]: false }));
       }
     },
     [androidVersion, checkPermissions]
@@ -318,12 +324,12 @@ export default function PermissionsScreen({ onComplete }: { onComplete: () => vo
                 (perm.android !== null);
               
               if (!isApplicable) {
-                // Show info icon for permissions not needed on this Android version
+                // Permission is automatically handled by OS on this version.
                 return (
                   <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                    <MaterialIcons name="info" size={24} color={theme.LIGHT_TEXT} />
+                    <MaterialIcons name="check-circle" size={28} color={theme.SUCCESS} />
                     <Text style={{ fontSize: 10, color: theme.LIGHT_TEXT, marginTop: 2 }}>
-                      N/A
+                      Auto
                     </Text>
                   </View>
                 );
@@ -346,9 +352,12 @@ export default function PermissionsScreen({ onComplete }: { onComplete: () => vo
                     console.log(`Requesting ${perm.id} permission for Android ${androidVersion}`);
                     requestPermission(perm);
                   }}
+                  disabled={requesting[perm.id]}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.allowBtnText}>Allow</Text>
+                  <Text style={styles.allowBtnText}>
+                    {requesting[perm.id] ? '...' : 'Allow'}
+                  </Text>
                 </TouchableOpacity>
               );
             })()

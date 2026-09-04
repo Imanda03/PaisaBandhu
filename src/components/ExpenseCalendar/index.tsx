@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '../../utils/Icons';
 import { useTheme } from '../../utils/colors';
+import { formatCurrency } from '../../utils/currency';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 interface CalendarDay {
@@ -146,7 +147,7 @@ const ExpenseCalendar: React.FC<ExpenseCalendarProps> = ({
                   {day.date.getDate()}
                 </Text>
                 {day.amount > 0 && (
-                  <Text style={styles.dayAmount}>₹{day.amount.toFixed(0)}</Text>
+                  <Text style={styles.dayAmount}>{formatCurrency(day.amount)}</Text>
                 )}
               </TouchableOpacity>
             </Animated.View>

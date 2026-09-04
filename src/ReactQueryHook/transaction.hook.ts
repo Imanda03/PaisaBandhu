@@ -3,7 +3,7 @@ import { useToast } from "../context/ToastContext";
 import { useModal } from "../context/ModalContext";
 import { AxiosError } from "axios";
 import { ApiError, transactionDataProps } from "../utils/types";
-import { createTransaction, updateTransaction, deleteTransaction, getBalanceTransaction, getBookTransaction, getLatestTransaction, getWeeklyTransaction, getTransactionOverview } from "../services/TransactionService";
+import { createTransaction, updateTransaction, deleteTransaction, getBalanceTransaction, getBookTransaction, getLatestTransaction, getLatestTransactionByRange, getWeeklyTransaction, getTransactionOverview } from "../services/TransactionService";
 
 export const useCreateTransaction = (setError: any) => {
     const queryClient = useQueryClient();
@@ -144,6 +144,21 @@ export const useFetchLatestTransaction = () => {
         {
             onError: (error) => {
                 console.error('Failed to fetch latest transaction:', error);
+            },
+        }
+    )
+}
+
+export const useFetchLatestTransactionByRange = (params?: {
+    startDate?: string;
+    endDate?: string;
+}) => {
+    return useQuery(
+        ['LatestTransactionList', params?.startDate, params?.endDate],
+        () => getLatestTransactionByRange(params),
+        {
+            onError: (error) => {
+                console.error('Failed to fetch latest transaction by range:', error);
             },
         }
     )

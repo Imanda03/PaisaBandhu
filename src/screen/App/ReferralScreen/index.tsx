@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
@@ -222,10 +223,16 @@ const ReferralScreen: React.FC = () => {
         </View>
       </View>
 
-      <View style={styles.content}>
+      <KeyboardAvoidingView
+        style={styles.content}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: 32 }]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* My Referral Code */}
           {referral && referral.code && (
@@ -486,7 +493,7 @@ const ReferralScreen: React.FC = () => {
               </View>
             )}
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };

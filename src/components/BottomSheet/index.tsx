@@ -18,21 +18,36 @@ import createStyles from './styles';
 interface BottomSheetProps {
     isVisible: boolean;
     onClose: () => void;
-    title: string;
+    title?: string;
+    hideHeader?: boolean;
     children: React.ReactNode;
 }
 
 const BottomSheet: React.FC<BottomSheetProps> = ({
     isVisible,
     onClose,
-    title,
+    title = '',
+    hideHeader = false,
     children,
 }) => {
     const { theme } = useTheme();
     const styles = createStyles();
 
-    const translateY = useSharedValue(300); // Starts below screen
+    const translateY = useSharedValue(300);
     const overlayOpacity = useSharedValue(0);
+
+    const dismiss = () => {
+        overlayOpacity.value = withTiming(0, {
+            duration: 200,
+            easing: Easing.in(Easing.cubic),
+        });
+        translateY.value = withTiming(300, {
+            duration: 350,
+            easing: Easing.in(Easing.cubic),
+        }, (finished) => {
+            if (finished) runOnJS(onClose)();
+        });
+    };
 
     useEffect(() => {
         if (isVisible) {
@@ -79,43 +94,23 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
             transparent
             animationType="none"
             visible={isVisible}
-            onRequestClose={() => {
-                // Optional: back button or swipe-to-close
-                overlayOpacity.value = withTiming(0, {
-                    duration: 200,
-                    easing: Easing.in(Easing.cubic),
-                });
-                translateY.value = withTiming(300, {
-                    duration: 350,
-                    easing: Easing.in(Easing.cubic),
-                }, (finished) => {
-                    if (finished) runOnJS(onClose)();
-                });
-            }}
+            onRequestClose={dismiss}
         >
             <Animated.View style={animatedOverlayStyle}>
                 <Animated.View style={[styles.modalContainer, animatedContainerStyle]}>
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>{title}</Text>
-                        <TouchableOpacity
-                            onPress={() => {
-                                overlayOpacity.value = withTiming(0, {
-                                    duration: 200,
-                                    easing: Easing.in(Easing.cubic),
-                                });
-                                translateY.value = withTiming(300, {
-                                    duration: 350,
-                                    easing: Easing.in(Easing.cubic),
-                                }, (finished) => {
-                                    if (finished) runOnJS(onClose)();
-                                });
-                            }}
-                            style={styles.closeButton}
-                        >
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.modalContent}>
+                    {hideHeader ? (
+                        <View style={styles.handleWrap}>
+                            <View style={styles.handle} />
+                        </View>
+                    ) : (
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>{title}</Text>
+                            <TouchableOpacity onPress={dismiss} style={styles.closeButton}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                    <View style={[styles.modalContent, hideHeader && styles.modalContentFlush]}>
                         {children}
                     </View>
                 </Animated.View>

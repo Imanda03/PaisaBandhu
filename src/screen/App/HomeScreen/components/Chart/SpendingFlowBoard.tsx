@@ -15,6 +15,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ThemeColors } from '../../../../../utils/colors';
 import { scale, fontSize, spacing } from '../../../../../utils/responsive';
+import SpendingEmptyState from './SpendingEmptyState';
+import { formatCurrency, formatSignedCurrency } from '../../../../../utils/currency';
 
 export type CategorySpend = { category: string; spent: number };
 
@@ -88,7 +90,15 @@ const SpendingFlowBoard: React.FC<Props> = ({
   }));
 
   const topCategories = useMemo(() => {
-    const sorted = [...categories].sort((a, b) => b.spent - a.spent);
+    const safe = Array.isArray(categories)
+      ? categories.filter(
+          item =>
+            item?.category != null &&
+            item?.spent != null &&
+            Number(item.spent) > 0,
+        )
+      : [];
+    const sorted = [...safe].sort((a, b) => b.spent - a.spent);
     return sorted.slice(0, 8);
   }, [categories]);
 
@@ -148,7 +158,7 @@ const SpendingFlowBoard: React.FC<Props> = ({
                   adjustsFontSizeToFit
                   minimumFontScale={0.72}
                 >
-                  ₹{formatAmount(income)}
+                  {formatCurrency(income)}
                 </Text>
               </View>
 
@@ -169,7 +179,7 @@ const SpendingFlowBoard: React.FC<Props> = ({
                   adjustsFontSizeToFit
                   minimumFontScale={0.72}
                 >
-                  ₹{formatAmount(expense)}
+                  {formatCurrency(expense)}
                 </Text>
               </View>
             </View>
@@ -178,7 +188,7 @@ const SpendingFlowBoard: React.FC<Props> = ({
               <Text style={[styles.netLine, { color: netColor }]}>
                 Net position{' '}
                 <Text style={styles.netEmphasis}>
-                  {net >= 0 ? '+' : '−'}₹{formatAmount(Math.abs(net))}
+                  {formatSignedCurrency(net)}
                 </Text>
               </Text>
             ) : (
@@ -253,15 +263,7 @@ const SpendingFlowBoard: React.FC<Props> = ({
             </Text>
 
             {topCategories.length === 0 ? (
-              <View style={[styles.emptyVault, { borderColor: rim }]}>
-                <Text style={[styles.emptyTitle, { color: theme.TEXT }]}>
-                  No spending picture yet
-                </Text>
-                <Text style={[styles.emptyBody, { color: theme.LIGHT_TEXT }]}>
-                  Expenses in this period will appear here with a clean
-                  breakdown.
-                </Text>
-              </View>
+              <SpendingEmptyState />
             ) : (
               <View style={styles.categoryList}>
                 {topCategories.map((row, index) => {
@@ -310,7 +312,7 @@ const SpendingFlowBoard: React.FC<Props> = ({
                             style={[styles.catAmt, { color: theme.TEXT }]}
                             numberOfLines={1}
                           >
-                            ₹{formatAmount(row.spent)}
+                            {formatCurrency(row.spent)}
                           </Text>
                         </View>
                         <View style={[styles.catTrack, { backgroundColor: hairline }]}>

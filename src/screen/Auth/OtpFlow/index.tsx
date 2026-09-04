@@ -147,10 +147,8 @@ const OtpFlow = ({ navigation: _navigation }: any) => {
       >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={
-            Platform.OS === 'ios' ? insets.top + AUTH_HEADER_VERTICAL : 0
-          }
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
           <AuthHeader
             title={

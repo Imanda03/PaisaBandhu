@@ -12,7 +12,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  Animated,
   EmitterSubscription,
   Keyboard,
   LayoutChangeEvent,
@@ -21,12 +20,17 @@ import {
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../utils/colors';
 import { createTabBarStyles } from './styles';
 import { scale, useNavBarLayout } from '../../utils/responsive';
-
-const useNativeDriver = Platform.OS !== 'web';
+import { springConfig } from '../../utils/animations';
 
 function useKeyboardVisible() {
   const [visible, setVisible] = useState(false);
@@ -63,7 +67,18 @@ export function FlowingTabBar(props: BottomTabBarProps) {
 
   const [layoutHeight, setLayoutHeight] = useState(0);
   const [isTabBarHidden, setIsTabBarHidden] = useState(!shouldShow);
-  const visible = useRef(new Animated.Value(shouldShow ? 1 : 0)).current;
+
+  const visible = useSharedValue(shouldShow ? 1 : 0);
+  const indicatorX = useSharedValue(0);
+  const [trackW, setTrackW] = useState(0);
+  const [dashW, setDashW] = useState(0);
+  const isFirstIndicator = useRef(true);
+
+  const insetBottom = insets.bottom;
+  const effectiveBottomOffset =
+    insetBottom > 0 ? Math.min(nav.bottomOffset, 8) : nav.bottomOffset;
+  const dockContentHeight = nav.dockHeight;
+  const totalDockHeight = dockContentHeight + insetBottom;
 
   const rimColors = useMemo(
     () =>
@@ -88,24 +103,23 @@ export function FlowingTabBar(props: BottomTabBarProps) {
 
   useEffect(() => {
     if (shouldShow) {
-      Animated.spring(visible, {
-        toValue: 1,
-        useNativeDriver: useNativeDriver,
-        damping: 26,
-        stiffness: 260,
-      }).start(({ finished }) => {
-        if (finished) setIsTabBarHidden(false);
-      });
+      visible.value = withSpring(1, springConfig);
+      setIsTabBarHidden(false);
     } else {
       setIsTabBarHidden(true);
-      Animated.timing(visible, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: useNativeDriver,
-      }).start();
+      visible.value = withTiming(0, { duration: 200 });
     }
-    return () => visible.stopAnimation();
   }, [shouldShow, visible]);
+
+  const dockAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY:
+          (1 - visible.value) *
+          (layoutHeight + insetBottom + StyleSheet.hairlineWidth),
+      },
+    ],
+  }));
 
   const handleLayout = useCallback(
     (e: LayoutChangeEvent) => {
@@ -117,10 +131,6 @@ export function FlowingTabBar(props: BottomTabBarProps) {
   );
 
   const n = state.routes.length;
-  const indicatorX = useRef(new Animated.Value(0)).current;
-  const [trackW, setTrackW] = useState(0);
-  const [dashW, setDashW] = useState(0);
-  const isFirstIndicator = useRef(true);
 
   const onTrackLayout = useCallback((e: LayoutChangeEvent) => {
     setTrackW(e.nativeEvent.layout.width);
@@ -128,31 +138,33 @@ export function FlowingTabBar(props: BottomTabBarProps) {
 
   useEffect(() => {
     if (trackW <= 0 || n <= 0) return;
-    // dockTrack uses horizontal padding; tabs lay out in the inner width only.
     const padH = nav.dockTrackPaddingH;
     const innerW = Math.max(0, trackW - 2 * padH);
     const slot = innerW / n;
     const w = Math.min(
-      Math.max(slot * 0.42, scale(36)),
-      Math.max(scale(56), nav.dockHeight * 0.42),
+      Math.max(slot * 0.38, scale(28)),
+      Math.max(scale(48), nav.dockHeight * 0.38),
     );
     setDashW(w);
     const x = padH + state.index * slot + (slot - w) / 2;
     if (isFirstIndicator.current) {
-      indicatorX.setValue(x);
+      indicatorX.value = x;
       isFirstIndicator.current = false;
     } else {
-      Animated.spring(indicatorX, {
-        toValue: x,
-        useNativeDriver: true,
-        damping: 17,
-        stiffness: 200,
-        mass: 0.78,
-      }).start();
+      indicatorX.value = withSpring(x, springConfig);
     }
-  }, [state.index, trackW, n, indicatorX, nav.dockHeight, nav.dockTrackPaddingH]);
+  }, [
+    state.index,
+    trackW,
+    n,
+    indicatorX,
+    nav.dockHeight,
+    nav.dockTrackPaddingH,
+  ]);
 
-  const insetBottom = insets.bottom;
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }));
 
   return (
     <Animated.View
@@ -161,19 +173,13 @@ export function FlowingTabBar(props: BottomTabBarProps) {
       style={[
         styles.tabBarDock,
         {
+          bottom: effectiveBottomOffset,
+          minHeight: dockContentHeight,
+          height: totalDockHeight,
           paddingBottom: insetBottom,
-          transform: [
-            {
-              translateY: visible.interpolate({
-                inputRange: [0, 1],
-                outputRange: [
-                  layoutHeight + insetBottom + StyleSheet.hairlineWidth,
-                  0,
-                ],
-              }),
-            },
-          ],
+          paddingTop: 6,
         },
+        dockAnimatedStyle,
       ]}
     >
       <LinearGradient
@@ -194,10 +200,8 @@ export function FlowingTabBar(props: BottomTabBarProps) {
                 pointerEvents="none"
                 style={[
                   styles.accentRailWrap,
-                  {
-                    width: dashW,
-                    transform: [{ translateX: indicatorX }],
-                  },
+                  { width: dashW },
+                  indicatorStyle,
                 ]}
               >
                 <LinearGradient

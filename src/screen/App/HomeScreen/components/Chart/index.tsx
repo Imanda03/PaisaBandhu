@@ -11,10 +11,12 @@ import { createStyles } from './styles';
 import { useTheme } from '../../../../../utils/colors';
 import {
   useFetchChartTransaction,
-  useFetchLatestTransaction,
+  useFetchLatestTransactionByRange,
 } from '../../../../../ReactQueryHook/transaction.hook';
 import { MaterialIcons } from '../../../../../utils/Icons';
 import SpendingFlowBoard from './SpendingFlowBoard';
+import SpendingErrorBoundary from './SpendingErrorBoundary';
+import { formatAmountNumber } from '../../../../../utils/currency';
 
 type TimePeriod = 'today' | 'week' | 'month' | 'year' | 'all';
 
@@ -31,18 +33,6 @@ const timePeriods: TimePeriodOption[] = [
   { label: 'This Year', value: 'year', icon: 'calendar-today' },
   { label: 'All Time', value: 'all', icon: 'all-inclusive' },
 ];
-
-function transactionInPeriod(
-  dateStr: string,
-  startISO?: string,
-  endISO?: string,
-) {
-  if (!startISO || !endISO) return true;
-  const t = new Date(dateStr).getTime();
-  return (
-    t >= new Date(startISO).getTime() && t <= new Date(endISO).getTime()
-  );
-}
 
 const Chart = () => {
   const { theme, isDark } = useTheme();
@@ -86,12 +76,21 @@ const Chart = () => {
 
   const {
     data: chartData,
-    refetch,
+    isLoading: chartLoading,
+    isError: chartError,
+    refetch: refetchChart,
   } = useFetchChartTransaction(
     startDate && endDate ? { startDate, endDate } : undefined,
   );
 
-  const { data: latestRaw } = useFetchLatestTransaction();
+  const {
+    data: latestRaw,
+    isLoading: latestLoading,
+    isError: latestError,
+    refetch: refetchLatest,
+  } = useFetchLatestTransactionByRange(
+    startDate && endDate ? { startDate, endDate } : undefined,
+  );
 
   const income = chartData?.income || 0;
   const expense = chartData?.expense || 0;
@@ -103,7 +102,6 @@ const Chart = () => {
     const map = new Map<string, number>();
     for (const t of list) {
       if (t?.type !== 'expense') continue;
-      if (!transactionInPeriod(t.date, startDate, endDate)) continue;
       const name = t.categoryId?.title?.trim() || 'Other';
       const amt = Number(t.price) || 0;
       if (amt <= 0) continue;
@@ -113,11 +111,11 @@ const Chart = () => {
       category,
       spent,
     }));
-  }, [latestRaw, startDate, endDate]);
+  }, [latestRaw]);
 
   const formatAmount = (value: number) => {
     if (!value) return '0';
-    return value.toLocaleString('en-IN');
+    return formatAmountNumber(value);
   };
 
   const selectedPeriodOption = timePeriods.find(
@@ -134,10 +132,6 @@ const Chart = () => {
     scaleAnim.value = withSpring(0.95, {}, () => {
       scaleAnim.value = withSpring(1);
     });
-    // Refetch data with new date range
-    setTimeout(() => {
-      refetch();
-    }, 100);
   };
 
   const { insightPercent, insightTier } = useMemo(() => {
@@ -228,17 +222,44 @@ const Chart = () => {
 
       {/* Flow chambers + category torches (replaces donut) */}
       <View style={styles.chartContainer}>
-        <SpendingFlowBoard
-          theme={theme}
-          isDark={isDark}
-          income={income}
-          expense={expense}
-          categories={categorySpending}
-          formatAmount={formatAmount}
-          insightPercent={insightPercent}
-          insightTier={insightTier}
-          hasFlowData={!hasNoData}
-        />
+        {chartLoading || latestLoading ? (
+          <View style={styles.stateBox}>
+            <Text style={[styles.stateText, { color: theme.LIGHT_TEXT }]}>
+              Loading overview…
+            </Text>
+          </View>
+        ) : chartError || latestError ? (
+          <View style={styles.stateBox}>
+            <Text style={[styles.stateText, { color: theme.ERROR }]}>
+              Could not load spending data.
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                refetchChart();
+                refetchLatest();
+              }}
+              style={[styles.retryBtn, { borderColor: theme.SECONDARY }]}
+            >
+              <Text style={[styles.retryText, { color: theme.SECONDARY }]}>
+                Retry
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <SpendingErrorBoundary>
+            <SpendingFlowBoard
+              theme={theme}
+              isDark={isDark}
+              income={income}
+              expense={expense}
+              categories={categorySpending}
+              formatAmount={formatAmount}
+              insightPercent={insightPercent}
+              insightTier={insightTier}
+              hasFlowData={!hasNoData}
+            />
+          </SpendingErrorBoundary>
+        )}
       </View>
 
       {/* Time Period Modal */}

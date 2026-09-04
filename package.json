@@ -1,6 +1,6 @@
 {
   "name": "kharcha-split",
-  "version": "2.3.1",
+  "version": "2.5.2",
   "private": true,
   "scripts": {
     "android": "react-native run-android",

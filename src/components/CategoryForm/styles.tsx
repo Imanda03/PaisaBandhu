@@ -1,187 +1,178 @@
 import { StyleSheet, Platform } from 'react-native';
-import { useTheme } from '../../utils/colors';
+import { fontSize, scale, spacing } from '../../utils/responsive';
 
-export const createStyles = () => {
-  const { theme } = useTheme();
-
-  const cardShadow = Platform.select({
-    ios: {
-      shadowColor: theme.PRIMARY,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.06,
-      shadowRadius: 16,
-    },
-    android: { elevation: 4 },
-  });
-
-  const segmentShadow = Platform.select({
-    ios: {
-      shadowColor: theme.PRIMARY,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 8,
-    },
-    android: { elevation: 2 },
-  });
-
-  const iconSelectedShadow = Platform.select({
-    ios: {
-      shadowColor: theme.SECONDARY,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.25,
-      shadowRadius: 10,
-    },
-    android: { elevation: 6 },
-  });
-
-  return StyleSheet.create({
+export const createStyles = () =>
+  StyleSheet.create({
     container: {
       flex: 1,
-      flexDirection: 'column',
     },
-    fixedTop: {
+    topSection: {
       flexShrink: 0,
     },
-    fixedBottom: {
-      flexShrink: 0,
-      paddingTop: 16,
+    lead: {
+      fontSize: fontSize(13),
+      lineHeight: Math.round(fontSize(13) * 1.5),
+      fontWeight: '600',
+      marginBottom: spacing(14),
+      paddingHorizontal: spacing(2),
     },
-    section: {
-      marginBottom: 16,
-      backgroundColor: theme.INPUT_BACKGROUND,
-      borderRadius: 20,
-      padding: 20,
+    typeBlock: {
+      flexShrink: 0,
+      marginBottom: spacing(12),
+    },
+    typeLabel: {
+      fontSize: fontSize(11),
+      fontWeight: '800',
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+      marginBottom: spacing(10),
+    },
+    typeTrack: {
+      flexDirection: 'row',
+      borderRadius: scale(14),
       borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
-      ...cardShadow,
+      padding: spacing(4),
+      gap: spacing(4),
     },
-    chooseIconRow: {
+    typeBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing(6),
+      paddingVertical: spacing(14),
+      borderRadius: scale(11),
+      overflow: 'hidden',
+      minHeight: scale(48),
+    },
+    typeBtnActive: {
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 4,
+        },
+        android: { elevation: 2 },
+      }),
+    },
+    typeBtnText: {
+      fontSize: fontSize(14),
+      fontWeight: '800',
+    },
+    iconSectionRim: {
+      flex: 1,
+      minHeight: 0,
+      borderRadius: scale(20),
+      borderWidth: 1,
+      padding: scale(1.5),
+      marginBottom: spacing(12),
+      overflow: 'hidden',
+    },
+    iconRimInner: {
+      flex: 1,
+      borderRadius: scale(18),
+      overflow: 'hidden',
+    },
+    iconSectionFace: {
+      flex: 1,
+      borderRadius: scale(16),
+      padding: spacing(14),
+      minHeight: 0,
+    },
+    sectionLabel: {
+      fontSize: fontSize(10),
+      fontWeight: '800',
+      letterSpacing: 1.4,
+      textTransform: 'uppercase',
+    },
+    iconHeaderRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 12,
-      paddingHorizontal: 4,
-    },
-    chooseIconLabel: {
-      fontSize: 11,
-      fontWeight: '700',
-      letterSpacing: 1.2,
-      textTransform: 'uppercase',
-      opacity: 0.85,
-    },
-    iconScrollView: {
-      flex: 1,
-      minHeight: 0,
-    },
-    scrollContent: {
-      paddingVertical: 16,
-      paddingBottom: 24,
-    },
-    sectionLabel: {
-      fontSize: 11,
-      fontWeight: '700',
-      letterSpacing: 1.2,
-      marginBottom: 14,
-      textTransform: 'uppercase',
-      opacity: 0.85,
-    },
-    label: {
-      fontSize: 15,
-      fontWeight: '600',
-      marginBottom: 10,
-      letterSpacing: 0.2,
-    },
-    typeWrapper: {
-      flexDirection: 'row',
-      borderRadius: 14,
-      padding: 4,
-      backgroundColor: theme.BACKGROUND,
-      ...segmentShadow,
-    },
-    typeButton: {
-      flex: 1,
-      height: 48,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 12,
-      marginHorizontal: 2,
-    },
-    typeButtonActive: {
-      backgroundColor: theme.PURPLE,
-      ...segmentShadow,
-    },
-    typeText: {
-      fontSize: 16,
-      fontWeight: '600',
-      letterSpacing: 0.3,
-    },
-    typeTextActive: {
-      color: theme.SECONDARY,
-    },
-    typeTextInactive: {
-      color: theme.LIGHT_TEXT,
-    },
-    iconGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-    },
-    iconButton: {
-      width: '23%',
-      marginHorizontal: '1%',
-      marginVertical: 6,
-      borderRadius: 16,
-      borderWidth: 2,
-      paddingVertical: 14,
-      paddingHorizontal: 8,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: theme.BACKGROUND,
-      minHeight: 72,
-    },
-    iconButtonSelected: {
-      borderColor: theme.SECONDARY,
-      backgroundColor: theme.INPUT_BACKGROUND,
-      ...iconSelectedShadow,
-    },
-    iconButtonUnselected: {
-      borderColor: 'transparent',
-    },
-    iconEmoji: {
-      fontSize: 28,
-      marginBottom: 6,
-    },
-    iconLabel: {
-      fontSize: 11,
-      fontWeight: '600',
-      letterSpacing: 0.2,
-      textAlign: 'center',
-      maxWidth: '100%',
+      marginBottom: spacing(10),
+      gap: spacing(10),
+      flexShrink: 0,
     },
     selectedChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.BACKGROUND,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: theme.BORDER_COLOR,
+      maxWidth: '52%',
+      paddingVertical: spacing(5),
+      paddingHorizontal: spacing(10),
+      borderRadius: scale(10),
+      borderWidth: StyleSheet.hairlineWidth,
+      gap: spacing(6),
     },
-    selectedChipEmoji: {
-      fontSize: 20,
-      marginRight: 8,
+    chipEmoji: { fontSize: fontSize(18) },
+    chipLabel: { fontSize: fontSize(12), fontWeight: '700', flexShrink: 1 },
+    iconScroll: {
+      flex: 1,
+      minHeight: 0,
     },
-    selectedChipLabel: {
-      fontSize: 14,
+    iconScrollContent: {
+      flexGrow: 1,
+      paddingBottom: spacing(8),
+    },
+    iconGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    },
+    iconCell: {
+      width: '23%',
+      marginBottom: spacing(10),
+      borderRadius: scale(14),
+      borderWidth: 2,
+      paddingVertical: spacing(12),
+      paddingHorizontal: spacing(4),
+      alignItems: 'center',
+      minHeight: scale(76),
+      justifyContent: 'center',
+    },
+    iconEmoji: { fontSize: fontSize(26), marginBottom: spacing(4) },
+    iconCellLabel: {
+      fontSize: fontSize(9),
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    fixedBottom: {
+      flexShrink: 0,
+    },
+    previewCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing(10),
+      padding: spacing(12),
+      borderRadius: scale(14),
+      borderWidth: StyleSheet.hairlineWidth,
+      marginBottom: spacing(12),
+    },
+    previewText: {
+      flex: 1,
+      fontSize: fontSize(14),
       fontWeight: '600',
-      letterSpacing: 0.2,
     },
-    errorText: {
-      color: theme.ERROR,
-      fontSize: 13,
-      marginLeft: 4,
-      marginTop: 6,
-      fontWeight: '500',
+    ctaWrap: { borderRadius: scale(16), overflow: 'hidden' },
+    ctaBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing(8),
+      paddingVertical: spacing(16),
+      ...Platform.select({
+        ios: {
+          shadowColor: '#C6A56B',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        },
+        android: { elevation: 8 },
+      }),
+    },
+    ctaText: {
+      fontSize: fontSize(16),
+      fontWeight: '800',
+      letterSpacing: 0.3,
     },
   });
-};

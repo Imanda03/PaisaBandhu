@@ -263,7 +263,7 @@ const Transactions = () => {
       >
         <AuthHeader
           compact
-          title={`${bookTitle}'s Transactions`}
+          title={bookTitle ? `${bookTitle}'s Transactions` : 'Transactions'}
           showRightIcon={true}
           rightIconName={'chart-bar'}
           rightIconSize={isSharedBook ? 18 : 26}

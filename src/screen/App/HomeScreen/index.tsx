@@ -30,10 +30,10 @@ import {
   useFetchLatestTransaction,
   useFetchChartTransaction,
 } from '../../../ReactQueryHook/transaction.hook';
-import { getItem } from '../../../assets/storage';
-import { useGuideTour } from '../../../context/GuideTourContext';
-import HelpModal from '../../../components/HelpModal';
+import AnimatedNumber from '../../../components/AnimatedNumber';
 import BannerAdView from '../../../components/ads/BannerAdView';
+import AssistantChat from '../../../components/AssistantChat';
+import { formatCurrency } from '../../../utils/currency';
 import { useNavBarLayout, verticalScale } from '../../../utils/responsive';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -61,8 +61,6 @@ const HomeScreen = React.memo(() => {
     : theme.LIGHT_TEXT;
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
-  const [helpModalVisible, setHelpModalVisible] = useState(false);
-  const { startTour } = useGuideTour();
 
   const {
     data: transactionData,
@@ -82,24 +80,6 @@ const HomeScreen = React.memo(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only intro animation
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-    const checkGuide = async () => {
-      try {
-        const seen = await getItem('GUIDE_TOUR_SEEN');
-        if (mounted && seen !== 'true') {
-          setTimeout(() => startTour(), 800);
-        }
-      } catch {
-        if (mounted) startTour();
-      }
-    };
-    checkGuide();
-    return () => {
-      mounted = false;
-    };
-  }, [startTour]);
-
   const headerStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value,
     transform: [{ translateY: slideAnim.value }],
@@ -115,12 +95,9 @@ const HomeScreen = React.memo(() => {
   const expense = chartData?.expense || 0;
   const balance = income - expense;
 
-  const formatCurrency = useCallback(
+  const formatBalance = useCallback(
     (amount: number) =>
-      `₹${Math.abs(amount).toLocaleString('en-IN', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })}`,
+      formatCurrency(amount, { absolute: true, maximumFractionDigits: 0 }),
     [],
   );
 
@@ -159,10 +136,7 @@ const HomeScreen = React.memo(() => {
 
   return (
     <View style={styles.root}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={theme.HEADER_BACKGROUND}
-      />
+      <StatusBar barStyle="light-content" />
 
       {/* Header gradient - flows seamlessly into body */}
       <LinearGradient
@@ -172,7 +146,7 @@ const HomeScreen = React.memo(() => {
         end={{ x: 0.5, y: 1 }}
       >
         <AnimatedView style={[styles.headerSection, headerStyle]}>
-          <Header onHelpPress={() => setHelpModalVisible(true)} />
+          <Header />
           <SecondHeader />
         </AnimatedView>
       </LinearGradient>
@@ -203,9 +177,16 @@ const HomeScreen = React.memo(() => {
               <Text style={[styles.balanceLabel, { color: theme.LIGHT_TEXT }]}>
                 Total Balance
               </Text>
-              <Text style={[styles.balanceAmount, { color: theme.TEXT }]}>
-                {formatCurrency(balance)}
-              </Text>
+              <AnimatedNumber
+                value={balance}
+                style={[styles.balanceAmount, { color: theme.TEXT }]}
+                formatter={(v) =>
+                  formatCurrency(Math.round(v), {
+                    absolute: true,
+                    maximumFractionDigits: 0,
+                  })
+                }
+              />
             </View>
             <TouchableOpacity style={styles.refreshBtn} onPress={handleRefresh}>
               <MaterialIcons
@@ -362,11 +343,12 @@ const HomeScreen = React.memo(() => {
         </AnimatedView>
       </ScrollView>
 
-      <HelpModal
-        visible={helpModalVisible}
-        onClose={() => setHelpModalVisible(false)}
-      />
       <BannerAdView placement="home" />
+
+      <AssistantChat
+        bottomOffset={navLayout.dockHeight + navLayout.bottomOffset + verticalScale(16)}
+        onDataChanged={handleRefresh}
+      />
     </View>
   );
 });

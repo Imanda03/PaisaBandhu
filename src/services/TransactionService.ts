@@ -53,6 +53,28 @@ export const getLatestTransaction = async () => {
   }
 };
 
+export const getLatestTransactionByRange = async (params?: {
+  startDate?: string;
+  endDate?: string;
+}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+    const url = `${API_URL}/transaction/latest${
+      queryParams.toString() ? `?${queryParams.toString()}` : ''
+    }`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getBalanceTransaction = async (params?: {
   startDate?: string;
   endDate?: string;

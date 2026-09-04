@@ -163,8 +163,8 @@ const SignIn = React.memo(({ navigation }: any) => {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={0}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
             <Animated.View style={[styles.header, animatedHeaderStyle]}>
                 <AuthHeader title="Login" />
@@ -175,7 +175,7 @@ const SignIn = React.memo(({ navigation }: any) => {
 
             <View style={styles.content}>
                 <ScrollView
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
+                    contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: 32 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                     keyboardDismissMode="on-drag"

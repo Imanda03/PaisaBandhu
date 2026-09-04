@@ -24,9 +24,7 @@ function ThemedRootContent() {
   return (
     <>
       <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle={theme.TEXT === '#ffffff' ? 'light-content' : 'light-content'}
+        barStyle="light-content"
       />
       <ToastProvider>
         <ModalProvider>

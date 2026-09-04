@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import BottomSheet from '../BottomSheet';
 import EditableBox from '../core/EditableBox';
@@ -57,47 +57,57 @@ const EditInformation: React.FC<Props> = ({ isVisible, setIsVisible }) => {
       onClose={() => setIsVisible(false)}
       title="Edit Your Information"
     >
-      <View style={{ paddingHorizontal: 10 }}>
-        <Controller
-          control={control}
-          name="fullName"
-          render={({ field: { onChange, value } }) => (
-            <EditableBox label="Name" value={value} onChangeText={onChange} />
-          )}
-        />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 10, paddingBottom: 32 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Controller
+            control={control}
+            name="fullName"
+            render={({ field: { onChange, value } }) => (
+              <EditableBox label="Name" value={value} onChangeText={onChange} />
+            )}
+          />
 
-        <Controller
-          control={control}
-          name="phoneNumber"
-          render={({ field: { onChange, value } }) => (
-            <EditableBox
-              label="Contact"
-              value={String(value)}
-              onChangeText={onChange}
-              keyboardType="phone-pad"
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, value } }) => (
-            <EditableBox
-              label="Email"
-              value={value}
-              onChangeText={onChange}
-              keyboardType="email-address"
-              editable={false}
-            />
-          )}
-        />
-        <ButtonIconComponent
-          marginTop={14}
-          title="Save"
-          onPress={handleSubmit(onSubmit)}
-          loading={isLoading}
-        />
-      </View>
+          <Controller
+            control={control}
+            name="phoneNumber"
+            render={({ field: { onChange, value } }) => (
+              <EditableBox
+                label="Contact"
+                value={String(value)}
+                onChangeText={onChange}
+                keyboardType="phone-pad"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <EditableBox
+                label="Email"
+                value={value}
+                onChangeText={onChange}
+                keyboardType="email-address"
+                editable={false}
+              />
+            )}
+          />
+          <ButtonIconComponent
+            marginTop={14}
+            title="Save"
+            onPress={handleSubmit(onSubmit)}
+            loading={isLoading}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </BottomSheet>
   );
 };

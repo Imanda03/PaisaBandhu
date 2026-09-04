@@ -16,10 +16,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../../../utils/colors';
 import type { MonthlyIncomeExpensePoint } from '../../../../components/AnimatedChart/GroupedMonthlyBarChart.types';
+import { formatSignedCurrency, formatCurrency } from '../../../../utils/currency';
 import { scale, fontSize, spacing } from '../../../../utils/responsive';
-
-const formatInr = (n: number) =>
-  Math.round(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
 type RowProps = {
   row: MonthlyIncomeExpensePoint;
@@ -104,11 +102,11 @@ function MonthPulseRow({ row, index, rim, hairline, isLast }: RowProps) {
 
         <View style={styles.amountRow}>
           <Text style={[styles.amountIn, { color: theme.INCOME_PIE }]}>
-            +₹{formatInr(row.income || 0)}
+            {formatSignedCurrency(row.income || 0)}
           </Text>
           <Text style={[styles.amountSep, { color: theme.LIGHT_TEXT }]}>·</Text>
           <Text style={[styles.amountOut, { color: theme.EXPENSE_PIE }]}>
-            −₹{formatInr(row.expense || 0)}
+            {formatSignedCurrency(-(row.expense || 0))}
           </Text>
         </View>
       </View>

@@ -18,6 +18,7 @@ import { useTheme } from '../../../../utils/colors';
 import { MaterialIcons, IoniconsIcon } from '../../../../utils/Icons';
 import { useFetchLatestTransaction, useFetchTransactionOverview, useFetchChartTransaction } from '../../../../ReactQueryHook/transaction.hook';
 import { createStyles } from './styles';
+import { formatCurrency } from '../../../../utils/currency';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
@@ -82,12 +83,6 @@ const Reports = () => {
     opacity: headerOpacity.value,
     transform: [{ translateY: headerTranslateY.value }],
   }));
-
-  const formatCurrency = useCallback((amount: number) =>
-    `₹${Math.abs(amount).toLocaleString('en-IN', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`, []);
 
   const incomeData = overviewData?.overview?.find((item: any) => item.type === 'income') || { total: 0, count: 0 };
   const expenseData = overviewData?.overview?.find((item: any) => item.type === 'expense') || { total: 0, count: 0 };

@@ -4,6 +4,8 @@ import { Dimensions, PixelRatio, Platform, useWindowDimensions } from 'react-nat
 // Base dimensions (iPhone 14 / standard reference)
 const BASE_WIDTH = 390;
 const BASE_HEIGHT = 844;
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
 
 /**
  * Scale size proportionally to screen width (uses live dimensions for rotation support)
@@ -103,18 +105,21 @@ export function computeNavBarLayout(
   const innerBorderRadius = Math.max(rimBorderRadius - rimPadding, 8);
 
   const dockTrackPaddingH = Math.round(wRatio * 6);
-  const dockTrackPaddingTop = Math.round(dockHeight * (4 / 72));
-  const dockTrackPaddingBottom = Math.round(dockHeight * (14 / 72));
+  const dockTrackPaddingTop = Math.round(clamp(dockHeight * (4 / 72), 4, 7));
+  const dockTrackPaddingBottom = Math.round(
+    clamp(dockHeight * (14 / 72), 10, 14),
+  );
 
-  const accentBottom = Math.round(dockHeight * (9 / 72));
-  const accentHeight = Math.round(Math.max(wRatio * 4, 3));
+  const accentHeight = Math.round(clamp(wRatio * 4, 3, 5));
+  const accentBottom = Math.max(2, Math.round(dockTrackPaddingBottom * 0.15));
 
-  const tabLabelWidth = Math.round(Math.min(wRatio * 88, 120));
+  const tabCountFactor = screenWidth < 375 ? 0.72 : screenWidth >= 560 ? 0.68 : 0.75;
+  const tabLabelWidth = Math.round(Math.min(wRatio * 88 * tabCountFactor, 96));
   const tabBarItemPaddingV = Math.round(hRatio * 4);
 
   const activeButtonRadius = Math.round(Math.min(wRatio * 20, dockHeight * 0.32));
   const activeButtonMarginH = Math.round(wRatio * 6);
-  const activeButtonPaddingV = Math.round(Math.min(wRatio * 10, 15));
+  const activeButtonPaddingV = Math.round(Math.min(wRatio * 8, 12));
   const activeButtonPaddingH = Math.round(Math.min(wRatio * 16, 24));
 
   const iconBase = Math.round(Math.min(Math.max(wRatio * 24, 22), 32));
@@ -124,7 +129,7 @@ export function computeNavBarLayout(
   const labelActivePt = isLargeWidth ? 14 : 13;
   const labelInactivePt = isLargeWidth ? 12 : 11;
 
-  const tabLiftPx = Math.round(dockHeight * (4 / 72));
+  const tabLiftPx = Math.round(dockHeight * (isLargeWidth ? 2 / 72 : 3 / 72));
 
   return {
     dockHeight,

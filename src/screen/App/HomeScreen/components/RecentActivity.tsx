@@ -12,7 +12,12 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '../../../../utils/Icons';
 import { useTheme } from '../../../../utils/colors';
 import { formatTimeAgo, ICONS } from '../../../../utils/helper';
+import { formatSignedCurrency } from '../../../../utils/currency';
 import { scale, fontSize, spacing } from '../../../../utils/responsive';
+import AnimatedListItem from '../../../../components/AnimatedListItem';
+import PressableScale from '../../../../components/PressableScale';
+import { useFetchFinancialBook } from '../../../../ReactQueryHook/book.hook';
+import { BookInterfaceProps } from '../../../../utils/types';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
@@ -25,7 +30,52 @@ type Tx = {
   price?: string | number;
   categoryId?: { icon?: string; title?: string };
   friendId?: { name?: string };
+  bookId?: string | { _id?: string; id?: string; title?: string; type?: 'single' | 'group' };
 };
+
+function resolveBookParams(
+  item: Tx | undefined,
+  books: BookInterfaceProps[] | undefined,
+): { bookId: string; title: string; type: 'single' | 'group' } | null {
+  const raw = item?.bookId;
+  if (raw && typeof raw === 'object') {
+    const id = raw._id || raw.id;
+    if (!id) return null;
+    return {
+      bookId: String(id),
+      title: raw.title?.trim() || 'Book',
+      type: raw.type === 'group' ? 'group' : 'single',
+    };
+  }
+  if (typeof raw === 'string' && raw) {
+    const book = books?.find(b => b.id === raw);
+    return {
+      bookId: raw,
+      title: book?.title?.trim() || 'Book',
+      type: book?.type ?? 'single',
+    };
+  }
+  return null;
+}
+
+function resolveDefaultBook(
+  transactions: Tx[] | null | undefined,
+  books: BookInterfaceProps[] | undefined,
+): { bookId: string; title: string; type: 'single' | 'group' } | null {
+  for (const tx of transactions ?? []) {
+    const fromTx = resolveBookParams(tx, books);
+    if (fromTx) return fromTx;
+  }
+  const first = books?.[0];
+  if (first?.id) {
+    return {
+      bookId: first.id,
+      title: first.title?.trim() || 'Book',
+      type: first.type ?? 'single',
+    };
+  }
+  return null;
+}
 
 function compactLedgerDate(raw: string) {
   const d = new Date(raw);
@@ -44,12 +94,8 @@ function formatLedgerAmount(
   const raw =
     typeof price === 'string' ? price.replace(/,/g, '') : String(price ?? 0);
   const n = Math.abs(Number(raw)) || 0;
-  const formatted = n.toLocaleString('en-IN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  const sign = type === 'income' ? '+' : '−';
-  return { sign, formatted };
+  const signed = type === 'income' ? n : -n;
+  return formatSignedCurrency(signed, { maximumFractionDigits: 0 });
 }
 
 function LedgerRow({
@@ -59,6 +105,7 @@ function LedgerRow({
   hairline,
   monoFill,
   isLast,
+  onPress,
 }: {
   item: Tx;
   index: number;
@@ -66,10 +113,11 @@ function LedgerRow({
   hairline: string;
   monoFill: string;
   isLast: boolean;
+  onPress?: () => void;
 }) {
   const { theme } = useTheme();
   const type = item.type === 'income' ? 'income' : 'expense';
-  const { sign, formatted } = formatLedgerAmount(item.price, type);
+  const amountLabel = formatLedgerAmount(item.price, type);
   const emoji =
     ICONS.find(i => i.value === item.categoryId?.icon)?.name ?? '💳';
   const categoryTitle = item.categoryId?.title?.trim();
@@ -81,6 +129,7 @@ function LedgerRow({
       : (['#FF9A9A', theme.EXPENSE_PIE] as const);
 
   return (
+    <PressableScale onPress={onPress} disabled={!onPress}>
     <AnimatedView
       entering={FadeInDown.delay(40 + index * 45).springify()}
       style={[
@@ -164,10 +213,11 @@ function LedgerRow({
           adjustsFontSizeToFit
           minimumFontScale={0.78}
         >
-          {sign}₹{formatted}
+          {amountLabel}
         </Text>
       </View>
     </AnimatedView>
+    </PressableScale>
   );
 }
 
@@ -178,6 +228,7 @@ type Props = {
 const RecentActivity: React.FC<Props> = ({ transactions }) => {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation();
+  const { data: books } = useFetchFinancialBook();
 
   const rim = isDark
     ? 'rgba(198, 165, 107, 0.22)'
@@ -192,9 +243,33 @@ const RecentActivity: React.FC<Props> = ({ transactions }) => {
   );
   const hasRows = slice.length > 0;
 
-  const onViewAll = () => {
-    (navigation as any).navigate('InnerScreen', { screen: 'Transactions' });
+  const openTransactions = (target?: Tx) => {
+    const params =
+      resolveBookParams(target, books) ??
+      resolveDefaultBook(transactions, books);
+
+    if (params) {
+      (navigation as { navigate: (name: string, p?: object) => void }).navigate(
+        'InnerScreen',
+        {
+          screen: 'Transactions',
+          params: {
+            bookId: params.bookId,
+            title: params.title,
+            type: params.type,
+          },
+        },
+      );
+      return;
+    }
+
+    (navigation as { navigate: (name: string, p?: object) => void }).navigate(
+      'Tabs',
+      { screen: 'Book' },
+    );
   };
+
+  const onViewAll = () => openTransactions();
 
   return (
     <View style={styles.root}>
@@ -270,15 +345,17 @@ const RecentActivity: React.FC<Props> = ({ transactions }) => {
             {hasRows ? (
               <View style={[styles.listShell, { borderColor: hairline }]}>
                 {slice.map((item, index) => (
-                  <LedgerRow
-                    key={String(item._id || item.id || index)}
-                    item={item}
-                    index={index}
-                    rim={rim}
-                    hairline={hairline}
-                    monoFill={monoFill}
-                    isLast={index === slice.length - 1}
-                  />
+                  <AnimatedListItem key={String(item._id || item.id || index)} index={index}>
+                    <LedgerRow
+                      item={item}
+                      index={index}
+                      rim={rim}
+                      hairline={hairline}
+                      monoFill={monoFill}
+                      isLast={index === slice.length - 1}
+                      onPress={() => openTransactions(item)}
+                    />
+                  </AnimatedListItem>
                 ))}
               </View>
             ) : (

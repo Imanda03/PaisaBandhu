@@ -157,5 +157,25 @@ export const createStyles = (theme: ThemeColors) => {
       fontSize: 16,
       letterSpacing: 0.2,
     },
+    stateBox: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing(32),
+      gap: spacing(12),
+    },
+    stateText: {
+      fontSize: fontSize(14),
+      textAlign: 'center',
+    },
+    retryBtn: {
+      paddingHorizontal: spacing(16),
+      paddingVertical: spacing(8),
+      borderRadius: scale(12),
+      borderWidth: 1,
+    },
+    retryText: {
+      fontSize: fontSize(14),
+      fontWeight: '600',
+    },
   });
 };

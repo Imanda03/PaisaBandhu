@@ -297,7 +297,7 @@ export const WeeklyChart = ({ route }: any) => {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor={headerBg} />
+      <StatusBar barStyle="light-content" />
       <View style={[styles.headerContainer, { paddingTop: headerPaddingTop }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerTitleContainer}>

@@ -1,6 +1,7 @@
 // API base URL - update with your backend. Ngrok URLs change on restart; use a stable URL for production.
 export const API_URL = 'https://kharchasplit.anish-sharma.com.np/api';
-// export const API_URL = 'https://aristolochiaceous-unhelping-johana.ngrok-free.app/api';
+// export const API_URL =
+//   'https://aristolochiaceous-unhelping-johana.ngrok-free.app/api';
 
 export const getGreeting = (name: string) => {
   const hour = new Date().getHours();
@@ -20,7 +21,12 @@ export const getFormattedDate = () => {
   return now.toLocaleDateString('en-US', options);
 };
 
-export type IconItem = { id: number; name: string; value: string; subLabel: string };
+export type IconItem = {
+  id: number;
+  name: string;
+  value: string;
+  subLabel: string;
+};
 
 /** Category icons grouped by subLabel. Use ICONS for flat list, getIconsByGroup() for sections. */
 export const ICONS: IconItem[] = [
@@ -58,8 +64,18 @@ export const ICONS: IconItem[] = [
   { id: 52, name: '📈', value: 'investment', subLabel: 'Income' },
   // { id: 53, name: '🎯', value: 'bonus', subLabel: 'Income' },
   // Lifestyle & Entertainment
-  { id: 60, name: '🎮', value: 'entertainment', subLabel: 'Lifestyle & Entertainment' },
-  { id: 61, name: '🎬', value: 'movies', subLabel: 'Lifestyle & Entertainment' },
+  {
+    id: 60,
+    name: '🎮',
+    value: 'entertainment',
+    subLabel: 'Lifestyle & Entertainment',
+  },
+  {
+    id: 61,
+    name: '🎬',
+    value: 'movies',
+    subLabel: 'Lifestyle & Entertainment',
+  },
   { id: 62, name: '📚', value: 'books', subLabel: 'Lifestyle & Entertainment' },
   { id: 63, name: '🎵', value: 'music', subLabel: 'Lifestyle & Entertainment' },
   // { id: 64, name: '🎳', value: 'hobbies', subLabel: 'Lifestyle & Entertainment' },
@@ -82,13 +98,13 @@ export const ICONS: IconItem[] = [
 /** Group icons by subLabel for sectioned display. Order matches ICONS. */
 export function getIconsByGroup(): { subLabel: string; icons: IconItem[] }[] {
   const map = new Map<string, IconItem[]>();
-  ICONS.forEach((icon) => {
+  ICONS.forEach(icon => {
     const list = map.get(icon.subLabel) || [];
     list.push(icon);
     map.set(icon.subLabel, list);
   });
-  const order = Array.from(new Set(ICONS.map((i) => i.subLabel)));
-  return order.map((subLabel) => ({ subLabel, icons: map.get(subLabel) || [] }));
+  const order = Array.from(new Set(ICONS.map(i => i.subLabel)));
+  return order.map(subLabel => ({ subLabel, icons: map.get(subLabel) || [] }));
 }
 
 export const formatTimeAgo = (rawDate: string): string => {

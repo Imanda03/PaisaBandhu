@@ -30,7 +30,6 @@ import EditInformation from '../../../components/EditInformation';
 import TermsModal from '../../../components/TermsModal';
 import { useNavigation } from '@react-navigation/native';
 import { useFetchChallenges } from '../../../ReactQueryHook/challenge.hook';
-import { useFetchAchievements } from '../../../ReactQueryHook/achievement.hook';
 import { useFetchReferralStats } from '../../../ReactQueryHook/referral.hook';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -112,8 +111,6 @@ const ProfileScreen: React.FC = () => {
   const { mutate: UserLogout } = useUserLogout();
   const { data: UserDetails, isFetching, refetch } = useFetchUserDetails();
   const { data: allChallenges } = useFetchChallenges();
-  const { data: achievements, isLoading: loadingAchievements } =
-    useFetchAchievements();
   const { data: referralStats, isLoading: loadingReferralStats } =
     useFetchReferralStats();
 
@@ -129,9 +126,8 @@ const ProfileScreen: React.FC = () => {
     return { completed, cancelled };
   }, [allChallenges]);
 
-  const achievementCount = achievements?.totalUnlocked || 0;
   const referralCount = referralStats?.totalReferrals || 0;
-  const loadingStats = loadingAchievements || loadingReferralStats;
+  const loadingStats = loadingReferralStats;
 
   const avatarScale = useSharedValue(0);
 
@@ -151,11 +147,7 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <View style={styles.root}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-      />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: 0 }]}
         showsVerticalScrollIndicator={false}
@@ -328,27 +320,11 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.infoSection}>
             <InfoRow
               icon={
-                <MaterialIcons
-                  name="emoji-events"
-                  size={20}
-                  color={theme.ICON_COLOR}
-                />
-              }
-              label="Achievements"
-              value={
-                loadingStats ? 'Loading...' : `${achievementCount} unlocked`
-              }
-              index={3}
-              onPress={() => navigation.navigate('Achievements')}
-              styles={styles}
-            />
-            <InfoRow
-              icon={
                 <IoniconsIcon name="medal" size={20} color={theme.ICON_COLOR} />
               }
               label="Challenges"
               value="View challenges"
-              index={4}
+              index={3}
               onPress={() => {
                 navigation.navigate('Challenges');
               }}
@@ -364,7 +340,7 @@ const ProfileScreen: React.FC = () => {
               }
               label="Referrals"
               value={loadingStats ? 'Loading...' : `${referralCount} referrals`}
-              index={5}
+              index={4}
               onPress={() => navigation.navigate('Referral')}
               styles={styles}
             />

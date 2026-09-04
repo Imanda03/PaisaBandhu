@@ -10,7 +10,22 @@ export const createStyles = () => {
         modalContent: {
             paddingHorizontal: 10,
             paddingVertical: 20,
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+        },
+        modalContentFlush: {
+            paddingTop: 0,
+            paddingHorizontal: 0,
+        },
+        handleWrap: {
+            alignItems: 'center',
+            paddingTop: 10,
+            paddingBottom: 4,
+        },
+        handle: {
+            width: 40,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(30,30,36,0.12)',
         },
         modalButtonContainer: {
             flexDirection: 'row',

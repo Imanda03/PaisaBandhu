@@ -64,6 +64,7 @@ const FriendModal = ({ isVisible, onClose, bookId }: FriendModalProps) => {
         >
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
                 style={styles.modalContent}
             >
                 <Controller

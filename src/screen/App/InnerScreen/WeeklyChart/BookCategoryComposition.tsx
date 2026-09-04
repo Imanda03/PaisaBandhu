@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../../../../utils/colors';
+import { formatCurrency } from '../../../../utils/currency';
 import { scale, fontSize, spacing } from '../../../../utils/responsive';
-
-const AnimatedView = Animated.createAnimatedComponent(View);
 
 export type CategorySpendItem = { category: string; spent: number };
 
@@ -31,8 +30,7 @@ function initialOf(name: string) {
   return t ? t.charAt(0).toUpperCase() : '•';
 }
 
-const formatInr = (n: number) =>
-  Math.round(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 type RowProps = {
   item: CategorySpendItem;
@@ -89,7 +87,7 @@ function VaultRow({
             {item.category}
           </Text>
           <Text style={[styles.amt, { color: theme.TEXT }]} numberOfLines={1}>
-            ₹{formatInr(item.spent)}
+            {formatCurrency(item.spent)}
           </Text>
         </View>
         <View style={[styles.track, { backgroundColor: hairline }]}>
@@ -145,7 +143,7 @@ const BookCategoryComposition: React.FC<Props> = ({
   const subtitle =
     variant === 'group'
       ? 'Shared expenses, ranked and weighted.'
-      : 'Every rupee, sorted like a private ledger.';
+      : 'Every amount, sorted like a private ledger.';
 
   if (!sorted.length) return null;
 

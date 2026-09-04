@@ -1,6 +1,18 @@
 import { AxiosError } from "axios";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { ApiError, BookInterfaceProps } from "../utils/types";
+
+/** Newest books first (Mongo ObjectId order ≈ creation time). */
+export function sortBooksNewestFirst(
+  books: BookInterfaceProps[] | undefined,
+): BookInterfaceProps[] {
+  if (!books?.length) return [];
+  return [...books].sort((a, b) => {
+    const idA = a.id ?? "";
+    const idB = b.id ?? "";
+    return idB.localeCompare(idA);
+  });
+}
 import { createFinancialBook, deleteFinancialBook, getFinancialBook, shareBook, updateFinancialBook } from "../services/BookService";
 import { useToast } from "../context/ToastContext";
 
@@ -10,11 +22,10 @@ export const useCreateFinancialBook = () => {
     return useMutation<any, AxiosError<ApiError>, BookInterfaceProps>(
         async (book) => createFinancialBook(book),
         {
-            onSuccess: async (response, variables: any) => {
+            onSuccess: async () => {
                 showToast("Book created successfully", "success");
                 await queryClient.invalidateQueries({
                     queryKey: ['BookTransactionList'],
-                    exact: true
                 });
             },
             onError: (error: AxiosError<ApiError>) => {
@@ -42,6 +53,7 @@ export const useFetchFinancialBook = () => {
         ['BookTransactionList'],
         () => getFinancialBook(),
         {
+            select: sortBooksNewestFirst,
             retry: (failureCount, error: any) => {
                 if (error?.response?.status === 429) return failureCount < 2;
                 return failureCount < 2;
@@ -117,9 +129,18 @@ export const useDeleteFinancialBook = (title: string) => {
         {
             onSuccess: async (_response,) => {
                 showToast(`${title} book deleted successfully`, 'success');
-                await queryClient.invalidateQueries({
-                    queryKey: ['BookTransactionList'],
-                });
+                // Same aggregates as transaction create/delete — home chart, recent activity, reports, weekly.
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ['BookTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['TransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['LatestTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChartTransaction'] }),
+                    queryClient.invalidateQueries({ queryKey: ['TransactionOverview'] }),
+                    queryClient.invalidateQueries({ queryKey: ['WeeklyTransactionList'] }),
+                    queryClient.invalidateQueries({ queryKey: ['Challenges'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChallengeProgress'] }),
+                    queryClient.invalidateQueries({ queryKey: ['ChallengeLeaderboard'] }),
+                ]);
             },
             onError: (error: AxiosError<ApiError>) => {
                 console.error('Delete book error:', error);

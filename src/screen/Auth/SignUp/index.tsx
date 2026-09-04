@@ -78,13 +78,18 @@ const SignUp = React.memo<SignUpProps>(({ navigation }) => {
                 )}
             </View>
 
-            <View style={styles.content}>
+            <KeyboardAvoidingView
+                style={styles.content}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+            >
                 <ScrollView
                     contentContainerStyle={[
                         styles.scrollContent,
-                        { paddingBottom: isKeyboardVisible ? 20 : 40 },
+                        { flexGrow: 1, paddingBottom: 32 },
                     ]}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.loginField}>
@@ -125,7 +130,7 @@ const SignUp = React.memo<SignUpProps>(({ navigation }) => {
                         </View>
                     </View>
                 </ScrollView>
-            </View>
+            </KeyboardAvoidingView>
         </View>
 
     );

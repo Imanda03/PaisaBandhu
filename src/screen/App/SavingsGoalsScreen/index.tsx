@@ -8,6 +8,9 @@ import {
   StyleSheet,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '../../../utils/Icons';
 import { useTheme } from '../../../utils/colors';
@@ -15,6 +18,7 @@ import { useModal } from '../../../context/ModalContext';
 import { savingsGoalService, SavingsGoal } from '../../../services/SavingsGoalService';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
+import { formatCurrency } from '../../../utils/currency';
 
 const SavingsGoalsScreen: React.FC = () => {
   const { theme } = useTheme();
@@ -109,13 +113,13 @@ const SavingsGoalsScreen: React.FC = () => {
               <View>
                 <Text style={[styles.amountLabel, { color: theme.LIGHT_TEXT }]}>Saved</Text>
                 <Text style={[styles.currentAmount, { color: theme.PURPLE }]}>
-                  ₹{item.currentAmount.toLocaleString()}
+                  {formatCurrency(item.currentAmount)}
                 </Text>
               </View>
               <View style={styles.targetContainer}>
                 <Text style={[styles.amountLabel, { color: theme.LIGHT_TEXT }]}>Target</Text>
                 <Text style={[styles.targetAmount, { color: theme.TEXT }]}>
-                  ₹{item.targetAmount.toLocaleString()}
+                  {formatCurrency(item.targetAmount)}
                 </Text>
               </View>
             </View>
@@ -208,51 +212,62 @@ const SavingsGoalsScreen: React.FC = () => {
         animationType="slide"
         onRequestClose={() => setShowCreateModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
           <View style={[styles.modalContent, { backgroundColor: theme.BACKGROUND_LIGHT }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.TEXT }]}>Create Savings Goal</Text>
-              <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-                <MaterialIcons name="close" size={24} color={theme.TEXT} />
-              </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={[styles.input, { color: theme.TEXT, borderColor: theme.BORDER_COLOR }]}
-              placeholder="Goal title"
-              placeholderTextColor={theme.LIGHT_TEXT}
-              value={newGoal.title}
-              onChangeText={text => setNewGoal({ ...newGoal, title: text })}
-            />
-
-            <TextInput
-              style={[styles.input, styles.textArea, { color: theme.TEXT, borderColor: theme.BORDER_COLOR }]}
-              placeholder="Description (optional)"
-              placeholderTextColor={theme.LIGHT_TEXT}
-              value={newGoal.description}
-              onChangeText={text => setNewGoal({ ...newGoal, description: text })}
-              multiline
-            />
-
-            <TextInput
-              style={[styles.input, { color: theme.TEXT, borderColor: theme.BORDER_COLOR }]}
-              placeholder="Target amount"
-              placeholderTextColor={theme.LIGHT_TEXT}
-              value={newGoal.targetAmount}
-              onChangeText={text => setNewGoal({ ...newGoal, targetAmount: text })}
-              keyboardType="numeric"
-            />
-
-            <TouchableOpacity
-              style={[styles.createButton, styles.submitButton, { backgroundColor: theme.PURPLE }]}
-              onPress={handleCreateGoal}
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
             >
-              <Text style={[styles.submitButtonText, { color: theme.SECONDARY }]}>
-                Create Goal
-              </Text>
-            </TouchableOpacity>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: theme.TEXT }]}>Create Savings Goal</Text>
+                <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+                  <MaterialIcons name="close" size={24} color={theme.TEXT} />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                style={[styles.input, { color: theme.TEXT, borderColor: theme.BORDER_COLOR }]}
+                placeholder="Goal title"
+                placeholderTextColor={theme.LIGHT_TEXT}
+                value={newGoal.title}
+                onChangeText={text => setNewGoal({ ...newGoal, title: text })}
+              />
+
+              <TextInput
+                style={[styles.input, styles.textArea, { color: theme.TEXT, borderColor: theme.BORDER_COLOR }]}
+                placeholder="Description (optional)"
+                placeholderTextColor={theme.LIGHT_TEXT}
+                value={newGoal.description}
+                onChangeText={text => setNewGoal({ ...newGoal, description: text })}
+                multiline
+              />
+
+              <TextInput
+                style={[styles.input, { color: theme.TEXT, borderColor: theme.BORDER_COLOR }]}
+                placeholder="Target amount"
+                placeholderTextColor={theme.LIGHT_TEXT}
+                value={newGoal.targetAmount}
+                onChangeText={text => setNewGoal({ ...newGoal, targetAmount: text })}
+                keyboardType="numeric"
+              />
+
+              <TouchableOpacity
+                style={[styles.createButton, styles.submitButton, { backgroundColor: theme.PURPLE }]}
+                onPress={handleCreateGoal}
+              >
+                <Text style={[styles.submitButtonText, { color: theme.SECONDARY }]}>
+                  Create Goal
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

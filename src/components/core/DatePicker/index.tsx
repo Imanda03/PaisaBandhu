@@ -5,7 +5,7 @@ import { useTheme } from '../../../utils/colors';
 import { createStyles } from '../sharedStyles';
 
 interface DatePickerProps {
-  value: Date;
+  value?: Date;
   onChanged: (date: Date) => void;
   error?: string;
   placeholder?: string;
@@ -31,7 +31,7 @@ const DatePickerComponent = ({
       </TouchableOpacity>
       {showPicker && (
         <DateTimePicker
-          value={value}
+          value={value ?? new Date()}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {

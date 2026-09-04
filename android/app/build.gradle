@@ -90,8 +90,8 @@ android {
         applicationId "com.paisebandhu"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "2.3.1"
+        versionCode 15
+        versionName "2.5.2"
     }
     signingConfigs {
         debug {
@@ -115,9 +115,10 @@ android {
         }
         release {
             signingConfig signingConfigs.release
+            // Use optimize rules (not proguard-android.txt which disables R8 optimisation).
             minifyEnabled enableProguardInReleaseBuilds
             shrinkResources enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
 }
@@ -125,6 +126,7 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation("androidx.activity:activity-ktx:1.9.3")
     implementation project(':react-native-vector-icons')
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

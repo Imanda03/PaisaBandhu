@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -18,6 +18,7 @@ import Select from '../../../../components/core/Select';
 import DatePicker from '../../../../components/core/DatePicker';
 import TextArea from '../../../../components/core/TextArea';
 import AuthHeader from '../../../../components/core/AuthHeader';
+import { CURRENCY_SYMBOL } from '../../../../utils/currency';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useFetchCategories } from '../../../../ReactQueryHook/category.hook';
 import { useCreateTransaction, useUpdateTransaction } from '../../../../ReactQueryHook/transaction.hook';
@@ -25,6 +26,7 @@ import { CategoryFormData } from '../../../../utils/types';
 import { useFetchFriend } from '../../../../ReactQueryHook/friend.hook';
 import { useTheme } from '../../../../utils/colors';
 import { MaterialIcons } from '../../../../utils/Icons';
+import SuccessOverlay, { SuccessOverlayRef } from '../../../../components/SuccessOverlay';
 
 type FormData = {
   price: string;
@@ -73,6 +75,7 @@ const AddTransaction: React.FC<any> = () => {
   const isEditMode = !!transactionId && !!transaction;
 
   const navigation: any = useNavigation();
+  const successRef = useRef<SuccessOverlayRef>(null);
   const {
     control,
     handleSubmit,
@@ -133,12 +136,12 @@ const AddTransaction: React.FC<any> = () => {
               friendId: data.friendId || undefined,
             } as any,
           },
-          { onSuccess: () => navigation.goBack() },
+          { onSuccess: () => successRef.current?.show(() => navigation.goBack()) },
         );
       } else {
         createTransaction(
           { ...data, type, bookId },
-          { onSuccess: () => navigation.goBack() },
+          { onSuccess: () => successRef.current?.show(() => navigation.goBack()) },
         );
       }
     },
@@ -192,10 +195,11 @@ const AddTransaction: React.FC<any> = () => {
 
   return (
     <View style={styles.root}>
+      <SuccessOverlay ref={successRef} />
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={[styles.topSafe, { paddingTop: insets.top }]}>
           <AuthHeader
@@ -272,7 +276,7 @@ const AddTransaction: React.FC<any> = () => {
                     render={({ field: { onChange, value } }) => (
                       <View>
                         <View style={styles.amountFieldRow}>
-                          <Text style={styles.amountRupeePrefix}>₹</Text>
+                          <Text style={styles.amountRupeePrefix}>{CURRENCY_SYMBOL}</Text>
                           <TextInput
                             style={styles.amountTextInput}
                             value={value}

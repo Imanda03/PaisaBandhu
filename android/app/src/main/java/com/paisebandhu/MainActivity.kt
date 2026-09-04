@@ -1,5 +1,7 @@
 package com.paisebandhu
 
+import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -12,6 +14,13 @@ class MainActivity : ReactActivity() {
    * rendering of the component.
    */
   override fun getMainComponentName(): String = "KharchaSplit"
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    // Backward-compatible edge-to-edge (required guidance for Android 15+ / targetSdk 35+).
+    // SafeAreaProvider + insets in JS keep content clear of system bars.
+    enableEdgeToEdge()
+    super.onCreate(savedInstanceState)
+  }
 
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]

@@ -21,6 +21,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
+import { CURRENCY_SYMBOL } from '../utils/currency';
 import Svg, {
   Circle,
   Defs,
@@ -369,11 +370,7 @@ const LoadingScreen = ({ onFinish }: { onFinish?: () => void }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: vt.BG_DEEP }]}>
-      <StatusBar
-        backgroundColor="transparent"
-        barStyle={vt.STATUS}
-        translucent
-      />
+      <StatusBar barStyle={vt.STATUS} />
 
       <LinearGradient
         colors={[vt.BG_DEEP, vt.BG_MID, vt.BG_HIGHLIGHT]}
@@ -518,7 +515,7 @@ const LoadingScreen = ({ onFinish }: { onFinish?: () => void }) => {
                 end={{ x: 0.9, y: 1 }}
                 style={styles.emblemPlate}
               >
-                <Text style={styles.emblemRupee}>₹</Text>
+                <Text style={styles.emblemRupee}>{CURRENCY_SYMBOL}</Text>
               </LinearGradient>
               <View style={[styles.emblemRim, { borderColor: vt.GOLD_SOFT + 'AA' }]} />
             </View>

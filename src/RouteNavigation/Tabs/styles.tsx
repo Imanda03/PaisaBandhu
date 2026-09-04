@@ -11,10 +11,8 @@ export const createTabBarStyles = (nav: NavBarLayout) => {
      */
     tabBarDock: {
       position: 'absolute',
-      bottom: nav.bottomOffset,
       left: nav.horizontalInset,
       right: nav.horizontalInset,
-      height: nav.dockHeight,
       borderRadius: nav.rimBorderRadius,
       ...Platform.select({
         ios: {
@@ -113,22 +111,7 @@ export const createTabBarStyles = (nav: NavBarLayout) => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    tabBarButtonActive: {
-      backgroundColor: theme.NAVBAR_ACTIVE_BACKGROUND,
-      borderRadius: nav.activeButtonRadius,
-      marginHorizontal: nav.activeButtonMarginH,
-      paddingVertical: nav.activeButtonPaddingV,
-      paddingHorizontal: nav.activeButtonPaddingH,
-      ...Platform.select({
-        ios: {
-          shadowColor: theme.NAVBAR_ACTIVE_BACKGROUND,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.35,
-          shadowRadius: 12,
-        },
-        android: { elevation: 6 },
-      }),
+      minHeight: nav.dockHeight * 0.55,
     },
   });
 };
